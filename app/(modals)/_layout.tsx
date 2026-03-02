@@ -1,0 +1,16 @@
+import { Stack } from 'expo-router'
+
+export default function ModalsLayout() {
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        presentation: 'modal',
+        animation: 'slide_from_bottom',
+        contentStyle: { backgroundColor: '#f5f3f0' }
+      }}
+    >
+      <Stack.Screen name='device-setup' />
+    </Stack>
+  )
+}

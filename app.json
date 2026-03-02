@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "starter-kit-expo",
-    "slug": "starter-kit-expo",
+    "name": "OrchidPal",
+    "slug": "orchidpal",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "starterkitexpo",
+    "scheme": "orchidpal",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -32,7 +32,22 @@
       "expo-router",
       "expo-web-browser",
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "OrchidPal needs camera access to scan QR codes on your IoT device.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "OrchidPal uses your location to provide local weather data for better plant care recommendations.",
+          "locationAlwaysPermission": "OrchidPal uses your location to provide local weather data for better plant care recommendations.",
+          "locationWhenInUsePermission": "OrchidPal uses your location to provide local weather data for better plant care recommendations."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

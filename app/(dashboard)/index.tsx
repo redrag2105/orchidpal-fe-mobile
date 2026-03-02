@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router'
+import { Plus } from 'lucide-react-native'
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
@@ -103,6 +104,15 @@ export default function Dashboard() {
         {/* Quick actions & schedules & AI & Alerts tied together in AutomationCard */}
         <AutomationCard nextActions={NEXT_ACTIONS} suggestion={AI_SUGGESTION} alerts={PRIORITY_ALERTS} />
       </ScrollView>
+
+      {/* FAB: Add Device */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => router.push('/(modals)/device-setup')}
+        activeOpacity={0.8}
+      >
+        <Plus size={24} color="white" strokeWidth={2.5} />
+      </TouchableOpacity>
     </SafeAreaView>
   )
 }
@@ -149,5 +159,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 24,
     gap: 14
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#1f2933',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+    elevation: 6,
   }
 })

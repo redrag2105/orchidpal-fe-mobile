@@ -1,5 +1,5 @@
 {
-  "name": "starter-kit-expo",
+  "name": "orchidpal",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
@@ -31,12 +31,14 @@
     "babel-plugin-module-resolver": "^5.0.2",
     "dom-helpers": "^5.2.1",
     "expo": "~54.0.33",
+    "expo-camera": "~17.0.10",
     "expo-font": "~14.0.11",
     "expo-gl": "~16.0.10",
     "expo-haptics": "~15.0.8",
     "expo-image": "~3.0.11",
     "expo-linear-gradient": "~15.0.8",
     "expo-linking": "~8.0.11",
+    "expo-location": "~19.0.8",
     "expo-router": "~6.0.23",
     "expo-secure-store": "~15.0.8",
     "expo-splash-screen": "~31.0.13",
