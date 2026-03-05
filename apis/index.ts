@@ -7,5 +7,7 @@ export {
   assignDeviceToZone,
   configureEspWifi,
   getDeviceStatus,
-  waitForDeviceOnline,
+  waitForDeviceOnline
 } from './device.api'
+
+export { getGoogleAuthUrl, logout, refreshAccessToken } from './auth.api'

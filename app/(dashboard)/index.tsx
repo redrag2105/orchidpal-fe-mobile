@@ -1,5 +1,7 @@
 import { useRouter } from 'expo-router'
+import * as SecureStore from 'expo-secure-store'
 import { Plus } from 'lucide-react-native'
+import { useEffect, useState } from 'react'
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
@@ -77,6 +79,20 @@ const PRIORITY_ALERTS: DashboardAlert[] = [
 
 export default function Dashboard() {
   const router = useRouter()
+  const [tokens, setTokens] = useState<{ accessToken: string | null; refreshToken: string | null }>({
+    accessToken: null,
+    refreshToken: null
+  })
+
+  useEffect(() => {
+    const loadTokens = async () => {
+      const accessToken = await SecureStore.getItemAsync('access_token')
+      const refreshToken = await SecureStore.getItemAsync('refresh_token')
+      setTokens({ accessToken, refreshToken })
+      console.log('Loaded tokens:', { accessToken, refreshToken })
+    }
+    loadTokens()
+  }, [])
 
   return (
     <SafeAreaView style={styles.root}>
@@ -92,6 +108,23 @@ export default function Dashboard() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Debug: Token info card */}
+        <View style={styles.tokenCard}>
+          <Text style={styles.tokenTitle}>Stored Tokens (Debug)</Text>
+          <View style={styles.tokenRow}>
+            <Text style={styles.tokenLabel}>Access Token:</Text>
+            <Text style={styles.tokenValue} numberOfLines={2}>
+              {tokens.accessToken ? `${tokens.accessToken.substring(0, 50)}...` : 'Not found'}
+            </Text>
+          </View>
+          <View style={styles.tokenRow}>
+            <Text style={styles.tokenLabel}>Refresh Token:</Text>
+            <Text style={styles.tokenValue} numberOfLines={2}>
+              {tokens.refreshToken ? `${tokens.refreshToken.substring(0, 50)}...` : 'Not found'}
+            </Text>
+          </View>
+        </View>
+
         {/* Weather / environment card */}
         <EnvironmentCard snapshot={ENVIRONMENT_SNAPSHOT} trends={TREND_DATA} />
 
@@ -106,12 +139,8 @@ export default function Dashboard() {
       </ScrollView>
 
       {/* FAB: Add Device */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => router.push('/(modals)/device-setup')}
-        activeOpacity={0.8}
-      >
-        <Plus size={24} color="white" strokeWidth={2.5} />
+      <TouchableOpacity style={styles.fab} onPress={() => router.push('/(modals)/device-setup')} activeOpacity={0.8}>
+        <Plus size={24} color='white' strokeWidth={2.5} />
       </TouchableOpacity>
     </SafeAreaView>
   )
@@ -160,6 +189,36 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     gap: 14
   },
+  tokenCard: {
+    backgroundColor: '#fef3c7',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#f59e0b'
+  },
+  tokenTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#92400e',
+    marginBottom: 10
+  },
+  tokenRow: {
+    marginBottom: 8
+  },
+  tokenLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#92400e',
+    marginBottom: 2
+  },
+  tokenValue: {
+    fontSize: 10,
+    fontFamily: 'monospace',
+    color: '#78350f',
+    backgroundColor: '#fde68a',
+    padding: 6,
+    borderRadius: 4
+  },
   fab: {
     position: 'absolute',
     bottom: 24,
@@ -174,6 +233,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 6
   }
 })

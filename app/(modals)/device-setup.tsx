@@ -223,6 +223,8 @@ function StepScanQR({
   const [manualInput, setManualInput] = useState('')
   const [showManual, setShowManual] = useState(false)
   const [hasScanned, setHasScanned] = useState(false)
+  const [scannedData, setScannedData] = useState<{ serial_number: string; secret_key: string } | null>(null)
+  const [parseError, setParseError] = useState<string | null>(null)
 
   const handleOpenCamera = async () => {
     if (!permission?.granted) {
@@ -234,6 +236,8 @@ function StepScanQR({
       }
     }
     setHasScanned(false)
+    setScannedData(null)
+    setParseError(null)
     setShowCamera(true)
   }
 
@@ -241,12 +245,68 @@ function StepScanQR({
     if (hasScanned) return // Prevent multiple scans
     setHasScanned(true)
     setShowCamera(false)
-    onScanned(data)
+
+    // Try to parse the QR data with cleanup
+    try {
+      // Clean the data: trim whitespace, remove BOM, handle URL encoding
+      let cleanData = data.trim()
+
+      // Remove BOM if present
+      if (cleanData.charCodeAt(0) === 0xfeff) {
+        cleanData = cleanData.slice(1)
+      }
+
+      // Try URL decoding if it looks URL-encoded
+      if (cleanData.includes('%')) {
+        try {
+          cleanData = decodeURIComponent(cleanData)
+        } catch {
+          // Ignore decoding errors
+        }
+      }
+
+      const parsed = JSON.parse(cleanData)
+      if (parsed.serial_number && parsed.secret_key) {
+        // Immediately proceed to activation without preview
+        onScanned(JSON.stringify(parsed))
+      } else {
+        setParseError('Invalid QR code')
+        setScannedData(null)
+      }
+    } catch {
+      setParseError('Invalid QR code')
+      setScannedData(null)
+    }
   }
 
   const handleCloseCamera = () => {
     setShowCamera(false)
     setHasScanned(false)
+  }
+
+  const handleResetScan = () => {
+    setScannedData(null)
+    setParseError(null)
+    setHasScanned(false)
+  }
+
+  // Show parse error if we have one
+  if (parseError) {
+    return (
+      <View style={styles.card}>
+        <View style={[styles.iconContainer, styles.iconError]}>
+          <AlertCircle size={48} color='#dc2626' strokeWidth={1.5} />
+        </View>
+
+        <Text style={styles.stepTitle}>Invalid QR Code</Text>
+        <Text style={styles.stepDescription}>Please scan a valid OrchidPal device QR code.</Text>
+
+        <TouchableOpacity style={styles.primaryButton} onPress={handleResetScan}>
+          <QrCode size={18} color='white' />
+          <Text style={styles.primaryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    )
   }
 
   return (
@@ -1037,6 +1097,34 @@ const styles = StyleSheet.create({
   },
   iconError: {
     backgroundColor: '#fef2f2'
+  },
+  scannedDataBox: {
+    backgroundColor: '#f0fdf4',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#bbf7d0'
+  },
+  scannedDataRow: {
+    marginBottom: 12
+  },
+  scannedDataLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#166534',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4
+  },
+  scannedDataValue: {
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    color: '#15803d',
+    backgroundColor: '#dcfce7',
+    padding: 10,
+    borderRadius: 8,
+    overflow: 'hidden'
   },
   stepTitle: {
     fontSize: 22,
