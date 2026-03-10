@@ -1,7 +1,3 @@
-import * as Location from 'expo-location'
-import { ChevronRight, ChevronLeft, Flower2, MapPin } from 'lucide-react-native'
-import React, { useState } from 'react'
-import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import {
   Actionsheet,
   ActionsheetBackdrop,
@@ -11,6 +7,10 @@ import {
   ActionsheetItem,
   ActionsheetItemText
 } from '@/components/ui/actionsheet'
+import * as Location from 'expo-location'
+import { ChevronLeft, ChevronRight, Flower2, MapPin } from 'lucide-react-native'
+import React, { useState } from 'react'
+import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { styles } from './styles'
 
 const EXPOSURE_OPTIONS = [
@@ -168,9 +168,7 @@ export function StepCreateZone({ onSubmit, onBack, isLoading }: StepCreateZonePr
                   >
                     {opt.label}
                   </ActionsheetItemText>
-                  <Text style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>
-                    {opt.description}
-                  </Text>
+                  <Text style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>{opt.description}</Text>
                 </View>
               </ActionsheetItem>
             ))}

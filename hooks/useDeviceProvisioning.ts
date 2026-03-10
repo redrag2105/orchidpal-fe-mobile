@@ -483,12 +483,15 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
   /**
    * Jump to a specific step
    */
-  const goToStep = useCallback((targetStep: ProvisioningStep) => {
-    // Only allow jumping back to SELECT_ZONE from CREATE_ZONE or SELECT_PLANT
-    if (targetStep === 'SELECT_ZONE' && (state.step === 'CREATE_ZONE' || state.step === 'SELECT_PLANT')) {
-      setStep(targetStep)
-    }
-  }, [state.step, setStep])
+  const goToStep = useCallback(
+    (targetStep: ProvisioningStep) => {
+      // Only allow jumping back to SELECT_ZONE from CREATE_ZONE or SELECT_PLANT
+      if (targetStep === 'SELECT_ZONE' && (state.step === 'CREATE_ZONE' || state.step === 'SELECT_PLANT')) {
+        setStep(targetStep)
+      }
+    },
+    [state.step, setStep]
+  )
 
   /**
    * Retry from error state
@@ -507,9 +510,7 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
 
     // Computed
     espWifiName: state.qrData ? `OrchidPal-${state.qrData.serial_number}` : null,
-    canGoBack: ['ACTIVATION_SUCCESS', 'CREATE_ZONE', 'SELECT_PLANT', 'ERROR'].includes(
-      state.step
-    ),
+    canGoBack: ['ACTIVATION_SUCCESS', 'CREATE_ZONE', 'SELECT_PLANT', 'ERROR'].includes(state.step),
 
     // Actions
     handleQRScanned,

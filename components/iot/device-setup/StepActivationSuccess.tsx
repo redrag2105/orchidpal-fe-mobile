@@ -1,4 +1,4 @@
-import { ChevronRight, CheckCircle2, Info } from 'lucide-react-native'
+import { CheckCircle2, ChevronRight, Info } from 'lucide-react-native'
 import React from 'react'
 import { Text, TouchableOpacity, View } from 'react-native'
 import { styles } from './styles'

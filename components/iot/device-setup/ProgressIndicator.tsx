@@ -1,8 +1,8 @@
+import type { ProvisioningStep } from '@/types/device.types'
 import { CheckCircle2, Flower2, MapPin, QrCode, ShieldCheck, Wifi } from 'lucide-react-native'
 import React from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { THEME } from './theme'
-import type { ProvisioningStep } from '@/types/device.types'
 
 interface ProgressIndicatorProps {
   step: string
@@ -11,15 +11,54 @@ interface ProgressIndicatorProps {
 
 export function ProgressIndicator({ step, onStepPress }: ProgressIndicatorProps) {
   const steps = [
-    { key: 'scan', targetStep: 'SCAN_QR' as ProvisioningStep, label: 'Scan', icon: QrCode, active: ['SCAN_QR', 'ACTIVATING'].includes(step), disabled: true },
-    { key: 'activate', targetStep: 'ACTIVATION_SUCCESS' as ProvisioningStep, label: 'Activate', icon: ShieldCheck, active: ['ACTIVATION_SUCCESS'].includes(step), disabled: true },
-    { key: 'wifi', targetStep: 'CONNECT_TO_ESP' as ProvisioningStep, label: 'Connect', icon: Wifi, active: ['CONNECT_TO_ESP', 'WAITING_ONLINE'].includes(step), disabled: true },
-    { key: 'zone', targetStep: 'SELECT_ZONE' as ProvisioningStep, label: 'Zone', icon: MapPin, active: ['SELECT_ZONE', 'CREATE_ZONE'].includes(step), disabled: ['SCAN_QR', 'ACTIVATING', 'ACTIVATION_SUCCESS', 'CONNECT_TO_ESP', 'WAITING_ONLINE'].includes(step) },
-    { key: 'plant', targetStep: 'SELECT_PLANT' as ProvisioningStep, label: 'Plant', icon: Flower2, active: ['SELECT_PLANT'].includes(step), disabled: true }
+    {
+      key: 'scan',
+      targetStep: 'SCAN_QR' as ProvisioningStep,
+      label: 'Scan',
+      icon: QrCode,
+      active: ['SCAN_QR', 'ACTIVATING'].includes(step),
+      disabled: true
+    },
+    {
+      key: 'activate',
+      targetStep: 'ACTIVATION_SUCCESS' as ProvisioningStep,
+      label: 'Activate',
+      icon: ShieldCheck,
+      active: ['ACTIVATION_SUCCESS'].includes(step),
+      disabled: true
+    },
+    {
+      key: 'wifi',
+      targetStep: 'CONNECT_TO_ESP' as ProvisioningStep,
+      label: 'Connect',
+      icon: Wifi,
+      active: ['CONNECT_TO_ESP', 'WAITING_ONLINE'].includes(step),
+      disabled: true
+    },
+    {
+      key: 'zone',
+      targetStep: 'SELECT_ZONE' as ProvisioningStep,
+      label: 'Zone',
+      icon: MapPin,
+      active: ['SELECT_ZONE', 'CREATE_ZONE'].includes(step),
+      disabled: ['SCAN_QR', 'ACTIVATING', 'ACTIVATION_SUCCESS', 'CONNECT_TO_ESP', 'WAITING_ONLINE'].includes(step)
+    },
+    {
+      key: 'plant',
+      targetStep: 'SELECT_PLANT' as ProvisioningStep,
+      label: 'Plant',
+      icon: Flower2,
+      active: ['SELECT_PLANT'].includes(step),
+      disabled: true
+    }
   ]
 
   const currentActiveIndex = steps.findIndex((s) => s.active)
-  const completedIndex = ['COMPLETE'].includes(step) ? steps.length - 1 : currentActiveIndex !== -1 ? currentActiveIndex : 0
+  const completedIndex = ['COMPLETE'].includes(step)
+    ? steps.length - 1
+    : currentActiveIndex !== -1
+      ? currentActiveIndex
+      : 0
   const progressPercent = Math.min((completedIndex / (steps.length - 1)) * 100, 100)
 
   return (
@@ -38,8 +77,8 @@ export function ProgressIndicator({ step, onStepPress }: ProgressIndicatorProps)
           const Icon = s.icon
 
           return (
-            <TouchableOpacity 
-              key={s.key} 
+            <TouchableOpacity
+              key={s.key}
               style={[localStyles.stepperItem, s.disabled && !isActive && localStyles.stepperItemDisabled]}
               disabled={s.disabled || isActive}
               onPress={() => onStepPress?.(s.targetStep)}
