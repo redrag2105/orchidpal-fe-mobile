@@ -10,25 +10,37 @@
  * 5. WAITING_ONLINE - Polling until device comes online
  * 6. SELECT_ZONE - User selects existing zone or creates new one
  * 7. CREATE_ZONE - User creates a new zone (optional sub-step)
- * 8. COMPLETE - Device setup finished
+ * 8. SELECT_PLANT - User selects plant species to add (optional)
+ * 9. COMPLETE - Device setup finished
  */
 
-import { activateDevice, assignDeviceToZone, createZone, getZones, waitForDeviceOnline } from '@/apis/device.api'
+import {
+  activateDevice,
+  assignDeviceToZone,
+  createPlant,
+  createZone,
+  getSpecies,
+  getZones,
+  waitForDeviceOnline
+} from '@/apis/device.api'
 import type {
   CreateZoneRequest,
   PlantingZone,
+  PlantSpecies,
   ProvisioningState,
   ProvisioningStep,
   QRPayload
 } from '@/types/device.types'
 import { AxiosError } from 'axios'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 const initialState: ProvisioningState = {
   step: 'SCAN_QR',
   qrData: null,
   device: null,
   selectedZone: null,
+  selectedSpecies: null,
+  plantNickname: null,
   error: null
 }
 
@@ -39,6 +51,28 @@ const DEMO_MODE = !process.env.EXPO_PUBLIC_API_URL
 const DEMO_ZONES: PlantingZone[] = [
   { id: 'demo-1', name: 'Living Room Garden', location_city: 'Ho Chi Minh City', exposure: 'PARTIAL_SHADE' },
   { id: 'demo-2', name: 'Balcony Orchids', location_city: 'Ho Chi Minh City', exposure: 'FULL_SUN' }
+]
+
+// Demo plant species for testing
+const DEMO_SPECIES: PlantSpecies[] = [
+  {
+    id: 'demo-sp-1',
+    common_name: 'Phalaenopsis',
+    scientific_name: 'Phalaenopsis spp.',
+    image_url: 'https://images.unsplash.com/photo-1566836610593-62a64888a216?w=200'
+  },
+  {
+    id: 'demo-sp-2',
+    common_name: 'Cattleya',
+    scientific_name: 'Cattleya spp.',
+    image_url: 'https://images.unsplash.com/photo-1612831819518-a91e6edc315e?w=200'
+  },
+  {
+    id: 'demo-sp-3',
+    common_name: 'Dendrobium',
+    scientific_name: 'Dendrobium spp.',
+    image_url: 'https://images.unsplash.com/photo-1567273128256-e2e4e21c80d6?w=200'
+  }
 ]
 
 /**
@@ -71,6 +105,10 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
   const [isLoading, setIsLoading] = useState(false)
   const [isDemoMode, setIsDemoMode] = useState(initialDemoMode)
   const [zones, setZones] = useState<PlantingZone[]>([])
+  const [species, setSpecies] = useState<PlantSpecies[]>([])
+
+  // Ref to prevent duplicate API calls (e.g., from React StrictMode)
+  const activationInProgress = useRef(false)
 
   // Helper to update state
   const updateState = useCallback((updates: Partial<ProvisioningState>) => {
@@ -98,6 +136,13 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
    */
   const handleQRScanned = useCallback(
     async (qrContent: string, forceDemo?: boolean) => {
+      // Prevent duplicate API calls (StrictMode double-invoke protection)
+      if (activationInProgress.current) {
+        console.log('[useDeviceProvisioning] Skipping duplicate activation call')
+        return
+      }
+      activationInProgress.current = true
+
       const useDemo = forceDemo ?? isDemoMode
       if (forceDemo) setIsDemoMode(true)
 
@@ -113,6 +158,7 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
         } catch {
           setError('Invalid QR code. Please scan the code on your OrchidPal device.')
           setIsLoading(false)
+          activationInProgress.current = false
           return
         }
 
@@ -156,6 +202,10 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
         setError(getErrorMessage(error))
       } finally {
         setIsLoading(false)
+        // Reset the flag after a short delay to allow retry if needed
+        setTimeout(() => {
+          activationInProgress.current = false
+        }, 1000)
       }
     },
     [updateState, setError, isDemoMode]
@@ -229,11 +279,12 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
             exposure: zoneData.exposure
           }
           setZones((prev) => [...prev, newZone])
-          updateState({ selectedZone: newZone, step: 'COMPLETE' })
+          setSpecies(DEMO_SPECIES)
+          updateState({ selectedZone: newZone, step: 'SELECT_PLANT' })
           return
         }
 
-        // Create zone
+        // Create zone (don't assign device yet - that happens after plant selection)
         const created = await createZone(zoneData)
         const newZone: PlantingZone = {
           id: created.zone_id || created.id,
@@ -242,13 +293,16 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
           exposure: created.exposure
         }
         setZones((prev) => [...prev, newZone])
+        updateState({ selectedZone: newZone, step: 'SELECT_PLANT' })
 
-        // Assign device to zone
-        await assignDeviceToZone(state.qrData.serial_number, {
-          zone_id: newZone.id
-        })
-
-        updateState({ selectedZone: newZone, step: 'COMPLETE' })
+        // Fetch species for plant selection
+        try {
+          const speciesResponse = await getSpecies()
+          setSpecies(speciesResponse.data)
+        } catch {
+          // Non-critical - user can skip plant selection
+          setSpecies([])
+        }
       } catch (error) {
         setError(getErrorMessage(error))
       } finally {
@@ -272,18 +326,25 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
       updateState({ selectedZone: zone })
 
       try {
-        // Demo mode
+        // Demo mode - just fetch species and move to plant selection
         if (isDemoMode) {
           await new Promise((resolve) => setTimeout(resolve, 800))
-          updateState({ step: 'COMPLETE' })
+          setSpecies(DEMO_SPECIES)
+          updateState({ step: 'SELECT_PLANT' })
           return
         }
 
-        await assignDeviceToZone(state.qrData.serial_number, {
-          zone_id: zone.id
-        })
+        // Don't assign device to zone yet - that happens after plant selection
+        // Just fetch species for plant selection
+        try {
+          const speciesResponse = await getSpecies()
+          setSpecies(speciesResponse.data)
+        } catch {
+          // Non-critical
+          setSpecies([])
+        }
 
-        updateState({ step: 'COMPLETE' })
+        updateState({ step: 'SELECT_PLANT' })
       } catch (error) {
         setError(getErrorMessage(error))
       } finally {
@@ -294,11 +355,99 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
   )
 
   /**
-   * Skip zone assignment
+   * Select a plant species and create the plant
    */
-  const skipZoneAssignment = useCallback(() => {
-    updateState({ step: 'COMPLETE' })
-  }, [updateState])
+  const selectPlant = useCallback(
+    async (selectedSpecies: PlantSpecies, nickname?: string) => {
+      if (!state.selectedZone || !state.qrData) {
+        setError('Zone or device information missing. Please restart the setup.')
+        return
+      }
+
+      const trimmedNickname = nickname?.trim() || null
+      setIsLoading(true)
+      updateState({ selectedSpecies, plantNickname: trimmedNickname })
+
+      try {
+        // Demo mode
+        if (isDemoMode) {
+          await new Promise((resolve) => setTimeout(resolve, 800))
+          updateState({ step: 'COMPLETE' })
+          return
+        }
+
+        // First assign device to zone
+        await assignDeviceToZone(state.qrData.serial_number, {
+          zone_id: state.selectedZone.id
+        })
+
+        // Then create the plant
+        await createPlant({
+          zone_id: state.selectedZone.id,
+          species_id: selectedSpecies.id,
+          nickname: trimmedNickname || undefined
+        })
+
+        updateState({ step: 'COMPLETE' })
+      } catch (error) {
+        setError(getErrorMessage(error))
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [state.selectedZone, state.qrData, updateState, setError, isDemoMode]
+  )
+
+  /**
+   * Skip plant selection and complete setup
+   */
+  const skipPlantSelection = useCallback(async () => {
+    if (!state.selectedZone || !state.qrData) {
+      updateState({ step: 'COMPLETE' })
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      // Demo mode
+      if (isDemoMode) {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        updateState({ step: 'COMPLETE' })
+        return
+      }
+
+      // Assign device to zone when skipping plant selection
+      await assignDeviceToZone(state.qrData.serial_number, {
+        zone_id: state.selectedZone.id
+      })
+
+      updateState({ step: 'COMPLETE' })
+    } catch (error) {
+      setError(getErrorMessage(error))
+    } finally {
+      setIsLoading(false)
+    }
+  }, [state.selectedZone, state.qrData, updateState, setError, isDemoMode])
+
+  /**
+   * Skip zone assignment - go directly to plant selection
+   */
+  const skipZoneAssignment = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      if (isDemoMode) {
+        setSpecies(DEMO_SPECIES)
+      } else {
+        const speciesResponse = await getSpecies()
+        setSpecies(speciesResponse.data)
+      }
+    } catch {
+      setSpecies([])
+    }
+    setIsLoading(false)
+    updateState({ step: 'SELECT_PLANT' })
+  }, [updateState, isDemoMode])
 
   /**
    * Reset the flow
@@ -307,6 +456,7 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
     setState(initialState)
     setIsLoading(false)
     setZones([])
+    setSpecies([])
   }, [])
 
   /**
@@ -315,15 +465,28 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
   const goBack = useCallback(() => {
     const backMap: Partial<Record<ProvisioningStep, ProvisioningStep>> = {
       ACTIVATION_SUCCESS: 'SCAN_QR',
-      CONNECT_TO_ESP: 'ACTIVATION_SUCCESS',
-      SELECT_ZONE: 'CONNECT_TO_ESP',
       CREATE_ZONE: 'SELECT_ZONE',
+      SELECT_PLANT: 'SELECT_ZONE',
       ERROR: 'SCAN_QR'
     }
 
     const previousStep = backMap[state.step]
     if (previousStep) {
+      // Reset demo mode when going back to SCAN_QR
+      if (previousStep === 'SCAN_QR') {
+        setIsDemoMode(DEMO_MODE)
+      }
       setStep(previousStep)
+    }
+  }, [state.step, setStep])
+
+  /**
+   * Jump to a specific step
+   */
+  const goToStep = useCallback((targetStep: ProvisioningStep) => {
+    // Only allow jumping back to SELECT_ZONE from CREATE_ZONE or SELECT_PLANT
+    if (targetStep === 'SELECT_ZONE' && (state.step === 'CREATE_ZONE' || state.step === 'SELECT_PLANT')) {
+      setStep(targetStep)
     }
   }, [state.step, setStep])
 
@@ -331,6 +494,7 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
    * Retry from error state
    */
   const retry = useCallback(() => {
+    setIsDemoMode(DEMO_MODE) // Reset demo mode on retry
     updateState({ error: null, step: 'SCAN_QR' })
   }, [updateState])
 
@@ -339,10 +503,13 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
     ...state,
     isLoading,
     zones,
+    species,
 
     // Computed
     espWifiName: state.qrData ? `OrchidPal-${state.qrData.serial_number}` : null,
-    canGoBack: ['ACTIVATION_SUCCESS', 'CONNECT_TO_ESP', 'SELECT_ZONE', 'CREATE_ZONE', 'ERROR'].includes(state.step),
+    canGoBack: ['ACTIVATION_SUCCESS', 'CREATE_ZONE', 'SELECT_PLANT', 'ERROR'].includes(
+      state.step
+    ),
 
     // Actions
     handleQRScanned,
@@ -352,7 +519,10 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
     createAndAssignZone,
     assignToZone,
     skipZoneAssignment,
+    selectPlant,
+    skipPlantSelection,
     goBack,
+    goToStep,
     reset,
     retry
   }

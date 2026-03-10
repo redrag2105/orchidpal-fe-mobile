@@ -123,12 +123,12 @@ export function useGoogleAuth(onSuccess?: (token: string) => void): UseGoogleAut
         // Handle the returned URL directly
         const handled = await handleAuthUrl(result.url)
         if (!handled) {
-          setError('Authentication failed. No token received.')
+          setError('Authentication could not be completed. Please try again.')
           setIsLoading(false)
         }
       } else if (result.type === 'cancel' || result.type === 'dismiss') {
         setIsLoading(false)
-        setError(null) // User cancelled, not an error
+        setError('Sign-in was cancelled. Tap the button to try again.')
       } else {
         setIsLoading(false)
       }

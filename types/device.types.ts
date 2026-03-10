@@ -103,8 +103,30 @@ export type ProvisioningStep =
   | 'WAITING_ONLINE'
   | 'SELECT_ZONE'
   | 'CREATE_ZONE'
+  | 'SELECT_PLANT'
   | 'COMPLETE'
   | 'ERROR'
+
+// Plant species (from species_wiki)
+export interface PlantSpecies {
+  id: string
+  common_name: string
+  scientific_name?: string
+  image_url?: string
+  ideal_temp_min?: number
+  ideal_temp_max?: number
+  ideal_humid_min?: number
+  ideal_humid_max?: number
+}
+
+// Create plant request
+export interface CreatePlantRequest {
+  zone_id: string
+  species_id: string
+  nickname?: string
+  image_url?: string
+  planted_at?: string
+}
 
 // Provisioning state
 export interface ProvisioningState {
@@ -112,5 +134,7 @@ export interface ProvisioningState {
   qrData: QRPayload | null
   device: ActivateDeviceResponse['device'] | null
   selectedZone: PlantingZone | null
+  selectedSpecies: PlantSpecies | null
+  plantNickname: string | null
   error: string | null
 }

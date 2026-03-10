@@ -9,11 +9,13 @@ import type {
   ActivateDeviceResponse,
   AssignDeviceToZoneRequest,
   AssignDeviceToZoneResponse,
+  CreatePlantRequest,
   CreateZoneRequest,
   CreateZoneResponse,
   DeviceStatusResponse,
   EspConfigResponse,
   PlantingZone,
+  PlantSpecies,
   WifiCredentials
 } from '@/types/device.types'
 
@@ -132,5 +134,30 @@ export async function getZones(): Promise<PlantingZone[]> {
  */
 export async function createZone(payload: CreateZoneRequest): Promise<CreateZoneResponse> {
   const response = await apiClient.post<CreateZoneResponse>('/zones', payload)
+  return response.data
+}
+
+/**
+ * Get all plant species from the wiki
+ */
+export async function getSpecies(
+  page: number = 1,
+  limit: number = 20
+): Promise<{
+  data: PlantSpecies[]
+  meta: { page: number; limit: number; total: number; totalPages: number }
+}> {
+  const response = await apiClient.get<{
+    data: PlantSpecies[]
+    meta: { page: number; limit: number; total: number; totalPages: number }
+  }>('/species', { params: { page, limit } })
+  return response.data
+}
+
+/**
+ * Create a plant in a zone
+ */
+export async function createPlant(payload: CreatePlantRequest): Promise<{ plant_id: string }> {
+  const response = await apiClient.post<{ plant_id: string }>('/my-plants', payload)
   return response.data
 }
