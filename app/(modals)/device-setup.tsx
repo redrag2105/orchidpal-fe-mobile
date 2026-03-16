@@ -56,17 +56,8 @@ export default function DeviceSetupScreen() {
     router.back()
   }
 
-  // Handle swipe from left edge
   const handleSwipeBack = () => {
-    if (provisioning.step === 'COMPLETE') {
-      router.replace('/(dashboard)')
-    } else if (provisioning.canGoBack) {
-      provisioning.goBack()
-    } else {
-      // First step - show cancel confirmation
-      setShowCancelConfirm(true)
-    }
-    return true // Prevent default back action
+    return true // Prevent default back action entirely
   }
 
   useEffect(() => {
@@ -79,9 +70,10 @@ export default function DeviceSetupScreen() {
     .activeOffsetX(50)
     .onEnd((event) => {
       // Only trigger on swipe from left edge to right
-      if (event.translationX > 100 && event.velocityX > 0) {
-        handleSwipeBack()
-      }
+      // Disable swipe to back, only use hardware back button or top left button
+      // if (event.translationX > 100 && event.velocityX > 0) {
+      //   handleSwipeBack()
+      // }
     })
     .runOnJS(true)
 

@@ -376,16 +376,16 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
           return
         }
 
-        // First assign device to zone
-        await assignDeviceToZone(state.qrData.serial_number, {
-          zone_id: state.selectedZone.id
-        })
-
-        // Then create the plant
+        // First create the plant
         await createPlant({
           zone_id: state.selectedZone.id,
           species_id: selectedSpecies.id,
           nickname: trimmedNickname || undefined
+        })
+
+        // Then assign device to zone
+        await assignDeviceToZone(state.qrData.serial_number, {
+          zone_id: state.selectedZone.id
         })
 
         updateState({ step: 'COMPLETE' })

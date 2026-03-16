@@ -118,13 +118,13 @@ const localStyles = StyleSheet.create({
   stepperContainer: {
     position: 'relative',
     marginBottom: 28,
-    paddingHorizontal: 12
+    marginTop: 10
   },
   stepperLineContainer: {
     position: 'absolute',
     top: 22,
-    left: 52,
-    right: 52,
+    left: '10%',
+    right: '10%',
     height: 3
   },
   stepperLineBg: {
@@ -133,7 +133,7 @@ const localStyles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: 'rgba(74,121,95,0.12)',
+    backgroundColor: 'rgba(0,0,0,0.08)',
     borderRadius: 2
   },
   stepperLineProgress: {
@@ -150,8 +150,9 @@ const localStyles = StyleSheet.create({
     alignItems: 'flex-start'
   },
   stepperItem: {
+    flex: 1,
     alignItems: 'center',
-    width: 56
+    paddingHorizontal: 2
   },
   stepperDot: {
     width: 44,
@@ -159,7 +160,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 22,
     backgroundColor: THEME.paper,
     borderWidth: 2.5,
-    borderColor: 'rgba(74,121,95,0.15)',
+    borderColor: 'rgba(0,0,0,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,

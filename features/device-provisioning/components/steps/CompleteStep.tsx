@@ -67,17 +67,15 @@ export function CompleteStep({ serialNumber, zoneName, onFinish }: CompleteStepP
           </View>
         </View>
 
-        {zoneName && (
-          <View style={[styles.summaryCard, styles.summaryCardOrchid]}>
-            <View style={[styles.summaryIcon, styles.summaryIconOrchid]}>
-              <Flower2 size={20} color={THEME.orchidMain} />
-            </View>
-            <View style={styles.summaryText}>
-              <Animated.Text style={[styles.summaryLabel, styles.labelOrchid]}>Zone</Animated.Text>
-              <Animated.Text style={styles.summaryValue}>{zoneName}</Animated.Text>
-            </View>
+        <View style={[styles.summaryCard, styles.summaryCardOrchid, !zoneName && { opacity: 0.5 }]}>
+          <View style={[styles.summaryIcon, styles.summaryIconOrchid]}>
+            <Flower2 size={20} color={THEME.orchidMain} />
           </View>
-        )}
+          <View style={styles.summaryText}>
+            <Animated.Text style={[styles.summaryLabel, styles.labelOrchid]}>Zone</Animated.Text>
+            <Animated.Text style={styles.summaryValue}>{zoneName || 'Not assigned'}</Animated.Text>
+          </View>
+        </View>
       </Animated.View>
 
       {/* What's next */}

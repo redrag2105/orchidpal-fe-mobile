@@ -36,12 +36,10 @@ export function StepComplete({ serialNumber, zoneName, plantName, onFinish }: St
           <Text style={styles.summaryLabel}>Device</Text>
           <Text style={styles.summaryValue}>{serialNumber}</Text>
         </View>
-        {zoneName && (
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Zone</Text>
-            <Text style={styles.summaryValue}>{zoneName}</Text>
-          </View>
-        )}
+        <View style={[styles.summaryRow, !zoneName && { opacity: 0.5 }]}>
+          <Text style={styles.summaryLabel}>Zone</Text>
+          <Text style={styles.summaryValue}>{zoneName || 'Not assigned'}</Text>
+        </View>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Status</Text>
           <View style={styles.statusBadge}>

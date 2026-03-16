@@ -58,7 +58,7 @@ function StepDot({ isCompleted, isActive, index }: { isCompleted: boolean; isAct
 }
 
 function StepConnector({ isCompleted }: { isCompleted: boolean }) {
-  return <View style={[styles.connector, { backgroundColor: isCompleted ? THEME.forest : THEME.paperDark }]} />
+  return <View style={[styles.connector, { backgroundColor: isCompleted ? THEME.forest : 'rgba(0,0,0,0.08)' }]} />
 }
 
 export function ProgressIndicator({ currentStep }: ProgressIndicatorProps) {
