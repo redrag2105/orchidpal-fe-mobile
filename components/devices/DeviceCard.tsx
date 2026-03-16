@@ -6,7 +6,7 @@
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
-import { ChevronRight, Router, Signal } from 'lucide-react-native'
+import { ChevronRight, Router, Signal, Plus } from 'lucide-react-native'
 import React from 'react'
 import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native'
 import Animated, { FadeInRight } from 'react-native-reanimated'
@@ -18,9 +18,10 @@ interface DeviceCardProps {
   device: Device
   index: number
   onPress?: () => void
+  onAssign?: () => void
 }
 
-export function DeviceCard({ device, index, onPress }: DeviceCardProps) {
+export function DeviceCard({ device, index, onPress, onAssign }: DeviceCardProps) {
   const isOnline = device.status === 'ONLINE'
 
   return (
@@ -53,10 +54,19 @@ export function DeviceCard({ device, index, onPress }: DeviceCardProps) {
           <ChevronRight size={18} color={THEME.inkMuted} strokeWidth={1.5} />
         </HStack>
 
-        {device.zoneName && (
+        {device.zoneName ? (
           <View style={styles.zoneTag}>
             <Text style={styles.zoneTagText}>{device.zoneName}</Text>
           </View>
+        ) : (
+          <TouchableOpacity 
+            style={[styles.zoneTag, styles.unassignedTag]} 
+            onPress={onAssign}
+            activeOpacity={0.7}
+          >
+            <Plus size={14} color={THEME.inkLight} />
+            <Text style={[styles.zoneTagText, styles.unassignedTagText]}>Assign to Zone</Text>
+          </TouchableOpacity>
         )}
       </TouchableOpacity>
     </Animated.View>
@@ -135,5 +145,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: THEME.forest,
     fontWeight: '600'
+  },
+  unassignedTag: {
+    backgroundColor: THEME.paper,
+    borderColor: THEME.paperDeep,
+    borderStyle: 'dashed'
+  },
+  unassignedTagText: {
+    color: THEME.inkLight
   }
 })

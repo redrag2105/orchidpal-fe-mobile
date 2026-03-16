@@ -74,7 +74,7 @@ export default function RootLayout() {
     <GluestackUIProvider mode="light">
       <GestureHandlerRootView style={{ flex: 1 }}>
         <BottomSheetModalProvider>
-          <StatusBar style='dark' />
+            <StatusBar style='dark' backgroundColor="transparent" translucent={true} />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name='index' />
             <Stack.Screen name='(auth)' />

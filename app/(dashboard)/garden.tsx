@@ -1,4 +1,4 @@
-import { useRouter, useNavigation, useFocusEffect } from 'expo-router'
+import { useRouter, useNavigation, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { Cpu, Leaf, Plus, Inbox, Check, Flower2 } from 'lucide-react-native'
 import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { Image, ScrollView, StyleSheet, TouchableOpacity, View, Keyboard, TouchableWithoutFeedback } from 'react-native'
@@ -71,8 +71,15 @@ const ZONE_FILTERS = ['All', 'Need plants', 'Need device', 'Fully Linked'];
 export default function GardenScreen() {
   const router = useRouter()
   const navigation = useNavigation()
+  const params = useLocalSearchParams<{ tab?: string }>()
 
-  const [activeTab, setActiveTab] = useState<'zones' | 'plants'>('zones')       
+  const [activeTab, setActiveTab] = useState<'zones' | 'plants'>('zones')
+
+  useEffect(() => {
+    if (params?.tab === 'plants') setActiveTab('plants');
+    if (params?.tab === 'zones') setActiveTab('zones');
+  }, [params?.tab])
+
   const [searchQuery, setSearchQuery] = useState('')
 
   const [zoneFilter, setZoneFilter] = useState<string>('All')
