@@ -1,5 +1,5 @@
 import { Platform, StyleSheet } from 'react-native'
-import { THEME } from './theme'
+import { THEME, FONTS } from './theme'
 
 export const styles = StyleSheet.create({
   container: {
@@ -716,44 +716,56 @@ export const styles = StyleSheet.create({
     elevation: 20
   },
   modalTitle: {
-    fontSize: 20,
+    fontFamily: FONTS.serif,
+    fontSize: 22,
     fontWeight: '700',
     color: THEME.ink,
     textAlign: 'center',
     marginBottom: 12
   },
   modalMessage: {
+    fontFamily: FONTS.sans,
     fontSize: 15,
     color: THEME.inkLight,
     textAlign: 'center',
     lineHeight: 22,
-    marginBottom: 24
+    marginBottom: 28
   },
   modalButtons: {
-    gap: 12
+    gap: 12,
+    marginTop: 4
   },
   modalButtonPrimary: {
-    backgroundColor: THEME.orchidMain,
+    backgroundColor: THEME.ink,
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 999,
-    alignItems: 'center'
+    alignItems: 'center',
+    shadowColor: THEME.ink,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4
   },
   modalButtonPrimaryText: {
     color: 'white',
     fontSize: 15,
-    fontWeight: '600'
+    fontWeight: '600',
+    fontFamily: FONTS.sans
   },
   modalButtonSecondary: {
-    backgroundColor: 'rgba(74, 121, 95, 0.08)',
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: 'rgba(20, 40, 29, 0.1)',
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 999,
     alignItems: 'center'
   },
   modalButtonSecondaryText: {
-    color: THEME.forest,
+    color: THEME.ink,
     fontSize: 15,
-    fontWeight: '600'
+    fontWeight: '600',
+    fontFamily: FONTS.sans
   }
 })

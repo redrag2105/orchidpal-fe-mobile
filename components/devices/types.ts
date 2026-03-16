@@ -4,10 +4,10 @@
 
 export interface Device {
   id: string
-  name: string
-  serialNumber: string
-  status: 'online' | 'offline'
-  lastSync: string
+  
+  serial_number: string
+  status: "ONLINE" | "OFFLINE"
+  last_online_at: string | null
   signalStrength: number
   zoneName?: string
 }

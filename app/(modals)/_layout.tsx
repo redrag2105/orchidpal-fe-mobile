@@ -10,7 +10,6 @@ export default function ModalsLayout() {
         contentStyle: { backgroundColor: '#f5f3f0' }
       }}
     >
-      <Stack.Screen name='device-setup' options={{ gestureEnabled: false }} />
-    </Stack>
+      <Stack.Screen name='device-setup' options={{ gestureEnabled: false }} />      <Stack.Screen name='add-plant' options={{ gestureEnabled: false }} />    </Stack>
   )
 }

@@ -9,6 +9,7 @@ import {
   FONTS,
   HeroDeviceCard,
   InsightCard,
+  NotificationBell,
   THEME,
   ZoneCard,
   type Insight,
@@ -75,10 +76,7 @@ export default function Dashboard() {
                 Your <Text style={styles.headerTitleAccent}>Sanctuary</Text>
               </Text>
             </VStack>
-            <TouchableOpacity style={styles.headerBtn}>
-              <Bell size={20} color={THEME.ink} strokeWidth={1.5} />
-              <View style={styles.notifDot} />
-            </TouchableOpacity>
+            <NotificationBell />
           </HStack>
         </Animated.View>
 

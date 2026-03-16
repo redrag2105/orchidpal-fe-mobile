@@ -4,6 +4,7 @@
  */
 
 import {
+  CancelConfirmModal,
   ProgressIndicator,
   StepActivationSuccess,
   StepComplete,
@@ -203,27 +204,11 @@ export default function DeviceSetupScreen() {
           </KeyboardAvoidingView>
 
           {/* Cancel Confirmation Modal */}
-          <Modal
+          <CancelConfirmModal
             visible={showCancelConfirm}
-            transparent
-            animationType='fade'
-            onRequestClose={() => setShowCancelConfirm(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Cancel Setup?</Text>
-                <Text style={styles.modalMessage}>Are you sure you want to cancel? Your progress will be lost.</Text>
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity style={styles.modalButtonSecondary} onPress={() => setShowCancelConfirm(false)}>
-                    <Text style={styles.modalButtonSecondaryText}>Continue Setup</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.modalButtonPrimary} onPress={confirmCancel}>
-                    <Text style={styles.modalButtonPrimaryText}>Yes, Cancel</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </Modal>
+            onCancel={() => setShowCancelConfirm(false)}
+            onConfirm={confirmCancel}
+          />
         </SafeAreaView>
       </GestureDetector>
     </GestureHandlerRootView>

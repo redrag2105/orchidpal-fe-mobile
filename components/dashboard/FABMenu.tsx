@@ -6,16 +6,31 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import { THEME } from './theme'
 
-export function FABMenu() {
+export interface FABAction {
+  key: string
+  label: string
+  icon: React.ElementType
+  color: string
+  route: string
+}
+
+export interface FABMenuProps {
+  actions?: FABAction[]
+}
+
+export function FABMenu({ actions: customActions }: FABMenuProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
 
   // Order: closest to FAB first (zone -> plant -> device)
-  const actions = [
+  const defaultActions = [
     { key: 'zone', label: 'Add Zone', icon: Leaf, color: THEME.gold, route: '/(modals)/device-setup' },
-    { key: 'plant', label: 'Add Plant', icon: Flower2, color: THEME.orchidMain, route: '/(modals)/device-setup' },
+    { key: 'plant', label: 'Add Plant', icon: Flower2, color: THEME.orchidMain, route: '/(modals)/add-plant' },
     { key: 'device', label: 'Add Device', icon: Cpu, color: THEME.forest, route: '/(modals)/device-setup' }
   ]
+
+  const actions = customActions || defaultActions
+
 
   return (
     <>

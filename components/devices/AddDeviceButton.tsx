@@ -14,12 +14,17 @@ import Animated, { FadeInDown } from 'react-native-reanimated'
 import { THEME } from './theme'
 
 interface AddDeviceButtonProps {
-  onPress: () => void
+  onPress: () => void;
+  title?: string;
+  subtitle?: string;
+  icon?: React.ReactNode;
+  hideArrow?: boolean;
+  style?: any;
 }
 
-export function AddDeviceButton({ onPress }: AddDeviceButtonProps) {
+export function AddDeviceButton({ onPress, title = 'Add New Device', style }: AddDeviceButtonProps) {
   return (
-    <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+    <Animated.View entering={FadeInDown.delay(200).duration(400)} style={style}>
       <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
         <LinearGradient
           colors={[THEME.forest, THEME.forestLight]}
@@ -27,14 +32,7 @@ export function AddDeviceButton({ onPress }: AddDeviceButtonProps) {
           end={{ x: 1, y: 0 }}
           style={styles.gradient}
         >
-          <View style={styles.icon}>
-            <Plus size={24} color='white' strokeWidth={2} />
-          </View>
-          <VStack style={{ flex: 1 }}>
-            <Text style={styles.title}>Add New Device</Text>
-            <Text style={styles.subtitle}>Connect an OrchidPal IoT kit</Text>
-          </VStack>
-          <ChevronRight size={20} color='white' strokeWidth={1.5} />
+          <Text style={styles.title}>{title}</Text>
         </LinearGradient>
       </TouchableOpacity>
     </Animated.View>
@@ -43,7 +41,7 @@ export function AddDeviceButton({ onPress }: AddDeviceButtonProps) {
 
 const styles = StyleSheet.create({
   button: {
-    marginBottom: 24,
+    marginBottom: 0,
     borderRadius: 20,
     overflow: 'hidden',
     shadowColor: THEME.forest,
@@ -53,27 +51,15 @@ const styles = StyleSheet.create({
     elevation: 6
   },
   gradient: {
-    flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    gap: 14
-  },
-  icon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20
   },
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'white'
-  },
-  subtitle: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 2
+    color: 'white',
+    textAlign: 'center'
   }
 })

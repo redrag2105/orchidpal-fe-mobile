@@ -64,17 +64,25 @@ function useAuthDeepLinkHandler() {
   return isReady
 }
 
+import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider'
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
+
 export default function RootLayout() {
   useAuthDeepLinkHandler()
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar style='dark' />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name='index' />
-        <Stack.Screen name='(auth)' />
-        <Stack.Screen name='(dashboard)' />
-      </Stack>
-    </GestureHandlerRootView>
+    <GluestackUIProvider mode="light">
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <BottomSheetModalProvider>
+          <StatusBar style='dark' />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name='index' />
+            <Stack.Screen name='(auth)' />
+            <Stack.Screen name='(dashboard)' />
+            <Stack.Screen name='zone/[id]' />
+          </Stack>
+        </BottomSheetModalProvider>
+      </GestureHandlerRootView>
+    </GluestackUIProvider>
   )
 }

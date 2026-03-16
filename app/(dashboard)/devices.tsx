@@ -4,6 +4,7 @@
  */
 
 import { AddDeviceButton, Device, DeviceCard, DeviceStatsRow, FONTS, THEME } from '@/components/devices'
+import { NotificationBell } from '@/components/dashboard'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
 import { useRouter } from 'expo-router'
@@ -17,28 +18,25 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 const DEVICES: Device[] = [
   {
     id: '1',
-    name: 'Living Room Orchid Hub',
-    serialNumber: 'ESP-ORCHID-001',
-    status: 'online',
-    lastSync: '2 min ago',
+    serial_number: 'ESP-ORCHID-001',
+    status: 'ONLINE',
+    last_online_at: '2 min ago',
     signalStrength: 85,
     zoneName: 'Living Room'
   },
   {
     id: '2',
-    name: 'Garden Monitor',
-    serialNumber: 'ESP-ORCHID-002',
-    status: 'online',
-    lastSync: '5 min ago',
+    serial_number: 'ESP-ORCHID-002',
+    status: 'ONLINE',
+    last_online_at: '5 min ago',
     signalStrength: 72,
     zoneName: 'Balcony Garden'
   },
   {
     id: '3',
-    name: 'Bedroom Sensor',
-    serialNumber: 'ESP-ORCHID-003',
-    status: 'offline',
-    lastSync: '2 hours ago',
+    serial_number: 'ESP-ORCHID-003',
+    status: 'OFFLINE',
+    last_online_at: '2 hours ago',
     signalStrength: 0,
     zoneName: 'Bedroom'
   }
@@ -52,14 +50,15 @@ export default function DevicesScreen() {
     router.push('/(modals)/device-setup')
   }
 
-  const onlineCount = DEVICES.filter((d) => d.status === 'online').length
-  const offlineCount = DEVICES.filter((d) => d.status === 'offline').length
+  const onlineCount = DEVICES.filter((d) => d.status === 'ONLINE').length
+  const offlineCount = DEVICES.filter((d) => d.status === 'OFFLINE').length
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 + insets.bottom }]}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Header */}
         <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
@@ -67,9 +66,7 @@ export default function DevicesScreen() {
             <Text style={styles.headerTitle}>My Devices</Text>
             <Text style={styles.headerSubtitle}>Manage your IoT sensors</Text>
           </VStack>
-          <TouchableOpacity style={styles.refreshButton}>
-            <RefreshCw size={20} color={THEME.forest} strokeWidth={1.5} />
-          </TouchableOpacity>
+          <NotificationBell />
         </Animated.View>
 
         {/* Stats Overview */}

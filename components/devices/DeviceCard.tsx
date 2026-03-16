@@ -21,7 +21,7 @@ interface DeviceCardProps {
 }
 
 export function DeviceCard({ device, index, onPress }: DeviceCardProps) {
-  const isOnline = device.status === 'online'
+  const isOnline = device.status === 'ONLINE'
 
   return (
     <Animated.View entering={FadeInRight.delay(300 + index * 100).duration(400)}>
@@ -32,13 +32,13 @@ export function DeviceCard({ device, index, onPress }: DeviceCardProps) {
           </View>
 
           <VStack style={{ flex: 1, gap: 4 }}>
-            <Text style={styles.name}>{device.name}</Text>
-            <Text style={styles.serial}>{device.serialNumber}</Text>
+            <Text style={styles.name}>{device.serial_number}</Text>
+            
             <HStack style={{ gap: 12, marginTop: 4 }}>
               <HStack style={styles.meta}>
                 <View style={[styles.statusDot, isOnline ? styles.statusOnline : styles.statusOffline]} />
                 <Text style={styles.metaText}>
-                  {isOnline ? 'Online' : 'Offline'} · {device.lastSync}
+                  {isOnline ? 'Online' : 'Offline'} · {device.last_online_at}
                 </Text>
               </HStack>
               {isOnline && (
@@ -119,16 +119,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#9e9e9e'
   },
   zoneTag: {
-    marginTop: 12,
+    marginTop: 14,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 12,
-    backgroundColor: THEME.paperDark,
-    alignSelf: 'flex-start'
+    borderRadius: 999,
+    backgroundColor: 'rgba(74, 121, 95, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(74, 121, 95, 0.15)',
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4
   },
   zoneTagText: {
     fontSize: 12,
-    color: THEME.inkLight,
-    fontWeight: '500'
+    color: THEME.forest,
+    fontWeight: '600'
   }
 })

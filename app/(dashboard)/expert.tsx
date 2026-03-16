@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { HStack } from '@/components/ui/hstack'
 import { VStack } from '@/components/ui/vstack'
+import { NotificationBell } from '@/components/dashboard'
 
 const THEME = {
   paper: '#fdfcf8',
@@ -69,9 +70,7 @@ export default function ExpertScreen() {
             <Text style={styles.headerTitle}>Care Tips</Text>
             <Text style={styles.headerSubtitle}>Expert orchid guidance</Text>
           </VStack>
-          <View style={styles.aiIcon}>
-            <Sparkles size={18} color={THEME.orchidMain} strokeWidth={2} />
-          </View>
+          <NotificationBell />
         </HStack>
 
         <ScrollView 

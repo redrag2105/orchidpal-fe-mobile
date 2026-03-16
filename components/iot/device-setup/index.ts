@@ -1,4 +1,5 @@
 // Device Setup Components
+export { CancelConfirmModal } from './CancelConfirmModal'
 export { ProgressIndicator } from './ProgressIndicator'
 export { StepActivationSuccess } from './StepActivationSuccess'
 export { StepComplete } from './StepComplete'

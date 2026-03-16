@@ -64,7 +64,6 @@ export function CircularStat({ value, maxValue, label, color, icon: Icon, delay 
 
 const styles = StyleSheet.create({
   circularStatWrap: {
-    flex: 1,
     alignItems: 'center',
     gap: 6
   },

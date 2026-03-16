@@ -7,6 +7,7 @@ import { logout } from '@/apis'
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
+import { NotificationBell } from '@/components/dashboard'
 import { useRouter } from 'expo-router'
 import * as SecureStore from 'expo-secure-store'
 import { Bell, ChevronRight, CircleUser, HelpCircle, LogOut, Moon, Shield, Smartphone, Wifi } from 'lucide-react-native'
@@ -92,8 +93,9 @@ export default function SettingsScreen() {
   return (
     <View style={styles.root}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <HStack style={styles.header}>
+        <HStack style={{ paddingHorizontal: 20, paddingVertical: 16, justifyContent: 'space-between', alignItems: 'center' }}>
           <Text style={styles.headerTitle}>Settings</Text>
+          <NotificationBell />
         </HStack>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
