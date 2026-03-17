@@ -66,23 +66,35 @@ function useAuthDeepLinkHandler() {
 
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider'
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 2,
+    },
+  },
+})
 
 export default function RootLayout() {
   useAuthDeepLinkHandler()
 
   return (
-    <GluestackUIProvider mode="light">
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <BottomSheetModalProvider>
-          <StatusBar style='dark' />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name='index' />
-            <Stack.Screen name='(auth)' />
-            <Stack.Screen name='(dashboard)' />
-            <Stack.Screen name='zone/[id]' />
-          </Stack>
-        </BottomSheetModalProvider>
-      </GestureHandlerRootView>
-    </GluestackUIProvider>
+    <QueryClientProvider client={queryClient}>
+      <GluestackUIProvider mode="light">
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <BottomSheetModalProvider>
+            <StatusBar style='dark' />
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name='index' />
+              <Stack.Screen name='(auth)' />
+              <Stack.Screen name='(dashboard)' />
+              <Stack.Screen name='zone/[id]' />
+            </Stack>
+          </BottomSheetModalProvider>
+        </GestureHandlerRootView>
+      </GluestackUIProvider>
+    </QueryClientProvider>
   )
 }

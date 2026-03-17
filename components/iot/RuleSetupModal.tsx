@@ -1,4 +1,4 @@
-import { Plus, Trash2, X, ChevronDown } from 'lucide-react-native'
+import { Plus, Trash2, ChevronDown } from 'lucide-react-native'
 import React, { useEffect, useState, useMemo } from 'react'
 import {
   KeyboardAvoidingView,
@@ -12,23 +12,10 @@ import {
   Text as RNText,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  Alert
 } from 'react-native'
 import { FONTS, THEME } from '../devices/theme'
-
-// Gluestack UI components
-import {
-  AlertDialog,
-  AlertDialogBackdrop,
-  AlertDialogBody,
-  AlertDialogCloseButton,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader
-} from '../ui/alert-dialog'
-import { Button, ButtonText } from '../ui/button'
-import { Heading } from '../ui/heading'
-import { Text } from '../ui/text'
 
 export interface RuleLogic {
   if: { metric: string; op: string; value: number }
@@ -59,9 +46,9 @@ const METRICS = [
 ]
 
 const OPERATORS = [
-  { label: 'Less than (<)', value: '<' },
-  { label: 'Greater than (>)', value: '>' },
-  { label: 'Equals (==)', value: '==' }
+  { label: 'Drops below', value: '<' },
+  { label: 'Rises above', value: '>' },
+  { label: 'Is exactly', value: '==' }
 ]
 
 interface CustomSelectProps {
@@ -122,7 +109,6 @@ export function RuleSetupModal({
   const [name, setName] = useState('')
   const [isActive, setIsActive] = useState(true)
   const [logicConfig, setLogicConfig] = useState<RuleLogic[]>([])
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   // Cấu hình mặc định khi tạo mới
   const defaultLogicConfig = useMemo(() => [
@@ -201,11 +187,31 @@ export function RuleSetupModal({
   }
 
   const handleSaveBtnClick = () => {
-    setShowConfirmModal(true)
+    // Check for exact duplicate IF conditions
+    const conditions = logicConfig.map(l => `${l.if.metric}-${l.if.op}-${l.if.value}`);
+    const uniqueConditions = new Set(conditions);
+    
+    if (uniqueConditions.size !== conditions.length) {
+      // Use native Alert so it shows over the modal properly on both iOS/Android
+      Alert.alert(
+        "Duplicate Conditions",
+        "You cannot create two identical logic conditions. Please review and modify them."
+      );
+      return;
+    }
+
+    // Use native Alert instead of Gluestack's AlertDialog avoiding iOS pageSheet overlay issues
+    Alert.alert(
+      "Save Rule Changes",
+      "Are you sure you want to save these changes to your automation rule? Current running schedules may be affected.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Confirm Save", onPress: handleConfirmSave, isPreferred: true }
+      ]
+    );
   }
 
   const handleConfirmSave = () => {
-    setShowConfirmModal(false)
     // Sử dụng requestAnimationFrame để đảm bảo Alert đóng hẳn trước khi thực thi callback
     requestAnimationFrame(() => {
       onSave({
@@ -225,17 +231,14 @@ export function RuleSetupModal({
   , [availableRelays])
 
   return (
-    <Modal visible={visible} animationType='slide' presentationStyle='pageSheet' onRequestClose={onClose}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+    <Modal visible={visible} animationType='slide' presentationStyle='pageSheet' onRequestClose={onClose} onDismiss={onClose}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.container}
       >
         <SafeAreaView style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.iconBtn}>
-            <X size={24} color={THEME.ink} />
-          </TouchableOpacity>
+          <View style={styles.dragHandle} />
           <RNText style={styles.headerTitle}>{initialRule ? 'Edit Rule' : 'New Rule'}</RNText>
-          <View style={{ width: 40 }} />
         </SafeAreaView>
 
         <ScrollView
@@ -287,9 +290,9 @@ export function RuleSetupModal({
               </View>
 
               <View style={styles.logicBlock}>
-                <RNText style={styles.blockTitle}>IF</RNText>
+                <RNText style={styles.blockTitle}>WHEN</RNText>
                 <CustomSelect
-                  label='Metric Element'
+                  label='Sensor'
                   value={logic.if.metric}
                   options={METRICS}
                   onChange={(val) => updateLogic(index, 'if', 'metric', val)}
@@ -297,7 +300,7 @@ export function RuleSetupModal({
                 <View style={{ flexDirection: 'row', gap: 12 }}>
                   <View style={{ flex: 1.3 }}>
                     <CustomSelect
-                      label='Operator'
+                      label='Condition'
                       value={logic.if.op}
                       options={OPERATORS}
                       onChange={(val) => updateLogic(index, 'if', 'op', val)}
@@ -316,18 +319,18 @@ export function RuleSetupModal({
               </View>
 
               <View style={styles.logicBlock}>
-                <RNText style={[styles.blockTitle, { color: THEME.forest }]}>THEN</RNText>
+                <RNText style={[styles.blockTitle, { color: THEME.forest }]}>DO ACTION</RNText>
                 <View style={{ flexDirection: 'row', gap: 12 }}>
                   <View style={{ flex: 1.5 }}>
                     <CustomSelect
-                      label='Action Relay'
+                      label='Turn On'
                       value={logic.then.action}
                       options={relayOptions}
                       onChange={(val) => updateLogic(index, 'then', 'action', val)}
                     />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <RNText style={styles.selectLabel}>Dur. (secs)</RNText>
+                    <RNText style={styles.selectLabel}>For (secs)</RNText>
                     <TextInput
                       style={styles.input}
                       keyboardType='numeric'
@@ -352,39 +355,6 @@ export function RuleSetupModal({
             </RNText>
           </TouchableOpacity>
         </View>
-
-        {/* AlertDialog đặt trong Modal để hiển thị được trên iOS PageSheet */}
-        <AlertDialog isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)}>
-          <AlertDialogBackdrop />
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <Heading size='md'>Save Rule Changes</Heading>
-            </AlertDialogHeader>
-            <AlertDialogBody>
-              <Text size='sm'>
-                Are you sure you want to save these changes to your automation rule?
-                Current running schedules may be affected.
-              </Text>
-            </AlertDialogBody>
-            <AlertDialogFooter className="mt-4 gap-3">
-              <Button
-                variant='outline'
-                action='secondary'
-                onPress={() => setShowConfirmModal(false)}
-                size='sm'
-              >
-                <ButtonText>Cancel</ButtonText>
-              </Button>
-              <Button
-                size='sm'
-                onPress={handleConfirmSave}
-                style={{ backgroundColor: THEME.forest }}
-              >
-                <ButtonText>Confirm Save</ButtonText>
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </KeyboardAvoidingView>
     </Modal>
   )
@@ -396,15 +366,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#fdfcf8'
   },
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 20 : 0,
+    paddingTop: Platform.OS === 'android' ? 20 : 12,
     paddingBottom: 16,
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.05)'
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: THEME.inkMuted,
+    borderRadius: 2,
+    marginBottom: 16,
+    opacity: 0.5
   },
   iconBtn: {
     width: 40,

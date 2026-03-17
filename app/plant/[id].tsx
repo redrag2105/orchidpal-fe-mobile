@@ -1,29 +1,36 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeft, MapPin, Calendar, HeartPulse, ShieldCheck, ChevronRight, Edit3, Settings, Camera } from 'lucide-react-native'
+import { ArrowLeft, MapPin, Calendar, HeartPulse, ShieldCheck, ChevronRight, Edit3, Settings, Camera, Droplets, Thermometer, UserSquare2, Trees } from 'lucide-react-native'
 import React, { useState, useRef, useMemo, useCallback } from 'react'
-import { Image, ScrollView, StyleSheet, TouchableOpacity, View, TextInput } from 'react-native'
-import { Alert } from 'react-native'
+import { Image, ScrollView, StyleSheet, TouchableOpacity, View, TextInput, ActivityIndicator, Dimensions, Platform } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { useToast, Toast, ToastTitle } from '@/components/ui/toast'
 import { HStack } from '@/components/ui/hstack'
 import { VStack } from '@/components/ui/vstack'
 import { THEME, FONTS } from '@/components/dashboard/theme'
-import { MOCK_ZONES, MOCK_PLANTS, WIKI_DATA } from '../(dashboard)/garden'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
-import { AddDeviceButton } from '@/components/devices/AddDeviceButton'
 import { CancelConfirmModal } from '@/components/iot/device-setup'
+import { usePlantDetail } from '@/hooks/queries/usePlantDetail'
+import { useAssignPlantToZone } from '@/hooks/mutations/useAssignPlantToZone'
+import { useZones } from '@/hooks/queries/useZones'
+import { LinearGradient } from 'expo-linear-gradient'
+import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated'
 
-import { useFocusEffect } from 'expo-router';
+const { width } = Dimensions.get('window');
 
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams()
   const router = useRouter()
   const toast = useToast()
+  const insets = useSafeAreaInsets()
+
+  const { data: plantCallData, isLoading } = usePlantDetail(id as string);
+  const plant = plantCallData?.data || plantCallData;
   
-  const [plant, setPlant] = useState(MOCK_PLANTS.find((p: any) => p.id === id));
-  
+  const { data: zones } = useZones();
+  const { mutateAsync: assignPlant } = useAssignPlantToZone();
+
   const [confirmModal, setConfirmModal] = useState({
     visible: false,
     title: '',
@@ -37,20 +44,6 @@ export default function PlantDetailScreen() {
     setConfirmModal({ visible: true, title, message, onConfirm, confirmText, cancelText });
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      const p = MOCK_PLANTS.find((p: any) => p.id === id);
-      if (p) setPlant(p);
-    }, [id])
-  );
-  
-  if (!plant) return null;
-
-  const currentZone = MOCK_ZONES.find((z: any) => z.id === plant.zone_id);
-  const wikiInfo = plant.species_wiki;
-  
-  const emptyZones = MOCK_ZONES.filter((z: any) => !z.plant_id);
-
   const assignSheetRef = useRef<BottomSheet>(null);
   const editProfileSheetRef = useRef<BottomSheet>(null);
   const assignSnapPoints = useMemo(() => ['50%', '67%'], []);
@@ -59,36 +52,35 @@ export default function PlantDetailScreen() {
     <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.3} />
   ), []);
 
+  const [editForm, setEditForm] = useState({ nickname: '', imageUrl: '' });
+
+  if (isLoading) return <View style={{ flex: 1, backgroundColor: THEME.paper, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator size="large" color={THEME.orchidMain} /></View>;
+  if (!plant) return null;
+
+  const currentZone: any = plant.planting_zones || null;
+  const wikiInfo = plant.species_wiki;
+
+  const emptyZones: any[] = (zones || []).filter((z: any) => !z.has_plant);
+
   const handleOpenAssign = () => assignSheetRef.current?.expand();
   const handleOpenEditProfile = () => {
     setEditForm({ nickname: plant.nickname, imageUrl: plant.image_url });
     editProfileSheetRef.current?.expand();
   };
 
-  const [editForm, setEditForm] = useState({ nickname: '', imageUrl: '' });
-
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
-
     if (!result.canceled) {
       setEditForm(prev => ({ ...prev, imageUrl: result.assets[0].uri }));
     }
   };
 
   const handleSaveProfile = () => {
-    // In a real app we'd call an API here
-    const updatedPlant = { ...plant, nickname: editForm.nickname, image_url: editForm.imageUrl };
-    // update mock to reflect immediately in screen as well as list
-    const pIndex = MOCK_PLANTS.findIndex((p: any) => p.id === plant.id);
-    if(pIndex !== -1) {
-      MOCK_PLANTS[pIndex] = updatedPlant;
-    }
-    setPlant(updatedPlant);
     showToast("Plant profile updated successfully.");
     editProfileSheetRef.current?.close();
   };
@@ -111,25 +103,32 @@ export default function PlantDetailScreen() {
       "Confirm Assignment",
       "Are you sure you want to assign this plant to this zone?",
       () => {
-        setPlant({ ...plant, zone_id: zoneId });
-        assignSheetRef.current?.close();
-        showToast("Plant has been successfully assigned to the zone.");
+        assignPlant({ plant_id: plant.id as string, zone_id: zoneId })
+          .then(() => {
+            assignSheetRef.current?.close();
+            showToast("Plant has been successfully assigned.");
+          });
       },
       "Assign",
       "Cancel"
     );
   };
 
-  const isProfileChanged = editForm.nickname !== plant.nickname || editForm.imageUrl !== plant.image_url;
+  const isHealthy = plant.health_status === 'GOOD';
 
   return (
     <View style={styles.root}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         
-        {/* Header Section */}
-        <View style={styles.headerSection}>
-          <Image source={{ uri: plant.image_url }} style={styles.coverImage} />
-
+        {/* Full Bleed Header */}
+        <Animated.View entering={FadeIn.duration(600)} style={{ width: '100%', height: 420, position: 'relative' }}>
+          <Image source={{ uri: plant.image_url || 'https://images.unsplash.com/photo-1599388102462-8e7c1a84fbe3' }} style={StyleSheet.absoluteFillObject} />
+          <LinearGradient
+            colors={['rgba(20,40,29,0.5)', 'transparent', 'rgba(253, 252, 248, 0.6)', THEME.paper]}
+            locations={[0, 0.4, 0.8, 1]}
+            style={StyleSheet.absoluteFillObject}
+          />
+          
           <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
             <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
               <ArrowLeft color={THEME.ink} size={24} />
@@ -140,114 +139,112 @@ export default function PlantDetailScreen() {
             </TouchableOpacity>
           </SafeAreaView>
 
-          <View style={styles.profileBox}>
-            <HStack style={{ alignItems: 'center', gap: 10 }}>
-              <Text style={styles.nickname}>{plant.nickname}</Text>
-            </HStack>
-            <Text style={styles.species}>{plant.species_wiki.common_name}</Text>
-            <View style={[styles.statusTag, plant.health_status === 'GOOD' ? styles.statusHealthy : styles.statusWarning]}>
-              <HeartPulse size={12} color={plant.health_status === 'GOOD' ? THEME.forest : THEME.gold} />
-              <Text style={[styles.statusText, plant.health_status === 'GOOD' ? styles.statusHealthyText : styles.statusWarningText]}>
-                {plant.health_status.toUpperCase()}
-              </Text>
-            </View>
+          <View style={styles.headerTitleContainer}>
+            <Animated.Text entering={FadeInDown.delay(200).duration(500)} style={styles.heroNickname}>
+              {plant.nickname || 'Unknown Plant'}
+            </Animated.Text>
+            <Animated.Text entering={FadeInDown.delay(300).duration(500)} style={styles.heroSpecies}>
+              {wikiInfo?.common_name || 'Mysterious Species'}
+            </Animated.Text>
           </View>
-        </View>
+        </Animated.View>
 
         <View style={styles.body}>
-
-          {/* Bio Information */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Botanical Info</Text>
-            <View style={styles.card}>
-              <HStack style={{ alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <ShieldCheck size={20} color={THEME.forest} />
-                <Text style={styles.cardTitle}>Species Profile</Text>
-              </HStack>
-              <Text style={styles.detailLabel}>Scientific Name</Text>
-              <Text style={styles.detailValue}>{wikiInfo?.scientific_name || plant.species_wiki.common_name}</Text>
-
-              {wikiInfo && (
-                <HStack style={{ marginTop: 16, gap: 16 }}>
-                  <VStack style={{ flex: 1, backgroundColor: THEME.paperDeep, padding: 12, borderRadius: 12 }}>
-                    <Text style={{ fontSize: 13, color: THEME.inkLight, fontWeight: '600', marginBottom: 4 }}>Ideal Temp</Text>
-                    <Text style={{ fontSize: 16, fontWeight: '700', color: THEME.orchidMain }}>
-                      {wikiInfo.ideal_temp_min} - {wikiInfo.ideal_temp_max}°C
-                    </Text>
-                  </VStack>
-                  <VStack style={{ flex: 1, backgroundColor: THEME.paperDeep, padding: 12, borderRadius: 12 }}>
-                    <Text style={{ fontSize: 13, color: THEME.inkLight, fontWeight: '600', marginBottom: 4 }}>Ideal Humidity</Text>
-                    <Text style={{ fontSize: 16, fontWeight: '700', color: '#3b82f6' }}>
-                      {wikiInfo.ideal_humid_min} - {wikiInfo.ideal_humid_max}%
-                    </Text>
-                  </VStack>
-                </HStack>
-              )}
-
-              <Text style={[styles.detailLabel, { marginTop: 16 }]}>Care Instructions</Text>
-              <Text style={styles.careText}>{wikiInfo?.care_instruction || 'No specific care instructions found.'}</Text>
-            </View>
-          </View>
-
-          {/* Management Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Zone Assignment</Text>
-            <View style={styles.card}>
-              {currentZone ? (
-                <View>
-                  <Text style={styles.detailLabel}>Current Location</Text>
-                  <HStack style={styles.currentZoneRow}>
-                    <MapPin size={20} color={THEME.orchidMain} />
-                    <VStack style={{ flex: 1 }}>
-                      <Text style={styles.zoneNameText}>{currentZone.name}</Text>
-                      <Text style={styles.zoneCityText}>{currentZone.location_city}</Text>
-                    </VStack>
-                    <View style={{ backgroundColor: 'rgba(74, 121, 95, 0.1)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 }}>
-                      <Text style={{ fontSize: 12, fontWeight: '700', color: THEME.forest }}>Active</Text>
-                    </View>
-                  </HStack>
-                  <AddDeviceButton title="Move to another Zone" onPress={handleOpenAssign} />
-                </View>
-              ) : (
-                <View style={{ alignItems: 'center', paddingVertical: 12 }}>
-                  <Text style={styles.emptyZoneDesc}>This plant is currently not assigned to any monitoring zone.</Text>
-                  <AddDeviceButton title="Assign to a Zone" onPress={handleOpenAssign} />
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* History Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Plant History</Text>
-            <View style={styles.card}>
-              
-              {/* Timeline Item 1 */}
-              <View style={styles.timelineItem}>
-                <View style={styles.timelineLine} />
-                <View style={[styles.timelineDot, { backgroundColor: THEME.forest }]} />
-                <VStack style={styles.timelineContent}>
-                  <Text style={styles.timelineTitle}>Planted</Text>
-                  <Text style={styles.timelineDate}>{plant.planted_at}</Text>
-                  <Text style={styles.timelineDesc}>Added to your garden collection.</Text>
-                </VStack>
+          
+          {/* Status & Actions Floating Bar */}
+          <Animated.View entering={FadeInUp.delay(400).duration(500)} style={styles.statusBar}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={[styles.statusIconBase, { backgroundColor: isHealthy ? 'rgba(74, 121, 95, 0.1)' : 'rgba(212, 165, 116, 0.15)' }]}>
+                <HeartPulse size={24} color={isHealthy ? THEME.forest : THEME.gold} />
               </View>
+              <View>
+                <Text style={{ fontFamily: FONTS.sans, fontSize: 13, color: THEME.inkLight }}>Health Status</Text>
+                <Text style={{ fontFamily: FONTS.serif, fontSize: 18, fontWeight: '700', color: isHealthy ? THEME.forest : THEME.gold }}>
+                  {plant.health_status ? plant.health_status.toUpperCase() : 'UNKNOWN'}
+                </Text>
+              </View>
+            </View>
+            <View style={{ height: 40, width: 1, backgroundColor: THEME.paperDeep }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={[styles.statusIconBase, { backgroundColor: THEME.paperDeep }]}>
+                <Calendar size={24} color={THEME.ink} />
+              </View>
+              <View>
+                <Text style={{ fontFamily: FONTS.sans, fontSize: 13, color: THEME.inkLight }}>Planted On</Text>
+                <Text style={{ fontFamily: FONTS.sans, fontSize: 14, fontWeight: '600', color: THEME.ink }}>
+                  {plant.planted_at ? new Date(plant.planted_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unknown'}
+                </Text>
+              </View>
+            </View>
+          </Animated.View>
 
-              {/* Timeline Item 2 */}
-              <View style={[styles.timelineItem, { marginBottom: 0 }]}>
-                <View style={[styles.timelineDot, { backgroundColor: plant.health_status === 'GOOD' ? THEME.forest : THEME.gold }]} />
-                <VStack style={styles.timelineContent}>
-                  <Text style={styles.timelineTitle}>Health Update</Text>
-                  <Text style={styles.timelineDate}>Recently</Text>
-                  <Text style={styles.timelineDesc}>
-                    Status reported as {plant.health_status}.
+          {/* Botanical Info Grid */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Botanical Guidelines</Text>
+            {wikiInfo ? (
+              <View style={styles.grid}>
+                <View style={styles.gridItem}>
+                  <Thermometer size={24} color={THEME.orchidMain} style={{ marginBottom: 12 }} />
+                  <Text style={styles.gridLabel}>Ideal Temp</Text>
+                  <Text style={styles.gridValue}>{wikiInfo.ideal_temp_min}-{wikiInfo.ideal_temp_max}°C</Text>
+                </View>
+                
+                <View style={styles.gridItem}>
+                  <Droplets size={24} color="#4ba3e3" style={{ marginBottom: 12 }} />
+                  <Text style={styles.gridLabel}>Humidity</Text>
+                  <Text style={styles.gridValue}>{wikiInfo.ideal_humid_min}-{wikiInfo.ideal_humid_max}%</Text>
+                </View>
+
+                <View style={[styles.gridItem, { width: '100%', flexDirection: 'column', alignItems: 'flex-start' }]}>
+                  <Text style={styles.gridLabel}>Scientific Name</Text>
+                  <Text style={[styles.gridValue, { fontStyle: 'italic', marginTop: 4, fontFamily: FONTS.serif }]}>
+                    {wikiInfo.scientific_name || wikiInfo.common_name}
+                  </Text>
+                </View>
+
+                <View style={[styles.gridItem, { width: '100%', flexDirection: 'column', alignItems: 'flex-start', backgroundColor: THEME.paperDeep }]}>
+                  <HStack style={{ alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <ShieldCheck size={20} color={THEME.forest} />
+                    <Text style={[styles.gridLabel, { marginTop: 0 }]}>Care Instructions</Text>
+                  </HStack>
+                  <Text style={styles.careText}>
+                    {wikiInfo.care_instruction || 'No specific care instructions found. Keep an eye on moisture and light levels.'}
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <Text style={{ color: THEME.inkLight, fontFamily: FONTS.sans }}>No botanical info available for this species.</Text>
+            )}
+          </View>
+
+          {/* Zone Location */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Location</Text>
+            {currentZone ? (
+              <View style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}>
+                <View style={[styles.statusIconBase, { backgroundColor: 'rgba(74, 121, 95, 0.1)', marginRight: 16 }]}>
+                  <MapPin size={24} color={THEME.forest} />
+                </View>
+                <VStack style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 18, fontWeight: '700', fontFamily: FONTS.serif, color: THEME.ink }}>
+                    {currentZone.name || 'Unnamed Zone'}
+                  </Text>
+                  <Text style={{ fontSize: 14, color: THEME.inkMuted, marginTop: 4, fontFamily: FONTS.sans }}>
+                    {currentZone.location_city || 'Your Home Environment'}
                   </Text>
                 </VStack>
               </View>
-
-            </View>
+            ) : (
+              <View style={[styles.card, { alignItems: 'center', paddingVertical: 32 }]}>
+                <Trees size={40} color={THEME.paperDeep} style={{ marginBottom: 16 }} />
+                <Text style={styles.emptyZoneDesc}>This plant hasn't been placed in any monitoring zone yet.</Text>
+                <TouchableOpacity onPress={handleOpenAssign} style={styles.assignButtonBig}>
+                  <MapPin size={20} color={THEME.paper} />
+                  <Text style={{ color: THEME.paper, fontFamily: FONTS.sans, fontWeight: '600', fontSize: 16 }}>Assign to Zone</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
-
         </View>
       </ScrollView>
 
@@ -265,26 +262,28 @@ export default function PlantDetailScreen() {
           <Text style={styles.sheetTitle}>Assign Zone</Text>
           <Text style={styles.sheetDesc}>Select an available zone to move this plant to.</Text>
 
-          <VStack style={{ gap: 12, marginTop: 16 }}>
+          <VStack style={{ gap: 12, marginTop: 24 }}>
             {emptyZones.length > 0 ? emptyZones.map((z: any) => (
-              <TouchableOpacity
-                key={z.id}
-                style={styles.sheetListItem}
-                onPress={() => handleConfirmLink(z.id)}
-              >
-                <Image source={{ uri: z.image_url }} style={styles.sheetThumb} />
+              <TouchableOpacity key={z.id} style={styles.sheetListItem} onPress={() => handleConfirmLink(z.id)}>
+                <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: THEME.paperDeep, alignItems: 'center', justifyContent: 'center' }}>
+                  <MapPin size={24} color={THEME.forest} />
+                </View>
                 <VStack style={{ flex: 1 }}>
-                  <Text style={styles.sheetItemTitle}>{z.name}</Text>
-                  <Text style={styles.sheetItemSub}>{z.location_city}</Text>
+                  <Text style={styles.sheetItemTitle}>{z.name || 'Unnamed Zone'}</Text>
+                  <Text style={styles.sheetItemSub}>{z.location_city || 'Your Environment'}</Text>
                 </VStack>
                 <ChevronRight size={20} color={THEME.inkLight} />
               </TouchableOpacity>
             )) : (
-              <Text style={{ textAlign: 'center', marginTop: 20, color: THEME.inkLight }}>No empty zones available.</Text>
+              <View style={{ alignItems: 'center', paddingVertical: 40, opacity: 0.8 }}>
+                <Trees size={48} color={THEME.paperDeep} style={{ marginBottom: 16 }} />
+                <Text style={{ textAlign: 'center', color: THEME.inkLight, fontSize: 16, fontFamily: FONTS.sans }}>No empty zones available to place this plant.</Text>
+              </View>
             )}
           </VStack>
         </BottomSheetScrollView>
       </BottomSheet>
+
       {/* Edit Profile Bottom Sheet */}
       <BottomSheet
         ref={editProfileSheetRef}
@@ -298,50 +297,42 @@ export default function PlantDetailScreen() {
         <BottomSheetScrollView contentContainerStyle={[styles.sheetContent, { paddingBottom: 40 }]}>
           <Text style={styles.sheetTitle}>Edit Profile</Text>
           
-          <TouchableOpacity onPress={pickImage} style={{ alignSelf: 'center', marginTop: 24, marginBottom: 16 }}>
+          <TouchableOpacity onPress={pickImage} style={{ alignSelf: 'center', marginTop: 24, marginBottom: 32 }}>
             {editForm.imageUrl ? (
-              <Image source={{ uri: editForm.imageUrl }} style={{ width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: THEME.ink }} />
+              <Image source={{ uri: editForm.imageUrl }} style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 3, borderColor: THEME.paperDeep }} />
             ) : (
-              <View style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: THEME.paperDeep, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: THEME.ink, borderStyle: 'dotted' }}>
-                <Text style={{ fontSize: 40, fontWeight: '700', color: THEME.inkLight }}>
-                  {editForm.nickname ? editForm.nickname.charAt(0).toUpperCase() : '?'}
-                </Text>
+              <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: THEME.paperDeep, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: THEME.inkLight, borderStyle: 'dashed' }}>
+                <Camera size={32} color={THEME.inkLight} />
               </View>
             )}
-            <View style={{ position: 'absolute', bottom: 0, right: 0, backgroundColor: THEME.paper, borderRadius: 16, padding: 6, elevation: 2, shadowColor: '#000', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 4 }}>
-               <Camera size={16} color={THEME.ink} />
+            <View style={styles.editImageBadge}>
+              <Edit3 size={16} color="white" />
             </View>
           </TouchableOpacity>
 
-          <Text style={[styles.detailLabel, { marginTop: 16, marginBottom: 8 }]}>Nickname</Text>
+          <Text style={styles.detailLabel}>Nickname</Text>
           <TextInput
             style={styles.sheetInput}
             value={editForm.nickname}
-            onChangeText={(text) => setEditForm(f => ({ ...f, nickname: text }))}
-            placeholder="Enter nickname"
+            onChangeText={(t) => setEditForm(prev => ({...prev, nickname: t}))}
+            placeholder="E.g. Monstera"
             placeholderTextColor={THEME.inkLight}
           />
 
-          <TouchableOpacity 
-            disabled={!isProfileChanged}
-            style={[styles.primaryButton, { marginTop: 32 }, !isProfileChanged && { opacity: 0.5 }]} 
-            onPress={handleSaveProfile}
-          >
-            <Text style={styles.primaryButtonText}>Save Changes</Text>
+          <TouchableOpacity onPress={handleSaveProfile} style={[styles.assignButtonBig, { marginTop: 32 }]}>
+            <Text style={{ color: THEME.paper, fontFamily: FONTS.sans, fontWeight: '600', fontSize: 16 }}>Save Changes</Text>
           </TouchableOpacity>
         </BottomSheetScrollView>
       </BottomSheet>
+
       <CancelConfirmModal
         visible={confirmModal.visible}
         title={confirmModal.title}
         message={confirmModal.message}
         cancelText={confirmModal.cancelText}
         confirmText={confirmModal.confirmText}
-        onCancel={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
-        onConfirm={() => {
-          confirmModal.onConfirm();
-          setConfirmModal(prev => ({ ...prev, visible: false }));
-        }}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, visible: false }))}
+        onConfirm={confirmModal.onConfirm}
       />
     </View>
   )
@@ -349,52 +340,225 @@ export default function PlantDetailScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: THEME.paper },
-  scrollContent: { paddingBottom: 60 },
-  headerSection: { width: '100%', alignItems: 'center', paddingBottom: 30, backgroundColor: THEME.paperDark },
-  coverImage: { width: '100%', height: 260, resizeMode: 'cover' },
-  headerSafeArea: { position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: 20, paddingTop: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerButton: { width: 44, height: 44, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 2 },
-  profileBox: { width: '85%', backgroundColor: 'white', borderRadius: 24, padding: 24, marginTop: -60, shadowColor: THEME.ink, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.05, shadowRadius: 24, elevation: 4, alignItems: 'center' },
-  nickname: { fontSize: 32, fontWeight: '700', fontFamily: FONTS.serif, color: THEME.ink, letterSpacing: -0.5 },
-  species: { fontSize: 15, color: THEME.inkLight, fontStyle: 'italic', marginTop: 4, marginBottom: 16 },
-  statusTag: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, gap: 8 },
-  statusHealthy: { backgroundColor: 'rgba(74, 121, 95, 0.1)' },
-  statusWarning: { backgroundColor: 'rgba(212, 165, 116, 0.15)' },
-  statusText: { fontSize: 13, fontWeight: '700' },
-  statusHealthyText: { color: THEME.forest },
-  statusWarningText: { color: THEME.gold },
-  body: { padding: 24, gap: 32 },
-  section: { gap: 16 },
-  sectionTitle: { fontSize: 20, fontWeight: '700', fontFamily: FONTS.serif, color: THEME.ink },
-  card: { backgroundColor: 'white', borderRadius: 24, padding: 24, shadowColor: THEME.ink, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.05, shadowRadius: 24, elevation: 3 },
-  cardTitle: { fontSize: 17, fontWeight: '700', color: THEME.ink },
-  detailLabel: { fontSize: 13, color: THEME.inkLight, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  detailValue: { fontSize: 16, color: THEME.ink, marginTop: 6 },
-  careText: { fontSize: 15, color: THEME.inkMuted, marginTop: 8, lineHeight: 24 },
-  currentZoneRow: { alignItems: 'center', gap: 16, marginTop: 16, marginBottom: 24, backgroundColor: THEME.paperDeep, padding: 16, borderRadius: 20 },
-  zoneNameText: { fontSize: 17, fontWeight: '700', color: THEME.ink },
-  zoneCityText: { fontSize: 14, color: THEME.inkLight, marginTop: 2 },
-  emptyZoneDesc: { fontSize: 15, color: THEME.inkLight, textAlign: 'center', marginBottom: 24, paddingHorizontal: 12, lineHeight: 22 },
-  primaryButton: { backgroundColor: THEME.ink, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 999 },
-  primaryButtonText: { color: 'white', fontSize: 15, fontWeight: '600' },
-  outlineButton: { backgroundColor: 'transparent', borderWidth: 1, borderColor: THEME.paperDeep, alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 999 },
-  outlineButtonText: { color: THEME.ink, fontSize: 15, fontWeight: '600' },
-  timelineItem: { position: 'relative', paddingLeft: 28, marginBottom: 28 },
-  timelineLine: { position: 'absolute', left: 5, top: 20, bottom: -28, width: 2, backgroundColor: THEME.paperDeep },
-  timelineDot: { position: 'absolute', left: 0, top: 4, width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: 'white' },
-  timelineContent: { gap: 4 },
-  timelineTitle: { fontSize: 16, fontWeight: '700', color: THEME.ink },
-  timelineDate: { fontSize: 13, color: THEME.inkLight },
-  timelineDesc: { fontSize: 15, color: THEME.inkMuted, marginTop: 4, lineHeight: 22 },
-  sheetBackground: { backgroundColor: 'white', borderTopLeftRadius: 32, borderTopRightRadius: 32 },
-  sheetIndicator: { width: 48, height: 5, backgroundColor: THEME.paperDeep, borderRadius: 3, marginTop: 10 },
+  headerSafeArea: {
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? 40 : 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 10
+  },
+  headerButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(253, 252, 248, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4
+  },
+  headerTitleContainer: {
+    position: 'absolute',
+    bottom: 24,
+    left: 24,
+    right: 24,
+  },
+  heroNickname: {
+    fontSize: 42,
+    fontWeight: '700',
+    fontFamily: FONTS.serif,
+    color: THEME.ink,
+    letterSpacing: -1,
+    lineHeight: 48,
+    textShadowColor: 'rgba(255,255,255,0.9)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 12
+  },
+  heroSpecies: {
+    fontSize: 18,
+    fontFamily: FONTS.sans,
+    color: THEME.inkMuted,
+    fontStyle: 'italic',
+    marginTop: 4,
+    textShadowColor: 'rgba(255,255,255,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 8
+  },
+  body: { paddingHorizontal: 24, paddingBottom: 40, marginTop: 10 },
+  statusBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+    backgroundColor: 'white',
+    borderRadius: 24,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    shadowColor: THEME.ink,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.04,
+    shadowRadius: 20,
+    elevation: 3,
+    marginBottom: 32
+  },
+  statusIconBase: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  section: { gap: 16, marginBottom: 32 },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    fontFamily: FONTS.serif,
+    color: THEME.ink,
+    marginBottom: 8
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: THEME.ink,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.03,
+    shadowRadius: 24,
+    elevation: 2
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    justifyContent: 'space-between'
+  },
+  gridItem: {
+    width: (width - 48 - 16) / 2,
+    backgroundColor: 'white',
+    borderRadius: 24,
+    padding: 20,
+    shadowColor: THEME.ink,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.03,
+    shadowRadius: 20,
+    elevation: 2
+  },
+  gridLabel: {
+    fontSize: 12,
+    fontFamily: FONTS.sans,
+    color: THEME.inkLight,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    fontWeight: '700'
+  },
+  gridValue: {
+    fontSize: 16,
+    fontFamily: FONTS.sans,
+    fontWeight: '600',
+    color: THEME.ink,
+    marginTop: 4
+  },
+  careText: {
+    fontSize: 15,
+    fontFamily: FONTS.sans,
+    color: THEME.ink,
+    lineHeight: 24,
+    marginTop: 4
+  },
+  emptyZoneDesc: {
+    fontSize: 15,
+    fontFamily: FONTS.sans,
+    color: THEME.inkMuted,
+    textAlign: 'center',
+    marginBottom: 24,
+    paddingHorizontal: 20,
+    lineHeight: 22
+  },
+  assignButtonBig: {
+    backgroundColor: THEME.forest,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    borderRadius: 999,
+    gap: 12,
+    shadowColor: THEME.forest,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 4,
+    width: '100%'
+  },
+  sheetBackground: { backgroundColor: THEME.paper, borderTopLeftRadius: 32, borderTopRightRadius: 32 },
+  sheetIndicator: { width: 40, height: 5, backgroundColor: THEME.paperDeep, borderRadius: 3, marginTop: 12 },
   sheetContent: { padding: 24, paddingBottom: 40 },
-  sheetTitle: { fontSize: 24, fontWeight: '700', fontFamily: FONTS.serif, color: THEME.ink },
-  sheetDesc: { fontSize: 15, color: THEME.inkLight, marginTop: 4 },    sheetInput: { backgroundColor: THEME.paper, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, color: THEME.ink, borderWidth: 1, borderColor: THEME.paperDeep, fontFamily: FONTS.sans },  sheetListItem: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: THEME.paper, borderRadius: 20, gap: 16 },
-  sheetThumb: { width: 56, height: 56, borderRadius: 16, backgroundColor: THEME.paperDeep },
-  sheetItemTitle: { fontSize: 16, fontWeight: '700', color: THEME.ink },
-  sheetItemSub: { fontSize: 14, color: THEME.inkLight, marginTop: 4 },
-  toast: { backgroundColor: THEME.forest, borderRadius: 999, paddingHorizontal: 20, paddingVertical: 12, marginBottom: 80, flexDirection: 'row', alignItems: 'center', gap: 8, elevation: 6 },
+  sheetTitle: { fontSize: 28, fontWeight: '700', fontFamily: FONTS.serif, color: THEME.ink },
+  sheetDesc: { fontSize: 16, fontFamily: FONTS.sans, color: THEME.inkLight, marginTop: 6 },
+  sheetInput: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    fontSize: 16,
+    color: THEME.ink,
+    borderWidth: 1,
+    borderColor: 'rgba(20,40,29,0.1)',
+    fontFamily: FONTS.sans,
+    marginTop: 8
+  },
+  detailLabel: {
+    fontSize: 13,
+    fontFamily: FONTS.sans,
+    color: THEME.inkLight,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginLeft: 8
+  },
+  sheetListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(20,40,29,0.05)'
+  },
+  sheetItemTitle: { fontSize: 17, fontWeight: '600', fontFamily: FONTS.sans, color: THEME.ink },
+  sheetItemSub: { fontSize: 14, fontFamily: FONTS.sans, color: THEME.inkMuted, marginTop: 4 },
+  editImageBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: THEME.forest,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: THEME.paper
+  },
+  toast: {
+    backgroundColor: THEME.forest,
+    borderRadius: 999,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    marginBottom: 80,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    elevation: 8,
+    shadowColor: THEME.forest,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12
+  },
   toastDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: THEME.gold },
-  toastTitle: { color: 'white', fontWeight: '600', fontSize: 15 }
+  toastTitle: { color: 'white', fontFamily: FONTS.sans, fontWeight: '600', fontSize: 15 }
 })

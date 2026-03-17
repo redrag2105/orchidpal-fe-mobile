@@ -161,3 +161,8 @@ export async function createPlant(payload: CreatePlantRequest): Promise<{ plant_
   const response = await apiClient.post<{ plant_id: string }>('/my-plants', payload)
   return response.data
 }
+
+export async function getDevices(): Promise<{ data: any[]; meta: { page: number; limit: number; total: number; totalPages: number; }; }> {
+  const response = await apiClient.get('/devices')
+  return response.data || { data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } }
+}

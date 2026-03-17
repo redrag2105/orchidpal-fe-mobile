@@ -1,0 +1,31 @@
+import { StyleSheet } from 'react-native'
+import { THEME, FONTS } from '@/components/dashboard/theme'
+
+export const gardenStyles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: THEME.paper },
+  header: { paddingHorizontal: 20, paddingVertical: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  greeting: { fontSize: 13, color: THEME.inkMuted, letterSpacing: 0.5, textTransform: 'uppercase' },
+  headerTitle: { fontSize: 28, fontWeight: '600', fontFamily: FONTS.serif, color: THEME.ink, marginTop: 4 },
+  headerTitleAccent: { fontStyle: 'italic', color: THEME.orchidMain },
+  addBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
+  tabContainer: { paddingHorizontal: 20, marginBottom: 20 },
+  tabSwitcher: { flexDirection: 'row', backgroundColor: THEME.paperDark, borderRadius: 999, padding: 4 },
+  tabButton: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 999 },
+  tabButtonActive: { backgroundColor: 'white', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
+  tabButtonText: { fontSize: 14, fontWeight: '600', color: THEME.inkMuted },
+  tabButtonTextActive: { color: THEME.ink },
+  filterContainer: { paddingHorizontal: 20, marginBottom: 16, flexDirection: 'row', gap: 10 },
+  filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: THEME.paper, borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)' },
+  filterChipActive: { backgroundColor: THEME.forest, borderColor: THEME.forest },
+  filterChipText: { fontSize: 13, color: THEME.inkMuted, fontWeight: '600' },
+  filterChipTextActive: { color: 'white' },
+  content: { paddingHorizontal: 20, paddingBottom: 100 },
+  gridContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between' },
+  gridItem: { width: '47%' },
+  listContainer: { gap: 16 },
+  emptyStateContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 16 },
+  emptyStateText: { fontSize: 15, color: THEME.inkMuted, textAlign: 'center' },
+  sheetBg: { backgroundColor: 'white', borderTopLeftRadius: 32, borderTopRightRadius: 32 },
+  sheetIndicator: { width: 48, height: 5, backgroundColor: THEME.paperDeep, borderRadius: 3, marginTop: 10 },
+  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
+})
