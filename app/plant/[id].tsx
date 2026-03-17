@@ -1,23 +1,47 @@
-import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeft, MapPin, Calendar, HeartPulse, ShieldCheck, ChevronRight, Edit3, Settings, Camera, Droplets, Thermometer, UserSquare2, Trees } from 'lucide-react-native'
-import React, { useState, useRef, useMemo, useCallback } from 'react'
-import { Image, ScrollView, StyleSheet, TouchableOpacity, View, TextInput, ActivityIndicator, Dimensions, Platform } from 'react-native'
-import * as ImagePicker from 'expo-image-picker'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Text } from '@/components/ui/text'
-import { useToast, Toast, ToastTitle } from '@/components/ui/toast'
-import { HStack } from '@/components/ui/hstack'
-import { VStack } from '@/components/ui/vstack'
-import { THEME, FONTS } from '@/components/dashboard/theme'
-import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
+import { FONTS, THEME } from '@/components/dashboard/theme'
 import { CancelConfirmModal } from '@/components/iot/device-setup'
-import { usePlantDetail } from '@/hooks/queries/usePlantDetail'
+import { HStack } from '@/components/ui/hstack'
+import { Text } from '@/components/ui/text'
+import { Toast, ToastTitle, useToast } from '@/components/ui/toast'
+import { VStack } from '@/components/ui/vstack'
 import { useAssignPlantToZone } from '@/hooks/mutations/useAssignPlantToZone'
+import { useUpdatePlant } from '@/hooks/mutations/useUpdatePlant'
+import { usePlantDetail } from '@/hooks/queries/usePlantDetail'
 import { useZones } from '@/hooks/queries/useZones'
+import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
+import * as ImagePicker from 'expo-image-picker'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import {
+  ArrowLeft,
+  Calendar,
+  Camera,
+  ChevronRight,
+  Droplets,
+  Edit3,
+  HeartPulse,
+  MapPin,
+  Settings,
+  ShieldCheck,
+  Thermometer,
+  Trees
+} from 'lucide-react-native'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
+import {
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native'
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get('window')
 
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams()
@@ -25,11 +49,12 @@ export default function PlantDetailScreen() {
   const toast = useToast()
   const insets = useSafeAreaInsets()
 
-  const { data: plantCallData, isLoading } = usePlantDetail(id as string);
-  const plant = plantCallData?.data || plantCallData;
-  
-  const { data: zones } = useZones();
-  const { mutateAsync: assignPlant } = useAssignPlantToZone();
+  const { data: plantCallData, isLoading } = usePlantDetail(id as string)
+  const plant = plantCallData?.data || plantCallData
+
+  const { data: zones } = useZones()
+  const { mutateAsync: assignPlant } = useAssignPlantToZone()
+  const { mutateAsync: updatePlant, isPending: isUpdating } = useUpdatePlant()
 
   const [confirmModal, setConfirmModal] = useState({
     visible: false,
@@ -38,59 +63,82 @@ export default function PlantDetailScreen() {
     cancelText: 'Cancel',
     confirmText: 'Confirm',
     onConfirm: () => {}
-  });
+  })
 
-  const showConfirm = (title: string, message: string, onConfirm: () => void, confirmText = 'Confirm', cancelText = 'Cancel') => {
-    setConfirmModal({ visible: true, title, message, onConfirm, confirmText, cancelText });
-  };
+  const showConfirm = (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    confirmText = 'Confirm',
+    cancelText = 'Cancel'
+  ) => {
+    setConfirmModal({ visible: true, title, message, onConfirm, confirmText, cancelText })
+  }
 
-  const assignSheetRef = useRef<BottomSheet>(null);
-  const editProfileSheetRef = useRef<BottomSheet>(null);
-  const assignSnapPoints = useMemo(() => ['50%', '67%'], []);
-  const editProfileSnapPoints = useMemo(() => ['50%'], []);
-  const renderBackdrop = useCallback((props: any) => (
-    <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.3} />
-  ), []);
+  const assignSheetRef = useRef<BottomSheet>(null)
+  const editProfileSheetRef = useRef<BottomSheet>(null)
+  const assignSnapPoints = useMemo(() => ['50%', '67%'], [])
+  const editProfileSnapPoints = useMemo(() => ['50%'], [])
+  const renderBackdrop = useCallback(
+    (props: any) => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.3} />,
+    []
+  )
 
-  const [editForm, setEditForm] = useState({ nickname: '', imageUrl: '' });
+  const [editForm, setEditForm] = useState({ nickname: '', imageUrl: '' })
 
-  if (isLoading) return <View style={{ flex: 1, backgroundColor: THEME.paper, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator size="large" color={THEME.orchidMain} /></View>;
-  if (!plant) return null;
+  if (isLoading)
+    return (
+      <View style={{ flex: 1, backgroundColor: THEME.paper, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size='large' color={THEME.orchidMain} />
+      </View>
+    )
+  if (!plant) return null
 
-  const currentZone: any = plant.planting_zones || null;
-  const wikiInfo = plant.species_wiki;
+  const currentZone: any = plant.planting_zones || null
+  const wikiInfo = plant.species_wiki
 
-  const emptyZones: any[] = (zones || []).filter((z: any) => !z.has_plant);
+  const emptyZones: any[] = (zones || []).filter((z: any) => !z.has_plant)
 
-  const handleOpenAssign = () => assignSheetRef.current?.expand();
+  const handleOpenAssign = () => assignSheetRef.current?.expand()
   const handleOpenEditProfile = () => {
-    setEditForm({ nickname: plant.nickname, imageUrl: plant.image_url });
-    editProfileSheetRef.current?.expand();
-  };
+    setEditForm({ nickname: plant.nickname, imageUrl: plant.image_url })
+    editProfileSheetRef.current?.expand()
+  }
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 1,
-    });
+      quality: 1
+    })
     if (!result.canceled) {
-      setEditForm(prev => ({ ...prev, imageUrl: result.assets[0].uri }));
+      setEditForm((prev) => ({ ...prev, imageUrl: result.assets[0].uri }))
     }
-  };
+  }
 
-  const handleSaveProfile = () => {
-    showToast("Plant profile updated successfully.");
-    editProfileSheetRef.current?.close();
-  };
-  
+  const handleSaveProfile = async () => {
+    try {
+      await updatePlant({
+        id: plant.id as string,
+        data: {
+          nickname: editForm.nickname,
+          image_url: editForm.imageUrl
+        }
+      })
+      showToast('Plant profile updated successfully.')
+      editProfileSheetRef.current?.close()
+    } catch (error) {
+      showToast('Failed to update plant profile.')
+    }
+  }
+
   const showToast = (message: string) => {
     toast.show({
-      placement: "bottom",
+      placement: 'bottom',
       duration: 1500,
       render: ({ id }) => (
-        <Toast nativeID={id} action="success" variant="solid" style={styles.toast}>
+        <Toast nativeID={id} action='success' variant='solid' style={styles.toast}>
           <View style={styles.toastDot} />
           <ToastTitle style={styles.toastTitle}>{message}</ToastTitle>
         </Toast>
@@ -100,40 +148,41 @@ export default function PlantDetailScreen() {
 
   const handleConfirmLink = (zoneId: string) => {
     showConfirm(
-      "Confirm Assignment",
-      "Are you sure you want to assign this plant to this zone?",
+      'Confirm Assignment',
+      'Are you sure you want to assign this plant to this zone?',
       () => {
-        assignPlant({ plant_id: plant.id as string, zone_id: zoneId })
-          .then(() => {
-            assignSheetRef.current?.close();
-            showToast("Plant has been successfully assigned.");
-          });
+        assignPlant({ plant_id: plant.id as string, zone_id: zoneId }).then(() => {
+          assignSheetRef.current?.close()
+          showToast('Plant has been successfully assigned.')
+        })
       },
-      "Assign",
-      "Cancel"
-    );
-  };
+      'Assign',
+      'Cancel'
+    )
+  }
 
-  const isHealthy = plant.health_status === 'GOOD';
+  const isHealthy = plant.health_status === 'GOOD'
 
   return (
     <View style={styles.root}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-        
         {/* Full Bleed Header */}
         <Animated.View entering={FadeIn.duration(600)} style={{ width: '100%', height: 420, position: 'relative' }}>
-          <Image source={{ uri: plant.image_url || 'https://images.unsplash.com/photo-1599388102462-8e7c1a84fbe3' }} style={StyleSheet.absoluteFillObject} />
+          <Image
+            source={{ uri: plant.image_url || 'https://images.unsplash.com/photo-1599388102462-8e7c1a84fbe3' }}
+            style={StyleSheet.absoluteFillObject}
+          />
           <LinearGradient
             colors={['rgba(20,40,29,0.5)', 'transparent', 'rgba(253, 252, 248, 0.6)', THEME.paper]}
             locations={[0, 0.4, 0.8, 1]}
             style={StyleSheet.absoluteFillObject}
           />
-          
+
           <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
             <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
               <ArrowLeft color={THEME.ink} size={24} />
             </TouchableOpacity>
-            
+
             <TouchableOpacity onPress={handleOpenEditProfile} style={styles.headerButton}>
               <Settings size={24} color={THEME.ink} />
             </TouchableOpacity>
@@ -150,16 +199,27 @@ export default function PlantDetailScreen() {
         </Animated.View>
 
         <View style={styles.body}>
-          
           {/* Status & Actions Floating Bar */}
           <Animated.View entering={FadeInUp.delay(400).duration(500)} style={styles.statusBar}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={[styles.statusIconBase, { backgroundColor: isHealthy ? 'rgba(74, 121, 95, 0.1)' : 'rgba(212, 165, 116, 0.15)' }]}>
+              <View
+                style={[
+                  styles.statusIconBase,
+                  { backgroundColor: isHealthy ? 'rgba(74, 121, 95, 0.1)' : 'rgba(212, 165, 116, 0.15)' }
+                ]}
+              >
                 <HeartPulse size={24} color={isHealthy ? THEME.forest : THEME.gold} />
               </View>
               <View>
                 <Text style={{ fontFamily: FONTS.sans, fontSize: 13, color: THEME.inkLight }}>Health Status</Text>
-                <Text style={{ fontFamily: FONTS.serif, fontSize: 18, fontWeight: '700', color: isHealthy ? THEME.forest : THEME.gold }}>
+                <Text
+                  style={{
+                    fontFamily: FONTS.serif,
+                    fontSize: 18,
+                    fontWeight: '700',
+                    color: isHealthy ? THEME.forest : THEME.gold
+                  }}
+                >
                   {plant.health_status ? plant.health_status.toUpperCase() : 'UNKNOWN'}
                 </Text>
               </View>
@@ -172,7 +232,13 @@ export default function PlantDetailScreen() {
               <View>
                 <Text style={{ fontFamily: FONTS.sans, fontSize: 13, color: THEME.inkLight }}>Planted On</Text>
                 <Text style={{ fontFamily: FONTS.sans, fontSize: 14, fontWeight: '600', color: THEME.ink }}>
-                  {plant.planted_at ? new Date(plant.planted_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unknown'}
+                  {plant.planted_at
+                    ? new Date(plant.planted_at).toLocaleDateString('en-US', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })
+                    : 'Unknown'}
                 </Text>
               </View>
             </View>
@@ -186,13 +252,17 @@ export default function PlantDetailScreen() {
                 <View style={styles.gridItem}>
                   <Thermometer size={24} color={THEME.orchidMain} style={{ marginBottom: 12 }} />
                   <Text style={styles.gridLabel}>Ideal Temp</Text>
-                  <Text style={styles.gridValue}>{wikiInfo.ideal_temp_min}-{wikiInfo.ideal_temp_max}°C</Text>
+                  <Text style={styles.gridValue}>
+                    {wikiInfo.ideal_temp_min}-{wikiInfo.ideal_temp_max}°C
+                  </Text>
                 </View>
-                
+
                 <View style={styles.gridItem}>
-                  <Droplets size={24} color="#4ba3e3" style={{ marginBottom: 12 }} />
+                  <Droplets size={24} color='#4ba3e3' style={{ marginBottom: 12 }} />
                   <Text style={styles.gridLabel}>Humidity</Text>
-                  <Text style={styles.gridValue}>{wikiInfo.ideal_humid_min}-{wikiInfo.ideal_humid_max}%</Text>
+                  <Text style={styles.gridValue}>
+                    {wikiInfo.ideal_humid_min}-{wikiInfo.ideal_humid_max}%
+                  </Text>
                 </View>
 
                 <View style={[styles.gridItem, { width: '100%', flexDirection: 'column', alignItems: 'flex-start' }]}>
@@ -202,18 +272,31 @@ export default function PlantDetailScreen() {
                   </Text>
                 </View>
 
-                <View style={[styles.gridItem, { width: '100%', flexDirection: 'column', alignItems: 'flex-start', backgroundColor: THEME.paperDeep }]}>
+                <View
+                  style={[
+                    styles.gridItem,
+                    {
+                      width: '100%',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      backgroundColor: THEME.paperDeep
+                    }
+                  ]}
+                >
                   <HStack style={{ alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <ShieldCheck size={20} color={THEME.forest} />
                     <Text style={[styles.gridLabel, { marginTop: 0 }]}>Care Instructions</Text>
                   </HStack>
                   <Text style={styles.careText}>
-                    {wikiInfo.care_instruction || 'No specific care instructions found. Keep an eye on moisture and light levels.'}
+                    {wikiInfo.care_instruction ||
+                      'No specific care instructions found. Keep an eye on moisture and light levels.'}
                   </Text>
                 </View>
               </View>
             ) : (
-              <Text style={{ color: THEME.inkLight, fontFamily: FONTS.sans }}>No botanical info available for this species.</Text>
+              <Text style={{ color: THEME.inkLight, fontFamily: FONTS.sans }}>
+                No botanical info available for this species.
+              </Text>
             )}
           </View>
 
@@ -240,7 +323,9 @@ export default function PlantDetailScreen() {
                 <Text style={styles.emptyZoneDesc}>This plant hasn't been placed in any monitoring zone yet.</Text>
                 <TouchableOpacity onPress={handleOpenAssign} style={styles.assignButtonBig}>
                   <MapPin size={20} color={THEME.paper} />
-                  <Text style={{ color: THEME.paper, fontFamily: FONTS.sans, fontWeight: '600', fontSize: 16 }}>Assign to Zone</Text>
+                  <Text style={{ color: THEME.paper, fontFamily: FONTS.sans, fontWeight: '600', fontSize: 16 }}>
+                    Assign to Zone
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -263,21 +348,34 @@ export default function PlantDetailScreen() {
           <Text style={styles.sheetDesc}>Select an available zone to move this plant to.</Text>
 
           <VStack style={{ gap: 12, marginTop: 24 }}>
-            {emptyZones.length > 0 ? emptyZones.map((z: any) => (
-              <TouchableOpacity key={z.id} style={styles.sheetListItem} onPress={() => handleConfirmLink(z.id)}>
-                <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: THEME.paperDeep, alignItems: 'center', justifyContent: 'center' }}>
-                  <MapPin size={24} color={THEME.forest} />
-                </View>
-                <VStack style={{ flex: 1 }}>
-                  <Text style={styles.sheetItemTitle}>{z.name || 'Unnamed Zone'}</Text>
-                  <Text style={styles.sheetItemSub}>{z.location_city || 'Your Environment'}</Text>
-                </VStack>
-                <ChevronRight size={20} color={THEME.inkLight} />
-              </TouchableOpacity>
-            )) : (
+            {emptyZones.length > 0 ? (
+              emptyZones.map((z: any) => (
+                <TouchableOpacity key={z.id} style={styles.sheetListItem} onPress={() => handleConfirmLink(z.id)}>
+                  <View
+                    style={{
+                      width: 50,
+                      height: 50,
+                      borderRadius: 25,
+                      backgroundColor: THEME.paperDeep,
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <MapPin size={24} color={THEME.forest} />
+                  </View>
+                  <VStack style={{ flex: 1 }}>
+                    <Text style={styles.sheetItemTitle}>{z.name || 'Unnamed Zone'}</Text>
+                    <Text style={styles.sheetItemSub}>{z.location_city || 'Your Environment'}</Text>
+                  </VStack>
+                  <ChevronRight size={20} color={THEME.inkLight} />
+                </TouchableOpacity>
+              ))
+            ) : (
               <View style={{ alignItems: 'center', paddingVertical: 40, opacity: 0.8 }}>
                 <Trees size={48} color={THEME.paperDeep} style={{ marginBottom: 16 }} />
-                <Text style={{ textAlign: 'center', color: THEME.inkLight, fontSize: 16, fontFamily: FONTS.sans }}>No empty zones available to place this plant.</Text>
+                <Text style={{ textAlign: 'center', color: THEME.inkLight, fontSize: 16, fontFamily: FONTS.sans }}>
+                  No empty zones available to place this plant.
+                </Text>
               </View>
             )}
           </VStack>
@@ -296,17 +394,32 @@ export default function PlantDetailScreen() {
       >
         <BottomSheetScrollView contentContainerStyle={[styles.sheetContent, { paddingBottom: 40 }]}>
           <Text style={styles.sheetTitle}>Edit Profile</Text>
-          
+
           <TouchableOpacity onPress={pickImage} style={{ alignSelf: 'center', marginTop: 24, marginBottom: 32 }}>
             {editForm.imageUrl ? (
-              <Image source={{ uri: editForm.imageUrl }} style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 3, borderColor: THEME.paperDeep }} />
+              <Image
+                source={{ uri: editForm.imageUrl }}
+                style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 3, borderColor: THEME.paperDeep }}
+              />
             ) : (
-              <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: THEME.paperDeep, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: THEME.inkLight, borderStyle: 'dashed' }}>
+              <View
+                style={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: 60,
+                  backgroundColor: THEME.paperDeep,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: 2,
+                  borderColor: THEME.inkLight,
+                  borderStyle: 'dashed'
+                }}
+              >
                 <Camera size={32} color={THEME.inkLight} />
               </View>
             )}
             <View style={styles.editImageBadge}>
-              <Edit3 size={16} color="white" />
+              <Edit3 size={16} color='white' />
             </View>
           </TouchableOpacity>
 
@@ -314,13 +427,23 @@ export default function PlantDetailScreen() {
           <TextInput
             style={styles.sheetInput}
             value={editForm.nickname}
-            onChangeText={(t) => setEditForm(prev => ({...prev, nickname: t}))}
-            placeholder="E.g. Monstera"
+            onChangeText={(t) => setEditForm((prev) => ({ ...prev, nickname: t }))}
+            placeholder='E.g. Monstera'
             placeholderTextColor={THEME.inkLight}
           />
 
-          <TouchableOpacity onPress={handleSaveProfile} style={[styles.assignButtonBig, { marginTop: 32 }]}>
-            <Text style={{ color: THEME.paper, fontFamily: FONTS.sans, fontWeight: '600', fontSize: 16 }}>Save Changes</Text>
+          <TouchableOpacity
+            onPress={handleSaveProfile}
+            style={[styles.assignButtonBig, { marginTop: 32 }, isUpdating && { opacity: 0.7 }]}
+            disabled={isUpdating}
+          >
+            {isUpdating ? (
+              <ActivityIndicator color={THEME.paper} />
+            ) : (
+              <Text style={{ color: THEME.paper, fontFamily: FONTS.sans, fontWeight: '600', fontSize: 16 }}>
+                Save Changes
+              </Text>
+            )}
           </TouchableOpacity>
         </BottomSheetScrollView>
       </BottomSheet>
@@ -365,7 +488,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 24,
     left: 24,
-    right: 24,
+    right: 24
   },
   heroNickname: {
     fontSize: 42,

@@ -17,6 +17,7 @@ import { useZoneDetail } from '@/hooks/queries/useZoneDetail'
 import { usePlants } from '@/hooks/queries/usePlants'
 import { useDevices } from '@/hooks/queries/useDevices'
 import { useUpdateAutomationRules } from '@/hooks/mutations/useUpdateAutomationRules'
+import { useControlDevice } from '@/hooks/mutations/useControlDevice'
 
 import {
   LinkedPlantCard,
@@ -38,6 +39,7 @@ export default function ZoneDetailScreen() {
   const { mutateAsync: mutateAutomationRules } = useUpdateAutomationRules();
   const { mutateAsync: assignDevice } = useAssignDeviceToZone();
   const { mutateAsync: assignPlant } = useAssignPlantToZone();
+  const { mutateAsync: controlDeviceMutate } = useControlDevice();
 
   const [confirmModal, setConfirmModal] = useState({
     visible: false,
@@ -85,9 +87,32 @@ export default function ZoneDetailScreen() {
     showConfirm(
       "Confirm Action",
       "Are you sure you want to save these device settings?",
-      () => {
-        setInitialRelayState(relayState);
-        showToast('Device settings updated successfully');
+      async () => {
+        if (!linkedDevice?.serial_number) {
+          showToast('Device information is missing');
+          return;
+        }
+        
+        try {
+          const changedRelays = Object.keys(relayState).filter(r => relayState[r] !== initialRelayState[r]);
+          if (changedRelays.length > 0) {
+            await Promise.all(
+              changedRelays.map(r => 
+                controlDeviceMutate({
+                  serialNumber: linkedDevice.serial_number,
+                  role: r,
+                  action: relayState[r] ? 'ON' : 'OFF'
+                })
+              )
+            );
+          }
+          setInitialRelayState(relayState);
+          showToast('Device settings updated successfully');
+        } catch (error) {
+          showToast('Failed to update device settings');
+          // Revert on error
+          setRelayState(initialRelayState);
+        }
       },
       "Save",
       "Cancel"

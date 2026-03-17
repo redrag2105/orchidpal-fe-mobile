@@ -166,3 +166,8 @@ export async function getDevices(): Promise<{ data: any[]; meta: { page: number;
   const response = await apiClient.get('/devices')
   return response.data || { data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } }
 }
+
+export async function controlDevice(serialNumber: string, payload: { role: string; action: 'ON' | 'OFF' }) {
+  const response = await apiClient.post(`/devices/${serialNumber}/control`, payload)
+  return response.data
+}

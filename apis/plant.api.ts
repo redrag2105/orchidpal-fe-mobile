@@ -40,3 +40,13 @@ export const createPlant = async (payload: CreatePlantRequest): Promise<any> => 
   const response = await apiClient.post('/my-plants', payload)
   return response.data
 }
+
+export interface UpdatePlantRequest {
+  nickname?: string
+  image_url?: string
+}
+
+export const updatePlant = async (id: string, payload: UpdatePlantRequest) => {
+  const response = await apiClient.patch(`/my-plants/${id}`, payload)
+  return response.data
+}

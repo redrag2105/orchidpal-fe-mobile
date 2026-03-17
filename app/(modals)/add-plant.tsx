@@ -1,4 +1,5 @@
 ﻿import { FONTS, THEME } from '@/components/dashboard/theme'
+import { CancelConfirmModal } from '@/components/iot/device-setup'
 import * as Haptics from 'expo-haptics'
 import * as ImagePicker from 'expo-image-picker'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -77,6 +78,8 @@ export default function AddPlantStoryScreen() {
   const enteringAnim = direction === 'forward' ? SlideInRight.duration(400) : SlideInLeft.duration(400)
   const exitingAnim = direction === 'forward' ? SlideOutLeft.duration(400) : SlideOutRight.duration(400)
 
+  const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false)
+
   const goToStep = (targetStep: number) => {
     Keyboard.dismiss()
     setDirection(targetStep > step ? 'forward' : 'backward')
@@ -97,7 +100,7 @@ export default function AddPlantStoryScreen() {
     if (step > 1) goToStep(step - 1)
     else {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-      router.back()
+      setIsConfirmModalVisible(true)
     }
   }
 
@@ -155,7 +158,7 @@ export default function AddPlantStoryScreen() {
         <TouchableOpacity
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-            router.back()
+            setIsConfirmModalVisible(true)
           }}
           style={{ padding: 8 }}
         >
@@ -733,7 +736,7 @@ export default function AddPlantStoryScreen() {
                       {currentZone?.name || 'Not assigned'}
                     </Text>
                   </View>
-                  <TouchableOpacity onPress={() => goToStep(4)} style={{ padding: 8 }}>
+                  <TouchableOpacity onPress={() => goToStep(5)} style={{ padding: 8 }}>
                     <Edit3 size={20} color={THEME.forest} />
                   </TouchableOpacity>
                 </View>
@@ -781,6 +784,19 @@ export default function AddPlantStoryScreen() {
         {renderHeader()}
         {renderStep()}
       </LinearGradient>
+
+      <CancelConfirmModal
+        visible={isConfirmModalVisible}
+        title='Discard Changes?'
+        message='Are you sure you want to stop adding this plant? Your progress will be lost.'
+        cancelText='Keep Editing'
+        confirmText='Discard'
+        onCancel={() => setIsConfirmModalVisible(false)}
+        onConfirm={() => {
+          setIsConfirmModalVisible(false)
+          router.back()
+        }}
+      />
     </KeyboardAvoidingView>
   )
 }

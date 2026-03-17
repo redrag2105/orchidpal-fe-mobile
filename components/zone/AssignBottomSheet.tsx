@@ -1,10 +1,10 @@
-import React from 'react'
-import { Image, StyleSheet, TouchableOpacity, View } from 'react-native'
-import { Cpu, Plus } from 'lucide-react-native'
-import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
+import { FONTS, THEME } from '@/components/dashboard/theme'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
-import { THEME, FONTS } from '@/components/dashboard/theme'
+import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
+import { Cpu, Plus } from 'lucide-react-native'
+import React from 'react'
+import { Image, StyleSheet, TouchableOpacity, View } from 'react-native'
 
 type AssignBottomSheetProps = {
   bottomSheetRef: React.RefObject<BottomSheet>
@@ -38,20 +38,12 @@ export function AssignBottomSheet({
       handleIndicatorStyle={styles.sheetIndicator}
     >
       <BottomSheetScrollView contentContainerStyle={styles.sheetContent}>
-        <Text style={styles.sheetTitle}>
-          {assignTarget === 'plant' ? 'Assign Plant' : 'Link Device'}
-        </Text>
-        <Text style={styles.sheetDesc}>
-          Select an available {assignTarget} to add to this zone.
-        </Text>
+        <Text style={styles.sheetTitle}>{assignTarget === 'plant' ? 'Assign Plant' : 'Link Device'}</Text>
+        <Text style={styles.sheetDesc}>Select an available {assignTarget} to add to this zone.</Text>
         <VStack style={{ gap: 12, marginTop: 16 }}>
           {assignTarget === 'plant' &&
             availablePlants.map((p: any) => (
-              <TouchableOpacity
-                key={p.id}
-                style={styles.sheetListItem}
-                onPress={() => onLinkPlant(p)}
-              >
+              <TouchableOpacity key={p.id} style={styles.sheetListItem} onPress={() => onLinkPlant(p)}>
                 <Image source={{ uri: p.image_url }} style={styles.sheetThumb} />
                 <VStack style={{ flex: 1 }}>
                   <Text style={styles.sheetItemTitle}>{p.nickname}</Text>
@@ -60,13 +52,17 @@ export function AssignBottomSheet({
                 <Plus size={20} color={THEME.orchidMain} />
               </TouchableOpacity>
             ))}
+          {assignTarget === 'plant' && availablePlants.length === 0 && (
+            <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+              <Text style={{ textAlign: 'center', color: THEME.inkLight, fontFamily: FONTS.sans }}>
+                No plants available. Add a plant to your garden first.
+              </Text>
+            </View>
+          )}
+
           {assignTarget === 'device' &&
             availableDevices.map((d: any) => (
-              <TouchableOpacity
-                key={d.id}
-                style={styles.sheetListItem}
-                onPress={() => onLinkDevice(d)}
-              >
+              <TouchableOpacity key={d.id} style={styles.sheetListItem} onPress={() => onLinkDevice(d)}>
                 <View style={styles.sheetDeviceIcon}>
                   <Cpu size={24} color={THEME.forest} />
                 </View>
@@ -79,6 +75,14 @@ export function AssignBottomSheet({
                 <Plus size={20} color={THEME.orchidMain} />
               </TouchableOpacity>
             ))}
+
+          {assignTarget === 'device' && availableDevices.length === 0 && (
+            <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+              <Text style={{ textAlign: 'center', color: THEME.inkLight, fontFamily: FONTS.sans }}>
+                No available devices. You have set up all your devices or haven't added any yet.
+              </Text>
+            </View>
+          )}
         </VStack>
       </BottomSheetScrollView>
     </BottomSheet>

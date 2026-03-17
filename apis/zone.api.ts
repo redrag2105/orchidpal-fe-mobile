@@ -13,9 +13,9 @@ export interface Zone {
 }
 
 export interface ZoneDetail extends Omit<Zone, 'has_plant' | 'has_device'> {
-  my_plants: any[];
-  devices: any[];
-  automation_rules: any[];
+  my_plants: any[]
+  devices: any[]
+  automation_rules: any[]
 }
 
 export const getZones = async (): Promise<Zone[]> => {
@@ -30,5 +30,17 @@ export const getZoneById = async (id: string): Promise<ZoneDetail> => {
 
 export const updateAutomationRules = async (id: string, logic: any[]): Promise<any> => {
   const response = await apiClient.patch(`/zones/${id}/automation-rules`, { logic })
+  return response.data
+}
+
+export interface CreateZoneRequest {
+  name: string
+  location_city: string
+  exposure: string
+  image_url?: string
+}
+
+export const createZone = async (payload: CreateZoneRequest): Promise<any> => {
+  const response = await apiClient.post('/zones', payload)
   return response.data
 }

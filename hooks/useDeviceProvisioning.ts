@@ -23,6 +23,7 @@ import {
   getZones,
   waitForDeviceOnline
 } from '@/apis/device.api'
+import { assignPlantToZone } from '@/apis/plant.api'
 import type {
   CreateZoneRequest,
   PlantingZone,
@@ -194,7 +195,7 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
         // Fetch user's zones
         try {
           const userZones = await getZones()
-          setZones(userZones)
+          setZones(userZones.filter((z) => !z.has_plant))
         } catch {
           // Non-critical - user can still create zone
         }
@@ -377,10 +378,16 @@ export function useDeviceProvisioning(initialDemoMode: boolean = DEMO_MODE) {
         }
 
         // First create the plant
-        await createPlant({
+        const createdPlantData = await createPlant({
           zone_id: state.selectedZone.id,
           species_id: selectedSpecies.id,
           nickname: trimmedNickname || undefined
+        })
+
+        // Then assign the plant to the zone
+        await assignPlantToZone({
+          plant_id: (createdPlantData as any).plant_id || (createdPlantData as any).id,
+          zone_id: state.selectedZone.id
         })
 
         // Then assign device to zone

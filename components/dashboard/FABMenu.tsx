@@ -1,7 +1,7 @@
 import { Text } from '@/components/ui/text'
-import { useRouter } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 import { Cpu, Flower2, Leaf, Plus } from 'lucide-react-native'
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import { THEME } from './theme'
@@ -22,15 +22,22 @@ export function FABMenu({ actions: customActions }: FABMenuProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
 
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setIsOpen(false)
+      }
+    }, [])
+  )
+
   // Order: closest to FAB first (zone -> plant -> device)
   const defaultActions = [
-    { key: 'zone', label: 'Add Zone', icon: Leaf, color: THEME.gold, route: '/(modals)/device-setup' },
+    { key: 'zone', label: 'Add Zone', icon: Leaf, color: THEME.gold, route: '/(modals)/add-zone' },
     { key: 'plant', label: 'Add Plant', icon: Flower2, color: THEME.orchidMain, route: '/(modals)/add-plant' },
     { key: 'device', label: 'Add Device', icon: Cpu, color: THEME.forest, route: '/(modals)/device-setup' }
   ]
 
   const actions = customActions || defaultActions
-
 
   return (
     <>

@@ -91,6 +91,7 @@ export interface PlantingZone {
   location_city: string
   description?: string
   exposure?: string
+  has_plant?: boolean
 }
 
 // Provisioning flow steps

@@ -15,71 +15,8 @@ import React, { useState } from 'react'
 import { ScrollView, StyleSheet, TouchableOpacity, View, FlatList, Keyboard, TouchableWithoutFeedback, Dimensions } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
-
-// Mock device data
-const DEVICES: Device[] = [
-  {
-    id: '1',
-    serial_number: 'ESP-ORCHID-001',
-    status: 'ONLINE',
-    last_online_at: '2 min ago',
-    signalStrength: 85,
-    zoneName: 'Living Room'
-  },
-  {
-    id: '2',
-    serial_number: 'ESP-ORCHID-002',
-    status: 'ONLINE',
-    last_online_at: '5 min ago',
-    signalStrength: 72,
-    zoneName: 'Balcony Garden'
-  },
-  {
-    id: '3',
-    serial_number: 'ESP-ORCHID-003',
-    status: 'OFFLINE',
-    last_online_at: '2 hours ago',
-    signalStrength: 0,
-    zoneName: 'Bedroom'
-  },
-  {
-    id: '4',
-    serial_number: 'ESP-ORCHID-004',
-    status: 'ONLINE',
-    last_online_at: 'Just now',
-    signalStrength: 95
-  },
-  {
-    id: '5',
-    serial_number: 'ESP-ORCHID-005',
-    status: 'ONLINE',
-    last_online_at: '10 min ago',
-    signalStrength: 60,
-    zoneName: 'Office Desk'
-  },
-  {
-    id: '6',
-    serial_number: 'ESP-ORCHID-006',
-    status: 'OFFLINE',
-    last_online_at: '1 day ago',
-    signalStrength: 0
-  },
-  {
-    id: '7',
-    serial_number: 'ESP-ORCHID-007',
-    status: 'ONLINE',
-    last_online_at: '1 min ago',
-    signalStrength: 88,
-    zoneName: 'Patio'
-  },
-  {
-    id: '8',
-    serial_number: 'ESP-ORCHID-008',
-    status: 'ONLINE',
-    last_online_at: '20 min ago',
-    signalStrength: 45
-  }
-]
+import { useDevices } from '@/hooks/queries/useDevices'
+import { ActivityIndicator, RefreshControl } from 'react-native'
 
 export default function DevicesScreen() {
   const router = useRouter()
@@ -87,14 +24,21 @@ export default function DevicesScreen() {
   const [searchQuery, setSearchQuery] = useState('')
   const [deviceFilter, setDeviceFilter] = useState<'All' | 'Assigned' | 'Unassigned'>('All')
 
-  const handleAddDevice = () => {
-    router.push('/(modals)/device-setup')
-  }
+  const { data: devicesData, isLoading, refetch, isRefetching } = useDevices()
+  
+  const mappedDevices: Device[] = (devicesData?.data || []).map((d: any) => ({
+    id: d.id,
+    serial_number: d.serial_number,
+    status: d.status || 'OFFLINE',
+    last_online_at: d.last_online_at ? new Date(d.last_online_at).toLocaleString() : 'Never',
+    signalStrength: d.signal_strength || Math.floor(Math.random() * 40) + 60, // Fallback mock
+    zoneName: d.planting_zones?.name || undefined
+  }))
 
-  const onlineCount = DEVICES.filter((d) => d.status === 'ONLINE').length
-  const offlineCount = DEVICES.filter((d) => d.status === 'OFFLINE').length
+  const onlineCount = mappedDevices.filter((d) => d.status === 'ONLINE').length
+  const offlineCount = mappedDevices.filter((d) => d.status === 'OFFLINE').length
 
-  const filteredDevices = DEVICES.filter(
+  const filteredDevices = mappedDevices.filter(
     (d) => 
       (d.serial_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (d.zoneName && d.zoneName.toLowerCase().includes(searchQuery.toLowerCase()))) &&
@@ -102,6 +46,10 @@ export default function DevicesScreen() {
       (deviceFilter === 'Assigned' && d.zoneName) || 
       (deviceFilter === 'Unassigned' && !d.zoneName))
   )
+
+  const handleAddDevice = () => {
+    router.push('/(modals)/device-setup')
+  }
 
   return (
     <View style={styles.container}>
@@ -120,7 +68,7 @@ export default function DevicesScreen() {
             </View>
 
             {/* Stats Overview */}
-            <DeviceStatsRow onlineCount={onlineCount} offlineCount={offlineCount} totalCount={DEVICES.length} />                                                      
+            <DeviceStatsRow onlineCount={onlineCount} offlineCount={offlineCount} totalCount={mappedDevices.length} />                                                      
             
           </View>
 
@@ -162,9 +110,16 @@ export default function DevicesScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 + insets.bottom }]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={THEME.forest} />
+        }
         ListEmptyComponent={() => (
           <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-            <Text style={{ color: THEME.inkMuted, fontSize: 16 }}>No devices found matching your search.</Text>
+            {isLoading ? (
+              <ActivityIndicator size="large" color={THEME.forest} />
+            ) : (
+              <Text style={{ color: THEME.inkMuted, fontSize: 16 }}>No devices found matching your search.</Text>
+            )}
           </View>
         )}
         renderItem={({ item, index }) => (
