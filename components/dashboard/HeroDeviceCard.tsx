@@ -32,8 +32,14 @@ export function HeroDeviceCard() {
       >
         {/* Section Label */}
         <View style={styles.heroSectionLabel}>
-          <Cpu size={12} color={THEME.forest} strokeWidth={2} />
-          <Text style={styles.heroSectionLabelText}>ACTIVE SENSOR</Text>
+          <HStack style={styles.labelLeft}>
+            <Cpu size={12} color={THEME.forest} strokeWidth={2} />
+            <Text style={styles.heroSectionLabelText}>ACTIVE SENSOR</Text>
+          </HStack>
+
+          <View style={styles.wifiPulse}>
+            <Wifi size={16} color={THEME.forest} strokeWidth={2} />
+          </View>
         </View>
 
         {/* Header */}
@@ -46,13 +52,12 @@ export function HeroDeviceCard() {
               <Text style={styles.heroDeviceName}>{DEVICE_DATA.name}</Text>
               <HStack style={{ gap: 6, alignItems: 'center' }}>
                 <View style={styles.onlineDot} />
-                <Text style={styles.heroSyncText}>Online · Last sync {DEVICE_DATA.lastSync}</Text>
+                <Text style={styles.heroSyncText}>
+                  Online · Last sync {DEVICE_DATA.lastSync}
+                </Text>
               </HStack>
             </VStack>
           </HStack>
-          <View style={styles.wifiPulse}>
-            <Wifi size={16} color={THEME.forest} strokeWidth={2} />
-          </View>
         </HStack>
 
         {/* Stats Grid */}
@@ -105,28 +110,48 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 6
   },
+
+  /* LABEL ROW */
   heroSectionLabel: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
     marginBottom: 12,
+    width: '100%'
+  },
+
+  labelLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
     backgroundColor: 'rgba(74,121,95,0.1)',
-    borderRadius: 8,
-    alignSelf: 'flex-start'
+    borderRadius: 8
   },
+
   heroSectionLabelText: {
     fontSize: 10,
     fontWeight: '700',
     color: THEME.forest,
     letterSpacing: 1
   },
+
+  wifiPulse: {
+    marginLeft: 'auto',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(74,121,95,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+
   heroHeader: {
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20
   },
+
   heroIconWrap: {
     width: 48,
     height: 48,
@@ -140,30 +165,26 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2
   },
+
   heroDeviceName: {
     fontSize: 18,
     fontWeight: '600',
     fontFamily: FONTS.serif,
     color: THEME.ink
   },
+
   onlineDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: THEME.forest
   },
+
   heroSyncText: {
     fontSize: 12,
     color: THEME.inkMuted
   },
-  wifiPulse: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(74,121,95,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
+
   statsGrid: {
     justifyContent: 'space-between',
     gap: 8
