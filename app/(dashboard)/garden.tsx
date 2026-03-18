@@ -11,7 +11,7 @@ import { BottomSheetBackdrop, BottomSheetModal } from '@gorhom/bottom-sheet'
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router'
 import { Flower2, Leaf } from 'lucide-react-native'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Keyboard, ScrollView, TouchableWithoutFeedback, View } from 'react-native'
+import { ActivityIndicator, Keyboard, ScrollView, TouchableWithoutFeedback, View, RefreshControl } from 'react-native'
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -201,6 +201,11 @@ export default function GardenScreen() {
 
   const isNavigatingToDetail = useRef(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  const { refetch: refetchZones, isRefetching: isRefetchingZones } = useZones()
+  const { refetch: refetchPlants, isRefetching: isRefetchingPlants } = usePlants()
+  const onRefresh = useCallback(async () => {
+    await Promise.all([refetchZones(), refetchPlants()])
+  }, [refetchZones, refetchPlants])
 
   useFocusEffect(
     useCallback(() => {
@@ -342,6 +347,7 @@ export default function GardenScreen() {
               contentContainerStyle={styles.content}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps='handled'
+              refreshControl={<RefreshControl refreshing={isRefetchingZones || isRefetchingPlants} onRefresh={onRefresh} tintColor={THEME.orchidMain} />}
             >
               {(loadingZones && zones.length === 0) || (loadingPlants && plants.length === 0) ? (
                 <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: 100 }}>

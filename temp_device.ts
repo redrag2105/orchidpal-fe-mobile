@@ -1,4 +1,4 @@
-import { CancelConfirmModal } from '@/components/iot/device-setup'
+﻿import { CancelConfirmModal } from '@/components/iot/device-setup'
 import { Toast, ToastTitle, useToast } from '@/components/ui/toast'
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { useLocalSearchParams, useRouter } from 'expo-router'
@@ -22,8 +22,7 @@ import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
 import { useDeviceDetail } from '@/hooks/queries/useDeviceDetail'
-import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { ScrollView, StyleSheet, TouchableOpacity, View, RefreshControl } from 'react-native'
 
 const MOCK_LOGS = [
   { id: '1', time: '10:45 AM', event: 'Pump activated automatically (Rule: Low Humidity)', type: 'action' },
@@ -44,9 +43,6 @@ export default function DeviceDetailScreen() {
     await refetch()
     setRefreshing(false)
   }, [refetch])
-
-  const [isAssigned, setIsAssigned] = useState(false)
-  useEffect(() => {
     if (apiDevice) {
       setIsAssigned(!!apiDevice.planting_zones?.name)
     }
@@ -125,12 +121,10 @@ export default function DeviceDetailScreen() {
   }
 
   const device = {
-    id: apiDevice.id,
     serial_number: apiDevice.hw_address,
     status: apiDevice.status ? apiDevice.status.toUpperCase() : 'OFFLINE',
     last_online_at: apiDevice.last_online_at ? new Date(apiDevice.last_online_at).toLocaleString() : 'Unknown',
     signalStrength: 85,
-    zoneId: apiDevice.planting_zones?.id,
     zoneName: apiDevice.planting_zones?.name,
     firmware: apiDevice.current_firmware || 'v1.0.0',
     ip: 'Unknown'
@@ -148,11 +142,7 @@ export default function DeviceDetailScreen() {
         <View style={{ width: 44 }} />
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME.forest} />}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Device Overview Card */}
         <View style={styles.card}>
           <HStack style={{ alignItems: 'center', gap: 16 }}>
@@ -161,7 +151,6 @@ export default function DeviceDetailScreen() {
             </View>
             <VStack style={{ flex: 1, gap: 4 }}>
               <Text style={styles.deviceSerial}>{device.serial_number}</Text>
-              <Text style={{ fontSize: 12, color: THEME.inkMuted, fontFamily: FONTS.mono }}>ID: {device.id}</Text>
               <HStack style={{ alignItems: 'center', gap: 6 }}>
                 <View style={[styles.statusDot, isOnline ? styles.statusOnline : styles.statusOffline]} />
                 <Text style={styles.statusText}>{isOnline ? 'Online' : 'Offline'}</Text>
@@ -199,12 +188,25 @@ export default function DeviceDetailScreen() {
           {isAssigned ? (
             <VStack style={{ gap: 12 }}>
               <Text style={styles.infoLabel}>Currently monitoring:</Text>
-              <TouchableOpacity activeOpacity={0.7} onPress={() => router.push(('/zone/' + device.zoneId) as any)}>
-                <View style={styles.activeZoneRow}>
-                  <Activity size={20} color={THEME.forest} />
-                  <Text style={styles.activeZoneText}>{device.zoneName}</Text>
-                  <ChevronRight size={20} color={THEME.forest} style={{ marginLeft: 'auto' }} />
-                </View>
+              <View style={styles.activeZoneRow}>
+                <Activity size={20} color={THEME.forest} />
+                <Text style={styles.activeZoneText}>{device.zoneName}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.outlineButton}
+                onPress={() =>
+                  showConfirm(
+                    'Unassign Device',
+                    'Are you sure you want to unassign this device from its current zone?',
+                    () => {
+                      setIsAssigned(false)
+                      showToast('Device unassigned successfully.')
+                    },
+                    'Unassign'
+                  )
+                }
+              >
+                <Text style={styles.outlineButtonText}>Unassign or Move</Text>
               </TouchableOpacity>
             </VStack>
           ) : (
@@ -592,3 +594,4 @@ const styles = StyleSheet.create({
     color: THEME.inkMuted
   }
 })
+

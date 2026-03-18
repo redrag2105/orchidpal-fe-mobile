@@ -4,8 +4,9 @@
  */
 
 import { BookOpen, Lightbulb, Sparkles } from 'lucide-react-native'
-import React from 'react'
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
+import React, { useState, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { ScrollView, StyleSheet, TouchableOpacity, View, RefreshControl } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { HStack } from '@/components/ui/hstack'
@@ -62,6 +63,13 @@ function TipCard({ tip }: { tip: typeof TIPS[0] }) {
 }
 
 export default function ExpertScreen() {
+  const queryClient = useQueryClient()
+  const [refreshing, setRefreshing] = useState(false)
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true)
+    await queryClient.invalidateQueries()
+    setTimeout(() => setRefreshing(false), 500)
+  }, [queryClient])
   return (
     <View style={styles.root}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
@@ -76,6 +84,7 @@ export default function ExpertScreen() {
         <ScrollView 
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME.forest} />}
         >
           {/* AI Insight */}
           <TouchableOpacity style={styles.aiCard} activeOpacity={0.9}>

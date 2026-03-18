@@ -162,12 +162,25 @@ export async function createPlant(payload: CreatePlantRequest): Promise<{ plant_
   return response.data
 }
 
-export async function getDevices(): Promise<{ data: any[]; meta: { page: number; limit: number; total: number; totalPages: number; }; }> {
+export async function getDevices(): Promise<{
+  data: any[]
+  meta: { page: number; limit: number; total: number; totalPages: number }
+}> {
   const response = await apiClient.get('/devices')
   return response.data || { data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } }
 }
 
 export async function controlDevice(serialNumber: string, payload: { role: string; action: 'ON' | 'OFF' }) {
   const response = await apiClient.post(`/devices/${serialNumber}/control`, payload)
+  return response.data
+}
+
+export async function getDeviceById(id: string): Promise<any> {
+  const response = await apiClient.get(`/devices/${id}`)
+  return response.data
+}
+
+export async function getLatestDevice(): Promise<any> {
+  const response = await apiClient.get('/devices/latest')
   return response.data
 }

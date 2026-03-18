@@ -20,49 +20,32 @@ import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
 import { useRouter } from 'expo-router'
 import { Bell, Leaf, Sparkles } from 'lucide-react-native'
-import React from 'react'
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
+import React, { useState, useCallback } from 'react'
+import { ScrollView, StyleSheet, TouchableOpacity, View, RefreshControl } from 'react-native'
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-// Mock data
-const MY_ZONES: Zone[] = [
-  {
-    id: '1',
-    name: 'Living Room',
-    plantCount: 3,
-    image: 'https://images.unsplash.com/photo-1566836610593-62a64888a216?w=400',
-    status: 'healthy',
-    temp: 23,
-    humidity: 68
-  },
-  {
-    id: '2',
-    name: 'Balcony Garden',
-    plantCount: 5,
-    image: 'https://images.unsplash.com/photo-1612831819518-a91e6edc315e?w=400',
-    status: 'needs-attention',
-    temp: 25,
-    humidity: 55
-  },
-  {
-    id: '3',
-    name: 'Bedroom',
-    plantCount: 2,
-    image: 'https://images.unsplash.com/photo-1567273128256-e2e4e21c80d6?w=400',
-    status: 'healthy',
-    temp: 22,
-    humidity: 70
-  }
-]
 
 const AI_INSIGHTS: Insight[] = [
   { id: '1', text: 'Early heatwave detected — consider +1 mist cycle', type: 'warning' },
   { id: '2', text: 'VPD optimal for blooming phase', type: 'success' }
 ]
 
+import { useQueryClient } from '@tanstack/react-query'
+import { useZones } from '@/hooks/queries/useZones'
+
 export default function Dashboard() {
   const router = useRouter()
+  const queryClient = useQueryClient()
+  const { data: zones = [], isLoading: isLoadingZones } = useZones()
+  
+  const [refreshing, setRefreshing] = useState(false)
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true)
+    await queryClient.invalidateQueries()
+    setRefreshing(false)
+  }, [queryClient])
+
 
   return (
     <View style={styles.root}>
@@ -80,7 +63,7 @@ export default function Dashboard() {
           </HStack>
         </Animated.View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME.forest} />}>
           {/* Hero Device Card */}
           <HeroDeviceCard />
 
@@ -98,7 +81,7 @@ export default function Dashboard() {
           </Animated.View>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.zonesScroll}>
-            {MY_ZONES.map((zone, index) => (
+            {zones.map((zone: any, index: number) => (
               <ZoneCard key={zone.id} zone={zone} index={index} />
             ))}
           </ScrollView>
@@ -206,3 +189,5 @@ const styles = StyleSheet.create({
     paddingRight: 20
   }
 })
+
+

@@ -3,20 +3,28 @@
  * IoT device management with botanical luxury design
  */
 
-import { Device, DeviceCard, DeviceStatsRow, FONTS, THEME } from '@/components/devices'
 import { NotificationBell } from '@/components/dashboard'
+import { Device, DeviceCard, DeviceStatsRow, FONTS, THEME } from '@/components/devices'
 import { SearchBar } from '@/components/ui/SearchBar'
 import { Text } from '@/components/ui/text'
-import { VStack } from '@/components/ui/vstack'
 import { Colors } from '@/constants/Colors'
+import { useDevices } from '@/hooks/queries/useDevices'
 import { useRouter } from 'expo-router'
-import { RefreshCw, Plus } from 'lucide-react-native'
+import { Plus } from 'lucide-react-native'
 import React, { useState } from 'react'
-import { ScrollView, StyleSheet, TouchableOpacity, View, FlatList, Keyboard, TouchableWithoutFeedback, Dimensions } from 'react-native'
+import {
+  ActivityIndicator,
+  FlatList,
+  Keyboard,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
+} from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useDevices } from '@/hooks/queries/useDevices'
-import { ActivityIndicator, RefreshControl } from 'react-native'
 
 export default function DevicesScreen() {
   const router = useRouter()
@@ -25,7 +33,7 @@ export default function DevicesScreen() {
   const [deviceFilter, setDeviceFilter] = useState<'All' | 'Assigned' | 'Unassigned'>('All')
 
   const { data: devicesData, isLoading, refetch, isRefetching } = useDevices()
-  
+
   const mappedDevices: Device[] = (devicesData?.data || []).map((d: any) => ({
     id: d.id,
     serial_number: d.serial_number,
@@ -39,12 +47,12 @@ export default function DevicesScreen() {
   const offlineCount = mappedDevices.filter((d) => d.status === 'OFFLINE').length
 
   const filteredDevices = mappedDevices.filter(
-    (d) => 
+    (d) =>
       (d.serial_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (d.zoneName && d.zoneName.toLowerCase().includes(searchQuery.toLowerCase()))) &&
-      (deviceFilter === 'All' || 
-      (deviceFilter === 'Assigned' && d.zoneName) || 
-      (deviceFilter === 'Unassigned' && !d.zoneName))
+        (d.zoneName && d.zoneName.toLowerCase().includes(searchQuery.toLowerCase()))) &&
+      (deviceFilter === 'All' ||
+        (deviceFilter === 'Assigned' && d.zoneName) ||
+        (deviceFilter === 'Unassigned' && !d.zoneName))
   )
 
   const handleAddDevice = () => {
@@ -53,53 +61,72 @@ export default function DevicesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={{ backgroundColor: Colors.light.background, borderBottomEndRadius: 30, borderBottomStartRadius: 30, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 8, zIndex: 10 }}>
+      <View
+        style={{
+          backgroundColor: Colors.light.background,
+          borderBottomEndRadius: 30,
+          borderBottomStartRadius: 30,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.05,
+          shadowRadius: 12,
+          elevation: 8,
+          zIndex: 10
+        }}
+      >
         <SafeAreaView edges={['top']} style={{ backgroundColor: Colors.light.background }}>
           <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
             <View style={styles.fixedHeader}>
               <View style={{ paddingHorizontal: 20 }}>
-            {/* Header */}
-            <View style={styles.headerRow}>
-              <Animated.View entering={FadeInDown.duration(400)} style={styles.headerText}> 
-                <Text style={styles.headerTitle}>My Devices</Text>
-                <Text style={styles.headerSubtitle}>Manage your IoT sensors</Text>
-              </Animated.View>
-              <NotificationBell />
+                {/* Header */}
+                <View style={styles.headerRow}>
+                  <Animated.View entering={FadeInDown.duration(400)} style={styles.headerText}>
+                    <Text style={styles.headerTitle}>My Devices</Text>
+                    <Text style={styles.headerSubtitle}>Manage your IoT sensors</Text>
+                  </Animated.View>
+                  <NotificationBell />
+                </View>
+
+                {/* Stats Overview */}
+                <DeviceStatsRow
+                  onlineCount={onlineCount}
+                  offlineCount={offlineCount}
+                  totalCount={mappedDevices.length}
+                />
+              </View>
+
+              {/* Search Bar */}
+              <View style={styles.searchContainer}>
+                <SearchBar
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholder='Search devices by serial or zone...'
+                />
+              </View>
+
+              {/* Filter Chips */}
+              <View style={{ paddingHorizontal: 20 }}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.filterContainer}
+                >
+                  {['All', 'Assigned', 'Unassigned'].map((filter) => {
+                    const isActive = deviceFilter === filter
+                    return (
+                      <TouchableOpacity
+                        key={filter}
+                        style={[styles.filterChip, isActive && styles.filterChipActive]}
+                        onPress={() => setDeviceFilter(filter as any)}
+                      >
+                        <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>{filter}</Text>
+                      </TouchableOpacity>
+                    )
+                  })}
+                </ScrollView>
+              </View>
             </View>
-
-            {/* Stats Overview */}
-            <DeviceStatsRow onlineCount={onlineCount} offlineCount={offlineCount} totalCount={mappedDevices.length} />                                                      
-            
-          </View>
-
-          {/* Search Bar */}
-          <View style={styles.searchContainer}>
-            <SearchBar
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder="Search devices by serial or zone..."
-            />
-          </View>
-
-          {/* Filter Chips */}
-          <View style={{ paddingHorizontal: 20 }}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContainer}>
-              {['All', 'Assigned', 'Unassigned'].map((filter) => {
-                const isActive = deviceFilter === filter;
-                return (
-                  <TouchableOpacity
-                    key={filter}
-                    style={[styles.filterChip, isActive && styles.filterChipActive]}
-                    onPress={() => setDeviceFilter(filter as any)}
-                  >
-                    <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>{filter}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-        </View>
-        </TouchableWithoutFeedback>
+          </TouchableWithoutFeedback>
         </SafeAreaView>
       </View>
 
@@ -108,37 +135,31 @@ export default function DevicesScreen() {
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 + insets.bottom }]}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={THEME.forest} />
-        }
+        keyboardShouldPersistTaps='handled'
+        keyboardDismissMode='on-drag'
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={THEME.forest} />}
         ListEmptyComponent={() => (
           <View style={{ paddingVertical: 40, alignItems: 'center' }}>
             {isLoading ? (
-              <ActivityIndicator size="large" color={THEME.forest} />
+              <ActivityIndicator size='large' color={THEME.forest} />
             ) : (
               <Text style={{ color: THEME.inkMuted, fontSize: 16 }}>No devices found matching your search.</Text>
             )}
           </View>
         )}
         renderItem={({ item, index }) => (
-          <DeviceCard 
-            device={item} 
-            index={index} 
+          <DeviceCard
+            device={item}
+            index={index}
             onPress={() => router.push(`/device/${item.id}`)}
             onAssign={() => router.push(`/device/${item.id}`)}
           />
         )}
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
       />
-      
+
       {/* Floating Action Button */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={handleAddDevice}
-        activeOpacity={0.9}
-      >
+      <TouchableOpacity style={styles.fab} onPress={handleAddDevice} activeOpacity={0.9}>
         <Plus size={28} color='white' strokeWidth={2.5} />
       </TouchableOpacity>
     </View>
@@ -150,32 +171,32 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: THEME.paper
   },
-  fixedHeader: { 
-    backgroundColor: Colors.light.background, 
-    paddingTop: 8, 
-    paddingBottom: 8, 
-    borderBottomEndRadius: 30, 
-    borderBottomStartRadius: 30, 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 4 }, 
-    shadowOpacity: 0.05, 
-    shadowRadius: 12, 
-    elevation: 8, 
-    zIndex: 10 
+  fixedHeader: {
+    backgroundColor: Colors.light.background,
+    paddingTop: 8,
+    paddingBottom: 8,
+    borderBottomEndRadius: 30,
+    borderBottomStartRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 8,
+    zIndex: 10
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 20
   },
-  headerRow: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginBottom: 8 
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8
   },
-  headerText: { 
-    flexDirection: 'column', 
-    alignItems: 'flex-start' 
+  headerText: {
+    flexDirection: 'column',
+    alignItems: 'flex-start'
   },
   header: {
     flexDirection: 'row',
@@ -221,7 +242,7 @@ const styles = StyleSheet.create({
   filterContainer: {
     paddingTop: 0,
     gap: 10,
-    paddingBottom: 8,
+    paddingBottom: 8
   },
   filterChip: {
     paddingHorizontal: 16,
@@ -229,19 +250,19 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: THEME.paper,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
+    borderColor: 'rgba(0,0,0,0.05)'
   },
   filterChipActive: {
     backgroundColor: THEME.forest,
-    borderColor: THEME.forest,
+    borderColor: THEME.forest
   },
   filterChipText: {
     fontSize: 13,
     color: THEME.inkMuted,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   filterChipTextActive: {
-    color: 'white',
+    color: 'white'
   },
   fab: {
     position: 'absolute',

@@ -10,11 +10,11 @@ import { FONTS, THEME } from './theme'
 export interface Zone {
   id: string
   name: string
-  plantCount: number
-  image: string
-  status: 'healthy' | 'needs-attention'
-  temp: number
-  humidity: number
+  image_url?: string | null
+  location_city?: string
+  temperature?: number | null
+  humidity?: number | null
+  status?: string
 }
 
 interface ZoneCardProps {
@@ -24,12 +24,13 @@ interface ZoneCardProps {
 }
 
 export function ZoneCard({ zone, index, onPress }: ZoneCardProps) {
-  const isHealthy = zone.status === 'healthy'
+  const isHealthy = zone.status !== 'needs-attention'
+  const imgUri = zone.image_url || 'https://images.unsplash.com/photo-1566836610593-62a64888a216?w=400'
 
   return (
     <Animated.View entering={FadeInRight.delay(200 + index * 100).duration(400)}>
       <TouchableOpacity style={styles.zoneCard} activeOpacity={0.85} onPress={onPress}>
-        <Image source={{ uri: zone.image }} style={styles.zoneImage} />
+        <Image source={{ uri: imgUri }} style={styles.zoneImage} />
 
         {/* Gradient overlay */}
         <LinearGradient colors={['transparent', 'rgba(0,0,0,0.7)']} style={styles.zoneGradient} />
@@ -47,16 +48,10 @@ export function ZoneCard({ zone, index, onPress }: ZoneCardProps) {
         {/* Content */}
         <View style={styles.zoneContent}>
           <Text style={styles.zoneName}>{zone.name}</Text>
-          <Text style={styles.zoneLocation}>{zone.plantCount} plants</Text>
+          {zone.location_city ? <Text style={styles.zoneLocation}>{zone.location_city}</Text> : null}
           <HStack style={styles.zoneStats}>
-            <HStack style={{ gap: 4, alignItems: 'center' }}>
-              <Thermometer size={12} color='white' strokeWidth={1.5} />
-              <Text style={styles.zoneStatText}>{zone.temp}°C</Text>
-            </HStack>
-            <HStack style={{ gap: 4, alignItems: 'center' }}>
-              <Droplets size={12} color='white' strokeWidth={1.5} />
-              <Text style={styles.zoneStatText}>{zone.humidity}%</Text>
-            </HStack>
+            {zone.temperature !== null && zone.temperature !== undefined ? <HStack style={{ gap: 4, alignItems: 'center' }}><Thermometer size={12} color='white' strokeWidth={1.5} /><Text style={styles.zoneStatText}>{zone.temperature}C</Text></HStack> : null}
+            {zone.humidity !== null && zone.humidity !== undefined ? <HStack style={{ gap: 4, alignItems: 'center' }}><Droplets size={12} color='white' strokeWidth={1.5} /><Text style={styles.zoneStatText}>{zone.humidity}%</Text></HStack> : null}
           </HStack>
         </View>
       </TouchableOpacity>

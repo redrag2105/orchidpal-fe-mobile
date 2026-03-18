@@ -1,27 +1,50 @@
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
+import { useLatestDevice } from '@/hooks/queries/useLatestDevice'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Cpu, Droplets, Leaf, Sun, Thermometer, Wifi } from 'lucide-react-native'
 import React from 'react'
-import { StyleSheet, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { CircularStat } from './CircularStat'
 import { FONTS, THEME } from './theme'
 
-// Mock data - in production this would come from props or context
-const DEVICE_DATA = {
-  name: 'Living Room Sensor',
-  serialNumber: 'ESP-ORCHID-001',
-  status: 'online',
-  temperature: 23.4,
-  humidity: 68,
-  light: 72,
-  moisture: 45,
-  lastSync: '2 min ago'
-}
-
 export function HeroDeviceCard() {
+  const { data, isLoading, error } = useLatestDevice()
+
+  if (isLoading) {
+    return (
+      <View
+        style={[
+          styles.heroCard,
+          { justifyContent: 'center', alignItems: 'center', height: 200, backgroundColor: '#f0f6f2' }
+        ]}
+      >
+        <ActivityIndicator size='large' color={THEME.forest} />
+      </View>
+    )
+  }
+
+  if (error || !data || !data.device) {
+    // Return empty or error state if needed
+    return null
+  }
+
+  const { device, zone, plants } = data
+
+  // Mock telemetry data - in production this would come from the telemetry stream
+  const DEVICE_DATA = {
+    name: zone?.name ? zone.name + ' Sensor' : device.serial_number,
+    serialNumber: device.serial_number,
+    status: device.status ? device.status.toLowerCase() : 'offline',
+    temperature: 23.4,
+    humidity: 68,
+    light: 72,
+    moisture: 45,
+    lastSync: device.last_online_at ? new Date(device.last_online_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'medium' }) : 'Unknown'
+  }
+
   return (
     <Animated.View entering={FadeInDown.delay(100).duration(500)}>
       <LinearGradient
@@ -51,9 +74,9 @@ export function HeroDeviceCard() {
             <VStack>
               <Text style={styles.heroDeviceName}>{DEVICE_DATA.name}</Text>
               <HStack style={{ gap: 6, alignItems: 'center' }}>
-                <View style={styles.onlineDot} />
+                <View style={[styles.onlineDot, DEVICE_DATA.status !== 'online' && { backgroundColor: '#9e9e9e' }]} />
                 <Text style={styles.heroSyncText}>
-                  Online · Last sync {DEVICE_DATA.lastSync}
+                  {DEVICE_DATA.status === 'online' ? 'Online' : 'Offline'} � Last sync {DEVICE_DATA.lastSync}
                 </Text>
               </HStack>
             </VStack>
@@ -65,7 +88,7 @@ export function HeroDeviceCard() {
           <CircularStat
             value={DEVICE_DATA.temperature}
             maxValue={40}
-            label='Temp °C'
+            label='Temp C'
             color={THEME.orchidMain}
             icon={Thermometer}
             delay={150}

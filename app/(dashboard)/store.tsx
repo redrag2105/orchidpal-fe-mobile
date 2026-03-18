@@ -11,8 +11,9 @@ import { NotificationBell } from '@/components/dashboard'
 import { useRouter } from 'expo-router'
 import * as SecureStore from 'expo-secure-store'
 import { Bell, ChevronRight, CircleUser, HelpCircle, LogOut, Moon, Shield, Smartphone, Wifi } from 'lucide-react-native'
-import React, { useState } from 'react'
-import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
+import React, { useState, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { Alert, ScrollView, StyleSheet, TouchableOpacity, View, RefreshControl } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 const THEME = {
@@ -61,6 +62,13 @@ function SettingsSection({ title, children }: { title: string; children: React.R
 
 export default function SettingsScreen() {
   const router = useRouter()
+  const queryClient = useQueryClient()
+  const [refreshing, setRefreshing] = useState(false)
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true)
+    await queryClient.invalidateQueries()
+    setTimeout(() => setRefreshing(false), 500)
+  }, [queryClient])
   const [isSigningOut, setIsSigningOut] = useState(false)
 
   const handleSignOut = async () => {
@@ -98,7 +106,7 @@ export default function SettingsScreen() {
           <NotificationBell />
         </HStack>
 
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME.forest} />}>
           {/* Profile */}
           <TouchableOpacity style={styles.profileCard} activeOpacity={0.8}>
             <View style={styles.avatar}>
