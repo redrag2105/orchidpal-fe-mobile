@@ -31,8 +31,8 @@ export function SearchBar({ value, onChangeText, placeholder }: { value: string,
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    paddingHorizontal: 0,
+    marginBottom: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.paper,
     borderRadius: 999,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.05)',
   },

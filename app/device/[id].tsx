@@ -22,6 +22,7 @@ import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
 import { useDeviceDetail } from '@/hooks/queries/useDeviceDetail'
+import { useAssignDeviceToZone } from '@/hooks/mutations/useAssignDeviceToZone'
 import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -37,6 +38,7 @@ export default function DeviceDetailScreen() {
   const { id } = useLocalSearchParams()
 
   const { data: apiDevice, isLoading, error, refetch } = useDeviceDetail(id as string)
+  const { mutateAsync: assignDeviceMutate } = useAssignDeviceToZone()
 
   const [refreshing, setRefreshing] = useState(false)
   const onRefresh = useCallback(async () => {
@@ -94,12 +96,30 @@ export default function DeviceDetailScreen() {
 
   const handleConfirmLink = (zone: any) => {
     showConfirm('Confirm Assignment', `Are you sure you want to assign this device to ${zone.name}?`, () => {
-      setIsAssigned(true)
-      if (device) {
-        device.zoneName = zone.name
-      }
-      assignSheetRef.current?.dismiss()
-      showToast('Device has been successfully assigned to the zone.')
+      assignDeviceMutate({ serialNumber: id as string, payload: { zone_id: zone.id } })
+        .then(() => {
+          setIsAssigned(true)
+          if (device) {
+            device.zoneName = zone.name
+          }
+          assignSheetRef.current?.dismiss()
+          showToast('Device has been successfully assigned to the zone.')
+        })
+        .catch(() => showToast('Failed to assign device.'))
+    })
+  }
+
+  const handleUnassignDevice = () => {
+    showConfirm('Unassign Device', 'Are you sure you want to remove this device from the zone?', () => {
+      assignDeviceMutate({ serialNumber: id as string, payload: { zone_id: null } })
+        .then(() => {
+          setIsAssigned(false)
+          if (device) {
+            device.zoneName = undefined
+          }
+          showToast('Device has been successfully unassigned.')
+        })
+        .catch(() => showToast('Failed to unassign device.'))
     })
   }
 
@@ -126,7 +146,8 @@ export default function DeviceDetailScreen() {
 
   const device = {
     id: apiDevice.id,
-    serial_number: apiDevice.hw_address,
+    serial_number: apiDevice.serial_number,
+    hw_address: apiDevice.hw_address,
     status: apiDevice.status ? apiDevice.status.toUpperCase() : 'OFFLINE',
     last_online_at: apiDevice.last_online_at ? new Date(apiDevice.last_online_at).toLocaleString() : 'Unknown',
     signalStrength: 85,
@@ -194,7 +215,14 @@ export default function DeviceDetailScreen() {
         </View>
 
         {/* Zone Assignment Section */}
-        <Text style={styles.sectionTitle}>Zone Assignment</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={styles.sectionTitle}>Zone Assignment</Text>
+          {isAssigned && (
+            <TouchableOpacity onPress={handleUnassignDevice} style={{ marginRight: 20, marginTop: 10 }}>
+              <Text style={{ fontSize: 13, color: THEME.orchidMain, fontWeight: '600' }}>Unassign</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <View style={styles.card}>
           {isAssigned ? (
             <VStack style={{ gap: 12 }}>
@@ -230,7 +258,7 @@ export default function DeviceDetailScreen() {
             </HStack>
             <HStack style={{ justifyContent: 'space-between' }}>
               <Text style={styles.infoLabel}>MAC Address</Text>
-              <Text style={styles.infoValue}>{device.serial_number}</Text>
+              <Text style={styles.infoValue}>{device.hw_address}</Text>
             </HStack>
             <HStack style={{ justifyContent: 'space-between' }}>
               <Text style={styles.infoLabel}>Update Method</Text>

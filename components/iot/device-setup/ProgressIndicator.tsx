@@ -117,37 +117,40 @@ export function ProgressIndicator({ step, onStepPress }: ProgressIndicatorProps)
 const localStyles = StyleSheet.create({
   stepperContainer: {
     position: 'relative',
-    marginBottom: 28,
-    marginTop: 10
+    marginBottom: 32,
+    marginTop: 16,
+    paddingHorizontal: 8
   },
   stepperLineContainer: {
     position: 'absolute',
-    top: 22,
-    left: '10%',
-    right: '10%',
-    height: 3
+    top: 20, /* 40/2 */
+    left: '14%',
+    right: '14%',
+    height: 4,
+    zIndex: 1
   },
   stepperLineBg: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 3,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    height: 4,
+    backgroundColor: 'rgba(0,0,0,0.06)',
     borderRadius: 2
   },
   stepperLineProgress: {
     position: 'absolute',
     top: 0,
     left: 0,
-    height: 3,
+    height: 4,
     backgroundColor: THEME.forest,
     borderRadius: 2
   },
   stepperRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start'
+    alignItems: 'flex-start',
+    zIndex: 2
   },
   stepperItem: {
     flex: 1,
@@ -155,19 +158,19 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 2
   },
   stepperDot: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: THEME.paper,
-    borderWidth: 2.5,
+    borderWidth: 2,
     borderColor: 'rgba(0,0,0,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
     shadowColor: THEME.ink,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
     elevation: 2
   },
   stepperDotActive: {

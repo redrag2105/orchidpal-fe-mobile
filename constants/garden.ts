@@ -1,6 +1,6 @@
 import { Plant, Device } from '@/types/garden.types';
 
-export const ZONE_FILTERS = ['All', 'Need plants', 'Need device', 'Fully Linked'];
+export const ZONE_FILTERS = ['All', 'Fully Linked', 'Need plants', 'Need device'];
 
 export const MOCK_PLANTS: any[] = [
   { id: 'p1', nickname: 'Luna', species_wiki: { common_name: 'Phalaenopsis amabilis', scientific_name: 'Sci Phalaenopsis amabilis', ideal_temp_min: 15, ideal_temp_max: 35, ideal_humid_min: 60, ideal_humid_max: 80, care_instruction: 'care' }, image_url: 'https://images.unsplash.com/photo-1587223075055-82e9a937ddff?auto=format&fit=crop&q=80&w=300', zone_id: 'z1', planted_at: '2025-01-15', health_status: 'GOOD' },

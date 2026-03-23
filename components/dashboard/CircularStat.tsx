@@ -95,6 +95,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: THEME.inkMuted,
     textTransform: 'uppercase',
-    letterSpacing: 0.5
+    letterSpacing: 0.5,
+    textAlign: 'center'
   }
 })

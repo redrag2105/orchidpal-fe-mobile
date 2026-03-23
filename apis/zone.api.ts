@@ -44,3 +44,15 @@ export const createZone = async (payload: CreateZoneRequest): Promise<any> => {
   const response = await apiClient.post('/zones', payload)
   return response.data
 }
+
+export interface UpdateZoneRequest {
+  name?: string
+  location_city?: string
+  exposure?: string
+  image_url?: string
+}
+
+export const updateZone = async (id: string, payload: UpdateZoneRequest): Promise<any> => {
+  const response = await apiClient.patch(`/zones/${id}`, payload)
+  return response.data
+}

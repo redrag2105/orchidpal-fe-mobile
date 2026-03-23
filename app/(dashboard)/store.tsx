@@ -11,10 +11,13 @@ import { NotificationBell } from '@/components/dashboard'
 import { useRouter } from 'expo-router'
 import * as SecureStore from 'expo-secure-store'
 import { Bell, ChevronRight, CircleUser, HelpCircle, LogOut, Moon, Shield, Smartphone, Wifi } from 'lucide-react-native'
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
+import { Image } from 'react-native'
+import { useDevices } from '@/hooks/queries/useDevices'
 import { useQueryClient } from '@tanstack/react-query'
 import { Alert, ScrollView, StyleSheet, TouchableOpacity, View, RefreshControl } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useDynamicBottomTab } from '@/hooks/useDynamicBottomTab'
 
 const THEME = {
   paper: '#fdfcf8',
@@ -60,9 +63,49 @@ function SettingsSection({ title, children }: { title: string; children: React.R
   )
 }
 
+function decodeJWT(token: string) {
+  try {
+    const base64Url = token.split('.')[1]
+    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    while (base64.length % 4) {
+      base64 += '='
+    }
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    )
+    return JSON.parse(jsonPayload)
+  } catch (e) {
+    return null
+  }
+}
+
 export default function SettingsScreen() {
+  const handleScroll = useDynamicBottomTab()
   const router = useRouter()
   const queryClient = useQueryClient()
+  
+  const { data: devicesData } = useDevices()
+  const totalDevices = devicesData?.data?.length || 0
+  const [user, setUser] = useState<{ name?: string; email?: string; picture?: string } | null>(null)
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const token = await SecureStore.getItemAsync('access_token')
+        if (token) {
+          const decoded = decodeJWT(token)
+          setUser(decoded)
+        }
+      } catch (e) {
+        console.log('Failed to decode user', e)
+      }
+    }
+    loadUser()
+  }, [])
+
   const [refreshing, setRefreshing] = useState(false)
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
@@ -106,35 +149,44 @@ export default function SettingsScreen() {
           <NotificationBell />
         </HStack>
 
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME.forest} />}>
+        <ScrollView 
+          contentContainerStyle={styles.content} 
+          showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME.forest} />}
+        >
           {/* Profile */}
           <TouchableOpacity style={styles.profileCard} activeOpacity={0.8}>
             <View style={styles.avatar}>
-              <CircleUser size={32} color={THEME.inkLight} strokeWidth={1.5} />
+              {user?.picture ? (
+                <Image source={{ uri: user.picture }} style={{ width: 56, height: 56, borderRadius: 28 }} />
+              ) : (
+                <CircleUser size={32} color={THEME.inkLight} strokeWidth={1.5} />
+              )}
             </View>
             <VStack style={{ flex: 1 }}>
-              <Text style={styles.profileName}>Orchid Lover</Text>
-              <Text style={styles.profileEmail}>user@orchidpal.com</Text>
+              <Text style={styles.profileName}>{user?.name || 'Orchid Lover'}</Text>
+              <Text style={styles.profileEmail}>{user?.email || 'user@orchidpal.com'}</Text>
             </VStack>
             <ChevronRight size={20} color={THEME.inkLight} />
           </TouchableOpacity>
 
           {/* Devices */}
           <SettingsSection title='Devices'>
-            <SettingsItem icon={Wifi} label='Connected Devices' value='1' />
-            <SettingsItem icon={Smartphone} label='Add New Device' />
+            <SettingsItem icon={Wifi} label='Connected Devices' value={totalDevices.toString()} />
+            <SettingsItem icon={Smartphone} label='Add New Device' onPress={() => router.push('/(modals)/device-setup')} />
           </SettingsSection>
 
           {/* Preferences */}
           <SettingsSection title='Preferences'>
-            <SettingsItem icon={Bell} label='Notifications' />
             <SettingsItem icon={Moon} label='Appearance' value='Light' />
           </SettingsSection>
 
           {/* Support */}
           <SettingsSection title='Support'>
-            <SettingsItem icon={HelpCircle} label='Help Center' />
-            <SettingsItem icon={Shield} label='Privacy Policy' />
+            <SettingsItem icon={HelpCircle} label='Help Center' onPress={() => router.push('/(modals)/help-center')} />
+            <SettingsItem icon={Shield} label='Privacy Policy' onPress={() => router.push('/(modals)/privacy-policy')} />
           </SettingsSection>
 
           {/* Account */}

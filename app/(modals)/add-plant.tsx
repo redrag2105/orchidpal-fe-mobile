@@ -19,6 +19,7 @@ import {
 import React, { useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   Image,
   Keyboard,
@@ -63,6 +64,8 @@ export default function AddPlantStoryScreen() {
 
   const [savedNickname, setSavedNickname] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [newBrandPlantId, setNewBrandPlantId] = useState('')
 
   const { data: speciesRes, isLoading: isSpeciesLoading } = useSpecies()
   const speciesList = speciesRes?.data || []
@@ -124,7 +127,11 @@ export default function AddPlantStoryScreen() {
         await assignPlantMutate({ plant_id: newPlantId, zone_id: plantData.zone_id })
       }
 
-      router.replace(`/plant/${newPlantId}`)
+      setNewBrandPlantId(newPlantId)
+      setIsSuccess(true)
+      setTimeout(() => {
+        router.replace(`/plant/${newPlantId}`)
+      }, 3000)
     } catch (err) {
       console.error(err)
       router.back()
@@ -169,6 +176,24 @@ export default function AddPlantStoryScreen() {
   }
 
   const renderStep = () => {
+    if (isSuccess) {
+      return (
+        <Animated.View entering={enteringAnim} style={{ flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center' }}>
+          <CheckCircle2 size={100} color={THEME.forest} style={{ marginBottom: 24 }} />
+          <Text style={{ fontFamily: FONTS.serif, fontSize: 32, color: THEME.ink, marginBottom: 12, textAlign: 'center' }}>
+            Plant Created!
+          </Text>
+          <Text style={{ fontFamily: FONTS.sans, fontSize: 16, color: THEME.inkMuted, textAlign: 'center', marginBottom: 40 }}>
+            Redirecting to detail page...
+          </Text>
+          <TouchableOpacity onPress={() => router.replace(`/plant/${newBrandPlantId}`)} style={{ backgroundColor: THEME.forest, paddingVertical: 16, paddingHorizontal: 32, borderRadius: 30 }}>
+            <Text style={{ fontFamily: FONTS.sans, fontSize: 16, color: THEME.paper, fontWeight: '600' }}>
+              Let's see
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+      )
+    }
     switch (step) {
       case 1:
         const filteredSpecies = speciesList.filter(
@@ -223,9 +248,7 @@ export default function AddPlantStoryScreen() {
                       onPress={() => {
                         Haptics.selectionAsync()
                         setPlantData({ ...plantData, species_id: species.id! })
-                        if (!isActive) {
-                          setTimeout(() => nextStep(), 350)
-                        }
+                        
                       }}
                       style={{
                         backgroundColor: isActive ? THEME.forestLight : 'rgba(255,255,255,0.8)',
@@ -372,16 +395,38 @@ export default function AddPlantStoryScreen() {
         )
 
       case 3:
-        const pickImage = async () => {
-          let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 1
-          })
-          if (!result.canceled && result.assets && result.assets.length > 0) {
-            setPlantData({ ...plantData, image_url: result.assets[0].uri })
-          }
+        const pickImage = () => {
+          Alert.alert('Upload Photo', 'Choose a source', [
+            {
+              text: 'Camera',
+              onPress: async () => {
+                let result = await ImagePicker.launchCameraAsync({
+                  mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                  allowsEditing: true,
+                  aspect: [4, 3],
+                  quality: 1
+                })
+                if (!result.canceled && result.assets && result.assets.length > 0) {
+                  setPlantData({ ...plantData, image_url: result.assets[0].uri })
+                }
+              }
+            },
+            {
+              text: 'Library',
+              onPress: async () => {
+                let result = await ImagePicker.launchImageLibraryAsync({
+                  mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                  allowsEditing: true,
+                  aspect: [4, 3],
+                  quality: 1
+                })
+                if (!result.canceled && result.assets && result.assets.length > 0) {
+                  setPlantData({ ...plantData, image_url: result.assets[0].uri })
+                }
+              }
+            },
+            { text: 'Cancel', style: 'cancel' }
+          ])
         }
 
         return (
@@ -454,7 +499,12 @@ export default function AddPlantStoryScreen() {
                 shadowRadius: 15
               }}
             >
-              {currentSpecies?.image_url ? (
+              {plantData.image_url && !plantData.image_url.includes('unsplash') ? (
+                <Image
+                  source={{ uri: plantData.image_url }}
+                  style={{ width: 100, height: 100, borderRadius: 50, marginBottom: 24 }}
+                />
+              ) : currentSpecies?.image_url ? (
                 <Image
                   source={{ uri: currentSpecies?.image_url }}
                   style={{ width: 100, height: 100, borderRadius: 50, marginBottom: 24 }}
@@ -510,7 +560,7 @@ export default function AddPlantStoryScreen() {
                       textAlign: 'center'
                     }}
                   >
-                    {currentSpecies?.ideal_temp_min}-{currentSpecies?.ideal_temp_max}Â°C
+                    {currentSpecies?.ideal_temp_min}-{currentSpecies?.ideal_temp_max}{'\u00B0'}C
                   </Text>
                   <Text style={{ fontFamily: FONTS.sans, fontSize: 12, color: THEME.inkMuted, marginTop: 4 }}>
                     Temp
@@ -580,80 +630,85 @@ export default function AddPlantStoryScreen() {
               <ActivityIndicator size='large' color={THEME.forest} />
             ) : (
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps='always'>
-                {(zonesList || [])
-                  .filter((z) => !z.has_plant)
-                  .map((zone) => {
-                    const isActive = plantData.zone_id === zone.id
-                    return (
-                      <TouchableOpacity
-                        key={zone.id}
-                        onPress={() => {
-                          Haptics.selectionAsync()
-                          setPlantData({ ...plantData, zone_id: zone.id })
-                          setTimeout(nextStep, 350)
-                        }}
-                        style={{
-                          backgroundColor: isActive ? THEME.forest : 'rgba(255,255,255,0.8)',
-                          padding: 20,
-                          borderRadius: 20,
-                          marginBottom: 16,
-                          flexDirection: 'row',
-                          alignItems: 'center'
-                        }}
-                      >
-                        <View
+                {(() => {
+                  const availableZones = (zonesList || []).filter((z) => !z.has_plant)
+                  return (
+                    <>
+                      {availableZones.map((zone) => {
+                        const isActive = plantData.zone_id === zone.id
+                        return (
+                          <TouchableOpacity
+                            key={zone.id}
+                            onPress={() => {
+                              Haptics.selectionAsync()
+                              setPlantData({ ...plantData, zone_id: zone.id })
+                              setTimeout(nextStep, 350)
+                            }}
+                            style={{
+                              backgroundColor: isActive ? THEME.forest : 'rgba(255,255,255,0.8)',
+                              padding: 20,
+                              borderRadius: 20,
+                              marginBottom: 16,
+                              flexDirection: 'row',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <View
+                              style={{
+                                width: 60,
+                                height: 60,
+                                borderRadius: 30,
+                                backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : 'rgba(74, 121, 95, 0.1)',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                marginRight: 16
+                              }}
+                            >
+                              <MapPin size={24} color={isActive ? THEME.paper : THEME.forest} />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text
+                                style={{
+                                  fontFamily: FONTS.sans,
+                                  fontSize: 18,
+                                  fontWeight: '700',
+                                  color: isActive ? THEME.paper : THEME.ink,
+                                  marginBottom: 4
+                                }}
+                              >
+                                {zone.name}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontFamily: FONTS.sans,
+                                  fontSize: 14,
+                                  color: isActive ? 'rgba(255,255,255,0.8)' : THEME.inkMuted
+                                }}
+                              >
+                                {zone.location_city || 'No Location'} {'\u2022'} {zone.exposure || 'Unknown Exposure'}
+                              </Text>
+                            </View>
+                            {isActive && <CheckCircle2 size={24} color={THEME.paper} />}
+                          </TouchableOpacity>
+                        )
+                      })}
+
+                      {availableZones.length === 0 && (
+                        <Text
                           style={{
-                            width: 60,
-                            height: 60,
-                            borderRadius: 30,
-                            backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : 'rgba(74, 121, 95, 0.1)',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            marginRight: 16
+                            fontFamily: FONTS.sans,
+                            fontSize: 16,
+                            color: THEME.inkMuted,
+                            textAlign: 'center',
+                            marginVertical: 20
                           }}
                         >
-                          <MapPin size={24} color={isActive ? THEME.paper : THEME.forest} />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text
-                            style={{
-                              fontFamily: FONTS.sans,
-                              fontSize: 18,
-                              fontWeight: '700',
-                              color: isActive ? THEME.paper : THEME.ink,
-                              marginBottom: 4
-                            }}
-                          >
-                            {zone.name}
-                          </Text>
-                          <Text
-                            style={{
-                              fontFamily: FONTS.sans,
-                              fontSize: 14,
-                              color: isActive ? 'rgba(255,255,255,0.8)' : THEME.inkMuted
-                            }}
-                          >
-                            {zone.location_city || 'No Location'} â€¢ {zone.exposure || 'Unknown Exposure'}
-                          </Text>
-                        </View>
-                        {isActive && <CheckCircle2 size={24} color={THEME.paper} />}
-                      </TouchableOpacity>
-                    )
-                  })}
-
-                {!zonesList?.length && (
-                  <Text
-                    style={{
-                      fontFamily: FONTS.sans,
-                      fontSize: 16,
-                      color: THEME.inkMuted,
-                      textAlign: 'center',
-                      marginVertical: 20
-                    }}
-                  >
-                    No zones created yet.
-                  </Text>
-                )}
+                          No valid zones available at the moment.
+                        </Text>
+                      )}
+                    </>
+                  )
+                })()}
 
                 <TouchableOpacity
                   onPress={() => {
@@ -695,6 +750,24 @@ export default function AddPlantStoryScreen() {
               </Text>
 
               <View style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 20, padding: 20, gap: 24 }}>
+                <View style={{ alignItems: 'center', marginBottom: -10 }}>
+                  {plantData.image_url && !plantData.image_url.includes('unsplash') ? (
+                    <Image
+                      source={{ uri: plantData.image_url }}
+                      style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 2, borderColor: THEME.forest }}
+                    />
+                  ) : currentSpecies?.image_url ? (
+                    <Image
+                      source={{ uri: currentSpecies.image_url }}
+                      style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 2, borderColor: THEME.forest }}
+                    />
+                  ) : (
+                    <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(74, 121, 95, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
+                      <Leaf size={40} color={THEME.forest} />
+                    </View>
+                  )}
+                </View>
+
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <View>
                     <Text style={{ fontFamily: FONTS.sans, fontSize: 14, color: THEME.inkMuted, marginBottom: 4 }}>

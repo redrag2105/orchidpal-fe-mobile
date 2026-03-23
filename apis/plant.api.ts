@@ -16,7 +16,7 @@ export const getMyPlants = async (): Promise<GetMyPlantsResponse> => {
 
 export interface AssignPlantToZoneRequest {
   plant_id: string
-  zone_id: string
+  zone_id: string | null
 }
 
 export const assignPlantToZone = async (payload: AssignPlantToZoneRequest) => {

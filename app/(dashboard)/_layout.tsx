@@ -1,9 +1,11 @@
+
 import { Tabs } from 'expo-router'
 import { Cpu, Flower2, Home, Lightbulb, Settings } from 'lucide-react-native'
-import React from 'react'
-import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native'
-import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated'
+import React, { useState, useEffect } from 'react'
+import { Platform, StyleSheet, TouchableOpacity, View, Keyboard } from 'react-native'
+import Animated, { useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useUIStore } from '@/hooks/useUIStore'
 
 const THEME = {
   paper: '#fdfcf8',
@@ -18,12 +20,14 @@ function TabButton({
   label,
   isFocused,
   isHome,
+  isSticky,
   onPress,
   children
 }: {
   label: string
   isFocused: boolean
   isHome: boolean
+  isSticky: boolean
   onPress: () => void
   children: React.ReactNode
 }) {
@@ -38,12 +42,14 @@ function TabButton({
   }))
 
   const animatedTextStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(isFocused ? 1 : 0.6, { duration: 200 }),
-    transform: [{ translateY: withTiming(isFocused ? 0 : 2, { duration: 150 }) }]
+    opacity: withTiming(isSticky ? 0 : isFocused ? 1 : 0.6, { duration: 200 }),
+    height: withTiming(isSticky ? 0 : 16, { duration: 200 }),
+    transform: [{ translateY: withTiming(isFocused ? 0 : 2, { duration: 150 }) }],
+    marginTop: withTiming(isSticky ? 0 : 3, { duration: 200 })
   }))
 
   return (
-    <TouchableOpacity style={styles.tabButton} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity style={[styles.tabButton, { paddingVertical: isSticky ? 2 : 4 }]} onPress={onPress} activeOpacity={0.8}>
       <Animated.View style={[styles.tabButtonInner, animatedBgStyle]}>{children}</Animated.View>
       <Animated.Text
         style={[styles.tabLabel, { color: isFocused ? activeColor : THEME.inkMuted }, animatedTextStyle]}
@@ -56,11 +62,39 @@ function TabButton({
 }
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false)
+  useEffect(() => {
+    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardVisible(true))
+    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardVisible(false))
+    return () => { showSub.remove(); hideSub.remove() }
+  }, [])
   const insets = useSafeAreaInsets()
+  const isTabBarSticky = useUIStore((s) => s.isTabBarSticky)
+  // const setTabBarSticky = useUIStore((s) => s.setTabBarSticky)
+
+  const wrapperAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: withTiming(isKeyboardVisible ? 0 : 1, { duration: 200 }),
+      transform: [{ translateY: withTiming(isKeyboardVisible ? 100 : 0, { duration: 200 }) }],
+      paddingHorizontal: withSpring(isTabBarSticky ? 0 : 20, { damping: 14, stiffness: 90, mass: 0.8 }),
+      paddingBottom: withSpring(isTabBarSticky ? 0 : Math.max(insets.bottom, 10), { damping: 14, stiffness: 90, mass: 0.8 })
+    }
+  })
+
+  const pillAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      borderBottomLeftRadius: withSpring(isTabBarSticky ? 0 : 28, { damping: 14, stiffness: 90, mass: 0.8 }),
+      borderBottomRightRadius: withSpring(isTabBarSticky ? 0 : 28, { damping: 14, stiffness: 90, mass: 0.8 }),
+      borderTopLeftRadius: withSpring(isTabBarSticky ? 24 : 28, { damping: 14, stiffness: 90, mass: 0.8 }),
+      borderTopRightRadius: withSpring(isTabBarSticky ? 24 : 28, { damping: 14, stiffness: 90, mass: 0.8 }),
+      paddingBottom: withSpring(isTabBarSticky ? Math.max(insets.bottom - 4, 4) : 8, { damping: 14, stiffness: 90, mass: 0.8 }),
+      paddingTop: withSpring(isTabBarSticky ? 4 : 8, { damping: 14, stiffness: 90, mass: 0.8 }),
+    }
+  })
 
   return (
-    <View style={[styles.tabBarWrapper, { paddingBottom: Math.max(insets.bottom, 10) }]}>
-      <View style={styles.tabBarPill}>
+    <Animated.View style={[styles.tabBarWrapper, wrapperAnimatedStyle]} pointerEvents={isKeyboardVisible ? 'none' : 'auto'}>
+      <Animated.View style={[styles.tabBarPill, pillAnimatedStyle]}>
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key]
           const isFocused = state.index === index
@@ -81,7 +115,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
           const activeColor = isHome ? THEME.orchidMain : THEME.forest
 
           return (
-            <TabButton key={route.key} label={options.title} isFocused={isFocused} isHome={isHome} onPress={onPress}>
+            <TabButton key={route.key} label={options.title} isFocused={isFocused} isHome={isHome} isSticky={isTabBarSticky} onPress={onPress}>
               {options.tabBarIcon?.({
                 color: isFocused ? activeColor : THEME.inkMuted,
                 focused: isFocused,
@@ -90,8 +124,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             </TabButton>
           )
         })}
-      </View>
-    </View>
+      </Animated.View>
+    </Animated.View>
   )
 }
 
@@ -114,9 +148,9 @@ export default function DashboardLayout() {
         }}
       />
       <Tabs.Screen
-        name='expert'
+        name='ai-chat'
         options={{
-          title: 'Insights',
+          title: 'AI Chat',
           tabBarIcon: ({ color, focused }) => <Lightbulb size={22} color={color} strokeWidth={focused ? 2.4 : 1.9} />
         }}
       />
@@ -192,3 +226,4 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1
   }
 })
+

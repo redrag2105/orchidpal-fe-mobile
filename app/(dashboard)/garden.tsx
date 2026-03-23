@@ -8,23 +8,25 @@ import { usePlants } from '@/hooks/queries/usePlants'
 import { useSpecies } from '@/hooks/queries/useSpecies'
 import { useZones } from '@/hooks/queries/useZones'
 import { BottomSheetBackdrop, BottomSheetModal } from '@gorhom/bottom-sheet'
-import { useFocusEffect, useNavigation, useRouter } from 'expo-router'
+import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { Flower2, Leaf } from 'lucide-react-native'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Keyboard, ScrollView, TouchableWithoutFeedback, View, RefreshControl } from 'react-native'
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useDynamicBottomTab } from '@/hooks/useDynamicBottomTab'
 
 // Import extracted constants & components
+// import { useUIStore } from '@/hooks/useUIStore'
 
 import { EmptyState } from '@/components/dashboard/garden/EmptyState'
 import { FilterBar } from '@/components/dashboard/garden/FilterBar'
 import { SpeciesFilterSheet, StatusFilterSheet } from '@/components/dashboard/garden/FilterSheets'
-import { PlantCard } from '@/components/dashboard/garden/PlantCard'
 import { gardenStyles as styles } from '@/components/dashboard/garden/styles'
 import { TabSwitcher } from '@/components/dashboard/garden/TabSwitcher'
 import { ZoneCard } from '@/components/dashboard/garden/ZoneCard'
 
+import { PlantShelf } from '@/components/dashboard/garden/PlantShelf'
 export const MOCK_ZONES = [
   {
     id: 'z1',
@@ -181,8 +183,16 @@ export const MOCK_ZONES = [
 export default function GardenScreen() {
   const router = useRouter()
   const navigation = useNavigation()
+  const handleScroll = useDynamicBottomTab()
 
-  const [activeTab, setActiveTab] = useState<'zones' | 'plants'>('zones')
+  const { tab } = useLocalSearchParams<{ tab?: 'zones' | 'plants' }>()
+  const [activeTab, setActiveTab] = useState<'zones' | 'plants'>(tab || 'zones')
+  
+  useEffect(() => {
+    if (tab && (tab === 'zones' || tab === 'plants')) {
+      setActiveTab(tab)
+    }
+  }, [tab])
   const [searchQuery, setSearchQuery] = useState('')
 
   const { data: zones = [], isLoading: loadingZones } = useZones()
@@ -323,7 +333,7 @@ export default function GardenScreen() {
               }}
             />
 
-            <View style={{ paddingHorizontal: 24, paddingBottom: 16 }}>
+            <View style={{ paddingHorizontal: 20, paddingBottom: 4 }}>
               <SearchBar
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -347,6 +357,8 @@ export default function GardenScreen() {
               contentContainerStyle={styles.content}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps='handled'
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
               refreshControl={<RefreshControl refreshing={isRefetchingZones || isRefetchingPlants} onRefresh={onRefresh} tintColor={THEME.orchidMain} />}
             >
               {(loadingZones && zones.length === 0) || (loadingPlants && plants.length === 0) ? (
@@ -380,21 +392,36 @@ export default function GardenScreen() {
                   {filteredPlants.length === 0 ? (
                     <EmptyState message='No plants found matching your criteria.' />
                   ) : (
-                    filteredPlants.map((plant, idx) => {
-                      const zone = zones.find((z) => z.id === plant.zone_id)
+                    (() => {
+                      const half = Math.ceil(filteredPlants.length / 2);
+                      const topShelfPlants = filteredPlants.slice(0, half);
+                      const bottomShelfPlants = filteredPlants.slice(half);
+
                       return (
-                        <Animated.View key={plant.id} entering={FadeInUp.delay(200 + idx * 50).duration(400)}>
-                          <PlantCard
-                            plant={plant}
-                            zoneName={zone?.name}
-                            onPress={() => {
+                        <>
+                          <PlantShelf
+                            plants={topShelfPlants}
+                            zones={zones}
+                            layout="right-aligned"
+                            indexOffset={0}
+                            onPressPlant={(plant) => {
                               isNavigatingToDetail.current = true
                               router.push(`/plant/${plant.id}`)
                             }}
                           />
-                        </Animated.View>
+                          <PlantShelf
+                            plants={bottomShelfPlants}
+                            zones={zones}
+                            layout="full-width"
+                            indexOffset={topShelfPlants.length}
+                            onPressPlant={(plant) => {
+                              isNavigatingToDetail.current = true
+                              router.push(`/plant/${plant.id}`)
+                            }}
+                          />
+                        </>
                       )
-                    })
+                    })()
                   )}
                 </View>
               )}
@@ -452,3 +479,4 @@ export default function GardenScreen() {
     </View>
   )
 }
+

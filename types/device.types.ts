@@ -50,7 +50,7 @@ export interface EspConfigResponse {
 
 // Zone assignment request
 export interface AssignDeviceToZoneRequest {
-  zone_id: string
+  zone_id: string | null
 }
 
 // Zone assignment response

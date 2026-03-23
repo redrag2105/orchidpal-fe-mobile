@@ -24,11 +24,13 @@ import {
   Settings,
   ShieldCheck,
   Thermometer,
-  Trees
+  Trees,
+  Sun
 } from 'lucide-react-native'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   Image,
   Platform,
@@ -105,16 +107,38 @@ export default function PlantDetailScreen() {
     editProfileSheetRef.current?.expand()
   }
 
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1
-    })
-    if (!result.canceled) {
-      setEditForm((prev) => ({ ...prev, imageUrl: result.assets[0].uri }))
-    }
+  const pickImage = () => {
+    Alert.alert('Upload Photo', 'Choose a source', [
+      {
+        text: 'Camera',
+        onPress: async () => {
+          let result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1
+          })
+          if (!result.canceled) {
+            setEditForm((prev) => ({ ...prev, imageUrl: result.assets[0].uri }))
+          }
+        }
+      },
+      {
+        text: 'Library',
+        onPress: async () => {
+          let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1
+          })
+          if (!result.canceled) {
+            setEditForm((prev) => ({ ...prev, imageUrl: result.assets[0].uri }))
+          }
+        }
+      },
+      { text: 'Cancel', style: 'cancel' }
+    ])
   }
 
   const handleSaveProfile = async () => {
@@ -161,21 +185,34 @@ export default function PlantDetailScreen() {
     )
   }
 
+  const handleUnassignZone = () => {
+    showConfirm(
+      'Unassign Zone',
+      'Are you sure you want to remove this plant from the zone?',
+      () => {
+        assignPlant({ plant_id: plant.id as string, zone_id: null }).then(() => {
+          showToast('Plant has been successfully unassigned.')
+        })
+      },
+      'Unassign',
+      'Cancel'
+    )
+  }
+
   const isHealthy = plant.health_status === 'GOOD'
 
   return (
     <View style={styles.root}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Full Bleed Header */}
-        <Animated.View entering={FadeIn.duration(600)} style={{ width: '100%', height: 420, position: 'relative' }}>
+        <Animated.View entering={FadeIn.duration(600)} style={{ width: '100%', height: 400, position: 'relative' }}>
           <Image
             source={{ uri: plant.image_url || 'https://images.unsplash.com/photo-1599388102462-8e7c1a84fbe3' }}
             style={StyleSheet.absoluteFillObject}
           />
           <LinearGradient
-            colors={['rgba(20,40,29,0.5)', 'transparent', 'rgba(253, 252, 248, 0.6)', THEME.paper]}
-            locations={[0, 0.4, 0.8, 1]}
-            style={StyleSheet.absoluteFillObject}
+            colors={['rgba(0,0,0,0.5)', 'transparent']}
+            style={{ width: '100%', height: 120, position: 'absolute', top: 0 }}
           />
 
           <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
@@ -187,8 +224,10 @@ export default function PlantDetailScreen() {
               <Settings size={24} color={THEME.ink} />
             </TouchableOpacity>
           </SafeAreaView>
+        </Animated.View>
 
-          <View style={styles.headerTitleContainer}>
+        <View style={styles.body}>
+          <View style={{ marginBottom: 24 }}>
             <Animated.Text entering={FadeInDown.delay(200).duration(500)} style={styles.heroNickname}>
               {plant.nickname || 'Unknown Plant'}
             </Animated.Text>
@@ -196,42 +235,40 @@ export default function PlantDetailScreen() {
               {wikiInfo?.common_name || 'Mysterious Species'}
             </Animated.Text>
           </View>
-        </Animated.View>
 
-        <View style={styles.body}>
           {/* Status & Actions Floating Bar */}
           <Animated.View entering={FadeInUp.delay(400).duration(500)} style={styles.statusBar}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={styles.statusCell}>
               <View
                 style={[
-                  styles.statusIconBase,
-                  { backgroundColor: isHealthy ? 'rgba(74, 121, 95, 0.1)' : 'rgba(212, 165, 116, 0.15)' }
+                  styles.statusIconElegant,
+                  { backgroundColor: isHealthy ? 'rgba(74, 121, 95, 0.08)' : 'rgba(212, 165, 116, 0.1)' }
                 ]}
               >
-                <HeartPulse size={24} color={isHealthy ? THEME.forest : THEME.gold} />
+                <HeartPulse size={22} color={isHealthy ? THEME.forest : THEME.gold} strokeWidth={2.5} />
               </View>
-              <View>
-                <Text style={{ fontFamily: FONTS.sans, fontSize: 13, color: THEME.inkLight }}>Health Status</Text>
+              <View style={styles.statusTextWrapper}>
+                <Text style={styles.statusLabelElegant}>Health Status</Text>
                 <Text
-                  style={{
-                    fontFamily: FONTS.serif,
-                    fontSize: 18,
-                    fontWeight: '700',
-                    color: isHealthy ? THEME.forest : THEME.gold
-                  }}
+                  style={[
+                    styles.statusValueElegant,
+                    { color: isHealthy ? THEME.forest : THEME.gold }
+                  ]}
                 >
                   {plant.health_status ? plant.health_status.toUpperCase() : 'UNKNOWN'}
                 </Text>
               </View>
             </View>
-            <View style={{ height: 40, width: 1, backgroundColor: THEME.paperDeep }} />
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={[styles.statusIconBase, { backgroundColor: THEME.paperDeep }]}>
-                <Calendar size={24} color={THEME.ink} />
+
+            <View style={styles.statusDivider} />
+
+            <View style={styles.statusCell}>
+              <View style={[styles.statusIconElegant, { backgroundColor: 'rgba(20, 40, 29, 0.04)' }]}>
+                <Calendar size={22} color={THEME.ink} strokeWidth={2} />
               </View>
-              <View>
-                <Text style={{ fontFamily: FONTS.sans, fontSize: 13, color: THEME.inkLight }}>Planted On</Text>
-                <Text style={{ fontFamily: FONTS.sans, fontSize: 14, fontWeight: '600', color: THEME.ink }}>
+              <View style={styles.statusTextWrapper}>
+                <Text style={styles.statusLabelElegant}>Planted On</Text>
+                <Text style={styles.statusValueElegantDate}>
                   {plant.planted_at
                     ? new Date(plant.planted_at).toLocaleDateString('en-US', {
                         day: 'numeric',
@@ -244,55 +281,80 @@ export default function PlantDetailScreen() {
             </View>
           </Animated.View>
 
-          {/* Botanical Info Grid */}
-          <View style={styles.section}>
+          {/* Botanical Info System (Glassmorphic Pills) */}
+          <View style={[styles.section, { marginRight: -24 }]}>
             <Text style={styles.sectionTitle}>Botanical Guidelines</Text>
             {wikiInfo ? (
-              <View style={styles.grid}>
-                <View style={styles.gridItem}>
-                  <Thermometer size={24} color={THEME.orchidMain} style={{ marginBottom: 12 }} />
-                  <Text style={styles.gridLabel}>Ideal Temp</Text>
-                  <Text style={styles.gridValue}>
-                    {wikiInfo.ideal_temp_min}-{wikiInfo.ideal_temp_max}°C
-                  </Text>
-                </View>
+              <>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false} 
+                  contentContainerStyle={{ paddingRight: 24, gap: 12, paddingBottom: 16 }}
+                >
+                  <View style={styles.pillCardWrapper}>
+                    <View style={styles.glassPill}>
+                      <View style={styles.iconCircle}>
+                        <Thermometer size={20} color="#FF6B6B" />
+                      </View>
+                      <View style={styles.pillTextContainer}>
+                        <Text style={styles.pillLabel}>Ideal Temp</Text>
+                        <Text style={styles.pillValue}>{wikiInfo.ideal_temp_min}-{wikiInfo.ideal_temp_max}°C</Text>
+                      </View>
+                    </View>
+                  </View>
 
-                <View style={styles.gridItem}>
-                  <Droplets size={24} color='#4ba3e3' style={{ marginBottom: 12 }} />
-                  <Text style={styles.gridLabel}>Humidity</Text>
-                  <Text style={styles.gridValue}>
-                    {wikiInfo.ideal_humid_min}-{wikiInfo.ideal_humid_max}%
-                  </Text>
-                </View>
+                  <View style={styles.pillCardWrapper}>
+                    <View style={styles.glassPill}>
+                      <View style={styles.iconCircle}>
+                        <Droplets size={20} color="#4BA3E3" />
+                      </View>
+                      <View style={styles.pillTextContainer}>
+                        <Text style={styles.pillLabel}>Humidity</Text>
+                        <Text style={styles.pillValue}>{wikiInfo.ideal_humid_min}-{wikiInfo.ideal_humid_max}%</Text>
+                      </View>
+                    </View>
+                  </View>
 
-                <View style={[styles.gridItem, { width: '100%', flexDirection: 'column', alignItems: 'flex-start' }]}>
+                  <View style={styles.pillCardWrapper}>
+                    <View style={styles.glassPill}>
+                      <View style={styles.iconCircle}>
+                        <Sun size={20} color="#FFA502" />
+                      </View>
+                      <View style={styles.pillTextContainer}>
+                        <Text style={styles.pillLabel}>Light Role</Text>
+                        <Text style={styles.pillValue}>Indirect</Text>
+                      </View>
+                    </View>
+                  </View>
+                </ScrollView>
+
+                <View style={[styles.card, { marginTop: 8, marginRight: 24 }]}>
                   <Text style={styles.gridLabel}>Scientific Name</Text>
                   <Text style={[styles.gridValue, { fontStyle: 'italic', marginTop: 4, fontFamily: FONTS.serif }]}>
                     {wikiInfo.scientific_name || wikiInfo.common_name}
                   </Text>
-                </View>
-
-                <View
-                  style={[
-                    styles.gridItem,
-                    {
-                      width: '100%',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      backgroundColor: THEME.paperDeep
-                    }
-                  ]}
-                >
+                  <View style={{ height: 16 }} />
                   <HStack style={{ alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <ShieldCheck size={20} color={THEME.forest} />
                     <Text style={[styles.gridLabel, { marginTop: 0 }]}>Care Instructions</Text>
                   </HStack>
                   <Text style={styles.careText}>
-                    {wikiInfo.care_instruction ||
-                      'No specific care instructions found. Keep an eye on moisture and light levels.'}
+                    {wikiInfo.care_instruction ? (
+                      wikiInfo.care_instruction
+                        .split('.')
+                        .filter((s) => s.trim().length > 0)
+                        .map((sentence, index, arr) => (
+                          <React.Fragment key={index}>
+                            • {sentence.trim()}.
+                            {index !== arr.length - 1 && '\n\n'}
+                          </React.Fragment>
+                        ))
+                    ) : (
+                      'No specific care instructions found. Keep an eye on moisture and light levels.'
+                    )}
                   </Text>
                 </View>
-              </View>
+              </>
             ) : (
               <Text style={{ color: THEME.inkLight, fontFamily: FONTS.sans }}>
                 No botanical info available for this species.
@@ -301,10 +363,21 @@ export default function PlantDetailScreen() {
           </View>
 
           {/* Zone Location */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Location</Text>
+          <View style={[styles.section, { paddingRight: 24 }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={styles.sectionTitle}>Location</Text>
+              {currentZone && (
+                <TouchableOpacity onPress={handleUnassignZone}>
+                  <Text style={{ fontSize: 13, color: THEME.orchidMain, fontWeight: '600' }}>Unassign</Text>
+                </TouchableOpacity>
+              )}
+            </View>
             {currentZone ? (
-              <View style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}>
+              <TouchableOpacity 
+                activeOpacity={0.7} 
+                onPress={() => router.push(`/zone/${currentZone.id}`)}
+                style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}
+              >
                 <View style={[styles.statusIconBase, { backgroundColor: 'rgba(74, 121, 95, 0.1)', marginRight: 16 }]}>
                   <MapPin size={24} color={THEME.forest} />
                 </View>
@@ -316,7 +389,8 @@ export default function PlantDetailScreen() {
                     {currentZone.location_city || 'Your Home Environment'}
                   </Text>
                 </VStack>
-              </View>
+                <ChevronRight size={20} color={THEME.inkMuted} />
+              </TouchableOpacity>
             ) : (
               <View style={[styles.card, { alignItems: 'center', paddingVertical: 32 }]}>
                 <Trees size={40} color={THEME.paperDeep} style={{ marginBottom: 16 }} />
@@ -434,8 +508,8 @@ export default function PlantDetailScreen() {
 
           <TouchableOpacity
             onPress={handleSaveProfile}
-            style={[styles.assignButtonBig, { marginTop: 32 }, isUpdating && { opacity: 0.7 }]}
-            disabled={isUpdating}
+            style={[styles.assignButtonBig, { marginTop: 32 }, (isUpdating || (editForm.nickname === plant.nickname && editForm.imageUrl === plant.image_url)) && { opacity: 0.5 }]}
+            disabled={isUpdating || (editForm.nickname === plant.nickname && editForm.imageUrl === plant.image_url)}
           >
             {isUpdating ? (
               <ActivityIndicator color={THEME.paper} />
@@ -491,41 +565,87 @@ const styles = StyleSheet.create({
     right: 24
   },
   heroNickname: {
-    fontSize: 42,
-    fontWeight: '700',
+    fontSize: 36,
+    fontWeight: '800',
     fontFamily: FONTS.serif,
     color: THEME.ink,
-    letterSpacing: -1,
-    lineHeight: 48,
-    textShadowColor: 'rgba(255,255,255,0.9)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 12
+    letterSpacing: -0.5,
+    lineHeight: 42,
   },
   heroSpecies: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: FONTS.sans,
     color: THEME.inkMuted,
-    fontStyle: 'italic',
     marginTop: 4,
-    textShadowColor: 'rgba(255,255,255,0.8)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 8
   },
-  body: { paddingHorizontal: 24, paddingBottom: 40, marginTop: 10 },
+  body: { 
+    paddingHorizontal: 24, 
+    paddingBottom: 40, 
+    backgroundColor: THEME.paper, 
+    borderTopRightRadius: 80, 
+    marginTop: -40, 
+    paddingTop: 32 
+  },
   statusBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-evenly',
+    justifyContent: 'space-between',
     backgroundColor: 'white',
     borderRadius: 24,
-    paddingVertical: 20,
+    paddingVertical: 18,
     paddingHorizontal: 16,
     shadowColor: THEME.ink,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.04,
     shadowRadius: 20,
-    elevation: 3,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(20,40,29,0.03)',
     marginBottom: 32
+  },
+  statusCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 1
+  },
+  statusIconElegant: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  statusTextWrapper: {
+    justifyContent: 'center',
+    flexShrink: 1
+  },
+  statusLabelElegant: {
+    fontFamily: FONTS.sans,
+    fontSize: 10,
+    color: THEME.inkLight,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2
+  },
+  statusValueElegant: {
+    fontFamily: FONTS.sans,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.3
+  },
+  statusValueElegantDate: {
+    fontFamily: FONTS.sans,
+    fontSize: 13,
+    fontWeight: '600',
+    color: THEME.ink,
+    letterSpacing: 0.3
+  },
+  statusDivider: {
+    height: 32,
+    width: 1,
+    backgroundColor: THEME.paperDeep,
+    marginHorizontal: 8
   },
   statusIconBase: {
     width: 48,
@@ -599,6 +719,54 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     paddingHorizontal: 20,
     lineHeight: 22
+  },
+  pillCardWrapper: {
+    borderRadius: 999,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(250, 249, 244, 0.7)', // Fallback without native blur but looks like glass
+    shadowColor: THEME.ink,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(240, 239, 234, 0.8)',
+  },
+  glassPill: {
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    width: 90,
+  },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  pillTextContainer: {
+    alignItems: 'center',
+  },
+  pillLabel: {
+    fontSize: 11,
+    fontFamily: FONTS.sans,
+    color: THEME.inkMuted,
+    marginBottom: 2,
+    fontWeight: '600'
+  },
+  pillValue: {
+    fontSize: 14,
+    fontFamily: FONTS.sans,
+    fontWeight: '700',
+    color: THEME.ink,
   },
   assignButtonBig: {
     backgroundColor: THEME.forest,

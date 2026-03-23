@@ -69,7 +69,7 @@ export function AssignBottomSheet({
                 <VStack style={{ flex: 1 }}>
                   <Text style={styles.sheetItemTitle}>{d.serial_number}</Text>
                   <Text style={styles.sheetItemSub}>
-                    {Object.values(d.hardware_config.sensors).filter(Boolean).length} sensors
+                    {d.hardware_config?.sensors ? Object.values(d.hardware_config.sensors).filter(Boolean).length : 0} sensors
                   </Text>
                 </VStack>
                 <Plus size={20} color={THEME.orchidMain} />

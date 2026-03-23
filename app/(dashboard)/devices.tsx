@@ -9,6 +9,7 @@ import { SearchBar } from '@/components/ui/SearchBar'
 import { Text } from '@/components/ui/text'
 import { Colors } from '@/constants/Colors'
 import { useDevices } from '@/hooks/queries/useDevices'
+import { useDynamicBottomTab } from '@/hooks/useDynamicBottomTab'
 import { useRouter } from 'expo-router'
 import { Plus } from 'lucide-react-native'
 import React, { useState } from 'react'
@@ -28,6 +29,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function DevicesScreen() {
   const router = useRouter()
+  const handleScroll = useDynamicBottomTab()
   const insets = useSafeAreaInsets()
   const [searchQuery, setSearchQuery] = useState('')
   const [deviceFilter, setDeviceFilter] = useState<'All' | 'Assigned' | 'Unassigned'>('All')
@@ -135,6 +137,8 @@ export default function DevicesScreen() {
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 + insets.bottom }]}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         keyboardShouldPersistTaps='handled'
         keyboardDismissMode='on-drag'
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={THEME.forest} />}
@@ -235,18 +239,18 @@ const styles = StyleSheet.create({
     marginBottom: 8
   },
   searchContainer: {
-    paddingHorizontal: 0,
+    paddingHorizontal: 20,
     marginBottom: 0,
     marginTop: 8
   },
   filterContainer: {
-    paddingTop: 0,
-    gap: 10,
+    paddingTop: 12,
+    gap: 8,
     paddingBottom: 8
   },
   filterChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 999,
     backgroundColor: THEME.paper,
     borderWidth: 1,
@@ -257,7 +261,7 @@ const styles = StyleSheet.create({
     borderColor: THEME.forest
   },
   filterChipText: {
-    fontSize: 13,
+    fontSize: 12,
     color: THEME.inkMuted,
     fontWeight: '600'
   },

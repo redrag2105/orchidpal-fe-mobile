@@ -33,9 +33,11 @@ const AI_INSIGHTS: Insight[] = [
 
 import { useQueryClient } from '@tanstack/react-query'
 import { useZones } from '@/hooks/queries/useZones'
+import { useDynamicBottomTab } from '@/hooks/useDynamicBottomTab'
 
 export default function Dashboard() {
   const router = useRouter()
+  const handleScroll = useDynamicBottomTab()
   const queryClient = useQueryClient()
   const { data: zones = [], isLoading: isLoadingZones } = useZones()
   
@@ -63,7 +65,13 @@ export default function Dashboard() {
           </HStack>
         </Animated.View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME.forest} />}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent} 
+          showsVerticalScrollIndicator={false} 
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME.forest} />}
+        >
           {/* Hero Device Card */}
           <HeroDeviceCard />
 
@@ -74,7 +82,7 @@ export default function Dashboard() {
                 <Leaf size={18} color={THEME.forest} strokeWidth={1.5} />
                 <Text style={styles.sectionTitle}>My Zones</Text>
               </HStack>
-              <TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push('/(dashboard)/garden?tab=zones')}>
                 <Text style={styles.seeAll}>Manage</Text>
               </TouchableOpacity>
             </HStack>
@@ -82,7 +90,7 @@ export default function Dashboard() {
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.zonesScroll}>
             {zones.map((zone: any, index: number) => (
-              <ZoneCard key={zone.id} zone={zone} index={index} />
+              <ZoneCard key={zone.id} zone={zone} index={index} onPress={() => router.push(`/zone/${zone.id}`)} />
             ))}
           </ScrollView>
 

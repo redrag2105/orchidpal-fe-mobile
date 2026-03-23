@@ -197,7 +197,7 @@ export function StepScanQR({ onScanned, onDemoScan, isLoading }: StepScanQRProps
           {/* Camera overlay */}
           <View style={styles.cameraOverlay}>
             {/* Top bar */}
-            <SafeAreaView style={styles.cameraHeader}>
+              <SafeAreaView edges={['top']} style={styles.cameraHeader}>
               <TouchableOpacity style={styles.cameraCloseButton} onPress={handleCloseCamera}>
                 <X size={24} color='white' />
               </TouchableOpacity>

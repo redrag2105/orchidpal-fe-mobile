@@ -7,7 +7,7 @@ import { HStack } from '@/components/ui/hstack'
 import { VStack } from '@/components/ui/vstack'
 import { THEME } from '@/components/dashboard/theme'
 import { CircularStat } from '@/components/dashboard/CircularStat'
-import { MiniLineChart } from './MiniLineChart'
+import { DeviceDataChart } from './DeviceDataChart'
 import { RelayToggle } from './RelayToggle'
 import { AddDeviceButton } from '@/components/devices/AddDeviceButton'
 
@@ -52,7 +52,7 @@ export function LinkedDeviceCard({
 
   return (
     <View style={styles.card}>
-      <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(dashboard)/devices')}>
+      <TouchableOpacity activeOpacity={0.7} onPress={() => router.push(`/device/${linkedDevice.id || linkedDevice.serial_number}`)}>
         <HStack style={styles.deviceHeader}>
           <HStack style={{ gap: 16, alignItems: 'center' }}>
             <View style={styles.deviceIcon}>
@@ -75,21 +75,19 @@ export function LinkedDeviceCard({
       <View style={styles.statsGrid}>
         <View style={styles.statColumn}>
           <CircularStat value={24} maxValue={40} label="Temp °C" color={THEME.orchidMain} icon={Thermometer} delay={150} />
-          <MiniLineChart values={TRENDS.temp} color={THEME.orchidMain} />
         </View>
         <View style={styles.statColumn}>
           <CircularStat value={60} maxValue={100} label="Humidity %" color="#3b82f6" icon={Droplets} delay={200} />
-          <MiniLineChart values={TRENDS.humidity} color="#3b82f6" />
         </View>
         <View style={styles.statColumn}>
           <CircularStat value={72} maxValue={100} label="Light %" color={THEME.gold} icon={Sun} delay={250} />
-          <MiniLineChart values={TRENDS.light} color={THEME.gold} />
         </View>
         <View style={styles.statColumn}>
           <CircularStat value={45} maxValue={100} label="Moisture %" color={THEME.forest} icon={Droplets} delay={300} />
-          <MiniLineChart values={TRENDS.moisture} color={THEME.forest} />
         </View>
       </View>
+
+      <DeviceDataChart />
 
       <View style={styles.divider} />
       
@@ -162,20 +160,19 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   statsGrid: {
-    flexDirection: 'column',
-    gap: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
     marginBottom: 4,
     marginTop: 16
   },
   statColumn: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    backgroundColor: THEME.paper,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 24
+    justifyContent: 'center',
+    width: '23%', 
+    backgroundColor: 'white',
+    paddingVertical: 12,
+    borderRadius: 16
   },
   divider: {
     height: 1,

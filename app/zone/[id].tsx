@@ -6,15 +6,17 @@ import { useAssignDeviceToZone } from '@/hooks/mutations/useAssignDeviceToZone'
 import { useAssignPlantToZone } from '@/hooks/mutations/useAssignPlantToZone'
 import { useControlDevice } from '@/hooks/mutations/useControlDevce'
 import { useUpdateAutomationRules } from '@/hooks/mutations/useUpdateAutomationRules'
+import { useUpdateZone } from '@/hooks/mutations/useUpdateZone'
 import { useDevices } from '@/hooks/queries/useDevices'
 import { usePlants } from '@/hooks/queries/usePlants'
 import { useZoneDetail } from '@/hooks/queries/useZoneDetail'
-import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
+import * as ImagePicker from 'expo-image-picker'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeft } from 'lucide-react-native'
+import { ArrowLeft, Settings, Camera } from 'lucide-react-native'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, TouchableOpacity, View, TextInput, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { AssignBottomSheet, AutomationRulesList, LinkedDeviceCard, LinkedPlantCard } from '@/components/zone'
@@ -33,6 +35,7 @@ export default function ZoneDetailScreen() {
   const { mutateAsync: assignDevice } = useAssignDeviceToZone()
   const { mutateAsync: assignPlant } = useAssignPlantToZone()
   const { mutateAsync: controlDeviceMutate } = useControlDevice()
+  const { mutateAsync: updateZone, isPending: isUpdating } = useUpdateZone()
 
   const [confirmModal, setConfirmModal] = useState({
     visible: false,
@@ -55,10 +58,10 @@ export default function ZoneDetailScreen() {
 
   const linkedPlant = zone?.my_plants?.[0]
   const linkedDevice = zone?.devices?.[0]
-  const activeRelays = linkedDevice?.hardware_config
+  const activeRelays = linkedDevice?.hardware_config?.relays
     ? (Object.values(linkedDevice.hardware_config.relays).filter((v: any) => v !== 'null') as string[])
     : []
-  const activeSensors = linkedDevice?.hardware_config
+  const activeSensors = linkedDevice?.hardware_config?.sensors
     ? Object.values(linkedDevice.hardware_config.sensors).filter(Boolean).length
     : 0
   const rules = zone?.automation_rules || []
@@ -123,8 +126,11 @@ export default function ZoneDetailScreen() {
   }
 
   const assignSheetRef = useRef<BottomSheet>(null)
+  const editProfileSheetRef = useRef<BottomSheet>(null)
   const assignSnapPoints = useMemo(() => ['50%', '67%'], [])
+  const editProfileSnapPoints = useMemo(() => ['50%'], [])
 
+  const [editForm, setEditForm] = useState({ nickname: '', imageUrl: '' })
   const [assignTarget, setAssignTarget] = useState<'plant' | 'device' | null>(null)
   const [isRuleModalVisible, setIsRuleModalVisible] = useState(false)
   const [editingRule, setEditingRule] = useState<any>(null)
@@ -146,6 +152,76 @@ export default function ZoneDetailScreen() {
     }
     setAssignTarget(target)
     assignSheetRef.current?.expand()
+  }
+  const handleUnassignPlant = () => {
+    showConfirm('Unassign Plant', 'Are you sure you want to remove the plant from this zone?', () => {
+      assignPlant({ plant_id: linkedPlant?.id!, zone_id: null })
+        .then(() => showToast('Plant unassigned successfully!'))
+        .catch(() => showToast('Failed to unassign plant.'))
+    }, 'Unassign', 'Cancel')
+  }
+
+  const handleUnassignDevice = () => {
+    showConfirm('Unassign Device', 'Are you sure you want to remove the device from this zone?', () => {
+      assignDevice({ serialNumber: linkedDevice?.serial_number!, payload: { zone_id: null } })
+        .then(() => showToast('Device unassigned successfully!'))
+        .catch(() => showToast('Failed to unassign device.'))
+    }, 'Unassign', 'Cancel')
+  }
+  const handleOpenEditProfile = () => {
+    setEditForm({ nickname: zone?.name || '', imageUrl: zone?.image_url || '' })
+    editProfileSheetRef.current?.expand()
+  }
+
+  const pickImage = () => {
+    Alert.alert('Upload Photo', 'Choose a source', [
+      {
+        text: 'Camera',
+        onPress: async () => {
+          let result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1
+          })
+          if (!result.canceled) {
+            setEditForm((prev) => ({ ...prev, imageUrl: result.assets[0].uri }))
+          }
+        }
+      },
+      {
+        text: 'Library',
+        onPress: async () => {
+          let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1
+          })
+          if (!result.canceled) {
+            setEditForm((prev) => ({ ...prev, imageUrl: result.assets[0].uri }))
+          }
+        }
+      },
+      { text: 'Cancel', style: 'cancel' }
+    ])
+  }
+
+  const handleSaveProfile = async () => {
+    if (!zone) return
+    try {
+      await updateZone({
+        id: zone.id as string,
+        data: {
+          name: editForm.nickname,
+          image_url: editForm.imageUrl
+        }
+      })
+      showToast('Zone profile updated successfully.')
+      editProfileSheetRef.current?.close()
+    } catch (error) {
+      showToast('Failed to update zone profile.')
+    }
   }
 
   const handleOpenRule = (rule: any = null) => {
@@ -186,28 +262,46 @@ export default function ZoneDetailScreen() {
             }}
             style={styles.coverImage}
           />
-          <LinearGradient colors={['rgba(0,0,0,0.5)', 'transparent', 'rgba(0,0,0,0.8)']} style={styles.coverGradient} />
+          <LinearGradient colors={['rgba(0,0,0,0.5)', 'transparent']} style={styles.coverGradient} />
 
           <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <ArrowLeft color='white' size={24} />
+              <ArrowLeft color={THEME.ink} size={24} />
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={handleOpenEditProfile} style={styles.backButton}>
+              <Settings size={24} color={THEME.ink} />
             </TouchableOpacity>
           </SafeAreaView>
+        </View>
 
+        <View style={styles.body}>
           <View style={styles.overviewContent}>
             <Text style={styles.zoneName}>{zone.name}</Text>
             <Text style={styles.zoneCity}>{zone.location_city}</Text>
           </View>
-        </View>
-
-        <View style={styles.body}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Linked Plant</Text>
-            <LinkedPlantCard linkedPlant={linkedPlant} onAddPlant={() => handleOpenAssign('plant')} />
-          </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Linked Device</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 10 }}>
+                <Text style={styles.sectionTitle}>Linked Plant</Text>
+                {linkedPlant && (
+                  <TouchableOpacity onPress={handleUnassignPlant}>
+                    <Text style={{ fontSize: 13, color: THEME.orchidMain, fontWeight: '600' }}>Unassign</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <LinkedPlantCard linkedPlant={linkedPlant} onAddPlant={() => handleOpenAssign('plant')} />
+            </View>
+
+            <View style={styles.section}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 10 }}>
+                <Text style={styles.sectionTitle}>Linked Device</Text>
+                {linkedDevice && (
+                  <TouchableOpacity onPress={handleUnassignDevice}>
+                    <Text style={{ fontSize: 13, color: THEME.orchidMain, fontWeight: '600' }}>Unassign</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             <LinkedDeviceCard
               linkedDevice={linkedDevice}
               activeSensors={activeSensors}
@@ -292,6 +386,69 @@ export default function ZoneDetailScreen() {
         }}
       />
 
+      {/* Edit Profile Bottom Sheet */}
+      <BottomSheet
+        ref={editProfileSheetRef}
+        index={-1}
+        snapPoints={editProfileSnapPoints}
+        enablePanDownToClose
+        backdropComponent={renderBackdrop}
+        backgroundStyle={styles.sheetBackground}
+        handleIndicatorStyle={styles.sheetIndicator}
+      >
+        <BottomSheetScrollView contentContainerStyle={[styles.sheetContent, { paddingBottom: 40 }]}>
+          <Text style={styles.sheetTitle}>Edit Profile</Text>
+
+          <TouchableOpacity onPress={pickImage} style={{ alignSelf: 'center', marginTop: 24, marginBottom: 32 }}>
+            {editForm.imageUrl ? (
+              <Image
+                source={{ uri: editForm.imageUrl }}
+                style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 3, borderColor: THEME.paperDeep }}
+              />
+            ) : (
+              <View
+                style={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: 60,
+                  backgroundColor: THEME.paperDeep,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: 2,
+                  borderColor: THEME.inkLight,
+                  borderStyle: 'dashed'
+                }}
+              >
+                <Camera size={32} color={THEME.inkLight} />
+              </View>
+            )}
+          </TouchableOpacity>
+
+          <Text style={styles.inputLabel}>Zone Name</Text>
+          <TextInput
+            style={styles.input}
+            value={editForm.nickname}
+            onChangeText={(t) => setEditForm((prev) => ({ ...prev, nickname: t }))}
+            placeholder='E.g. Balcony'
+            placeholderTextColor={THEME.inkLight}
+          />
+
+          <TouchableOpacity
+            onPress={handleSaveProfile}
+            style={[styles.assignButtonBig, { marginTop: 32 }, (isUpdating || (editForm.nickname === zone?.name && editForm.imageUrl === zone?.image_url)) && { opacity: 0.5 }]}
+            disabled={isUpdating || (editForm.nickname === zone?.name && editForm.imageUrl === zone?.image_url)}
+          >
+            {isUpdating ? (
+              <ActivityIndicator color={THEME.paper} />
+            ) : (
+              <Text style={{ color: THEME.paper, fontFamily: FONTS.sans, fontWeight: '600', fontSize: 16 }}>
+                Save Changes
+              </Text>
+            )}
+          </TouchableOpacity>
+        </BottomSheetScrollView>
+      </BottomSheet>
+
       <CancelConfirmModal
         visible={confirmModal.visible}
         title={confirmModal.title}
@@ -311,24 +468,77 @@ export default function ZoneDetailScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: THEME.paper },
   scrollContent: { paddingBottom: 60 },
-  overviewContainer: { width: '100%', height: 280, position: 'relative' },
+  overviewContainer: { width: '100%', height: 380, position: 'relative' },
   coverImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-  coverGradient: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 },
-  headerSafeArea: { position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: 20, paddingTop: 10 },
+  coverGradient: { position: 'absolute', top: 0, height: 120, left: 0, right: 0 },
+  headerSafeArea: { position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: 20, paddingTop: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(253, 252, 248, 0.9)',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4
   },
-  overviewContent: { position: 'absolute', bottom: 24, left: 24, right: 24 },
-  zoneName: { fontSize: 36, fontWeight: '700', fontFamily: FONTS.serif, color: 'white', letterSpacing: -0.5 },
-  zoneCity: { fontSize: 16, color: 'rgba(255,255,255,0.9)', marginTop: 4, fontStyle: 'italic' },
-  body: { padding: 24, gap: 32 },
+  overviewContent: { marginBottom: 24 },
+  zoneName: { fontSize: 36, fontWeight: '800', fontFamily: FONTS.serif, color: THEME.ink, letterSpacing: -0.5, lineHeight: 42 },
+  zoneCity: { fontSize: 16, color: THEME.inkMuted, marginTop: 4, fontFamily: FONTS.sans },
+  body: { 
+    padding: 24, 
+    gap: 32,
+    backgroundColor: THEME.paper,
+    borderTopRightRadius: 80,
+    marginTop: -40,
+    paddingTop: 32
+  },
   section: { gap: 16 },
   sectionTitle: { fontSize: 20, fontWeight: '700', fontFamily: FONTS.serif, color: THEME.ink },
+  sheetBackground: { backgroundColor: THEME.paper, borderTopLeftRadius: 32, borderTopRightRadius: 32 },
+  sheetIndicator: { width: 40, height: 5, backgroundColor: THEME.paperDeep, borderRadius: 3, marginTop: 12 },
+  sheetContent: { padding: 24, paddingBottom: 40 },
+  sheetTitle: { fontSize: 28, fontWeight: '700', fontFamily: FONTS.serif, color: THEME.ink },
+  inputLabel: {
+    fontSize: 13,
+    fontFamily: FONTS.sans,
+    color: THEME.inkLight,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginLeft: 8,
+    marginBottom: 8
+  },
+  input: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    fontSize: 16,
+    color: THEME.ink,
+    borderWidth: 1,
+    borderColor: 'rgba(20,40,29,0.1)',
+    fontFamily: FONTS.sans,
+  },
+  assignButtonBig: {
+    backgroundColor: THEME.forest,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    borderRadius: 999,
+    gap: 12,
+    shadowColor: THEME.forest,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 4,
+    width: '100%'
+  },
   toast: {
     backgroundColor: THEME.forest,
     borderRadius: 999,

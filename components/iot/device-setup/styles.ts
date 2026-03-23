@@ -474,7 +474,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingTop: Platform.OS === 'android' ? 40 : 16,
     paddingBottom: 16,
     backgroundColor: 'rgba(0,0,0,0.4)'
   },

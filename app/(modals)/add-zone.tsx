@@ -18,6 +18,7 @@ import { Camera, ChevronDown, ChevronLeft, MapPin } from 'lucide-react-native'
 import React, { useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   Image,
   KeyboardAvoidingView,
@@ -65,18 +66,39 @@ export default function AddZoneScreen() {
 
   const isValid = name.trim().length > 0 && locationCity.trim().length > 0
 
-  const pickImage = async () => {
+  const pickImage = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [16, 9],
-      quality: 0.8
-    })
-
-    if (!result.canceled) {
-      setImageUrl(result.assets[0].uri)
-    }
+    Alert.alert('Upload Photo', 'Choose a source', [
+      {
+        text: 'Camera',
+        onPress: async () => {
+          let result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [16, 9],
+            quality: 0.8
+          })
+          if (!result.canceled) {
+            setImageUrl(result.assets[0].uri)
+          }
+        }
+      },
+      {
+        text: 'Library',
+        onPress: async () => {
+          let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [16, 9],
+            quality: 0.8
+          })
+          if (!result.canceled) {
+            setImageUrl(result.assets[0].uri)
+          }
+        }
+      },
+      { text: 'Cancel', style: 'cancel' }
+    ])
   }
 
   const detectLocation = async () => {
