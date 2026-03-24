@@ -1,6 +1,6 @@
 import { Plus, Trash2, ChevronDown } from 'lucide-react-native'
 import React, { useEffect, useState, useMemo } from 'react'
-import {
+import { 
   KeyboardAvoidingView,
   LayoutAnimation,
   Modal,
@@ -14,7 +14,8 @@ import {
   TouchableOpacity,
   View,
   Alert
-} from 'react-native'
+ } from 'react-native'
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet'
 import { FONTS, THEME } from '../devices/theme'
 
 export interface RuleLogic {
@@ -36,9 +37,10 @@ interface RuleSetupModalProps {
   initialRule?: Rule | null
   availableRelays?: string[]
   defaultRuleName?: string
+  availableSensors?: string[]
 }
 
-const METRICS = [
+const ALL_METRICS = [
   { label: 'Temperature (°C)', value: 'temperature' },
   { label: 'Air Humidity (%)', value: 'humidity' },
   { label: 'Soil Moisture (%)', value: 'soil_moisture' },
@@ -102,10 +104,31 @@ export function RuleSetupModal({
   visible,
   onClose,
   onSave,
-  initialRule,
+  initialRule = null,
   availableRelays = [],
-  defaultRuleName = ''
+  defaultRuleName = '',
+  availableSensors = []
 }: RuleSetupModalProps) {
+  const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
+
+  React.useEffect(() => {
+    if (visible) {
+      bottomSheetModalRef.current?.present()
+    } else {
+      bottomSheetModalRef.current?.dismiss()
+    }
+  }, [visible])
+
+  const renderBackdrop = React.useCallback(
+    (props: any) => <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} />,
+    []
+  )
+
+  const availableMetricOptions = React.useMemo(() => {
+    return ALL_METRICS.filter(m => availableSensors.includes(m.value) || m.value === 'time')
+  }, [availableSensors])
+
+
   const [name, setName] = useState('')
   const [isActive, setIsActive] = useState(true)
   const [logicConfig, setLogicConfig] = useState<RuleLogic[]>([])
@@ -130,7 +153,7 @@ export function RuleSetupModal({
         setLogicConfig(JSON.parse(JSON.stringify(defaultLogicConfig)))
       }
     }
-  }, [visible, initialRule, defaultRuleName, defaultLogicConfig])
+  }, [visible, initialRule, defaultRuleName = '', defaultLogicConfig])
 
   // Hàm kiểm tra xem dữ liệu hiện tại có khác với dữ liệu gốc không
   const checkHasChanges = () => {
@@ -231,7 +254,16 @@ export function RuleSetupModal({
   , [availableRelays])
 
   return (
-    <Modal visible={visible} animationType='slide' presentationStyle='pageSheet' onRequestClose={onClose} onDismiss={onClose}>
+    <BottomSheetModal
+      ref={bottomSheetModalRef}
+      snapPoints={['67%', '100%']}
+      backdropComponent={renderBackdrop}
+      enablePanDownToClose
+      onDismiss={onClose}
+      keyboardBehavior="extend"
+      keyboardBlurBehavior="restore"
+      handleStyle={{ display: 'none' }}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.container}
@@ -241,7 +273,7 @@ export function RuleSetupModal({
           <RNText style={styles.headerTitle}>{initialRule ? 'Edit Rule' : 'New Rule'}</RNText>
         </SafeAreaView>
 
-        <ScrollView
+        <BottomSheetScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -294,7 +326,9 @@ export function RuleSetupModal({
                 <CustomSelect
                   label='Sensor'
                   value={logic.if.metric}
-                  options={METRICS}
+                  options={availableMetricOptions.filter(m => 
+                    m.value === logic.if.metric || !logicConfig.some(l => l.if.metric === m.value)
+                  )}
                   onChange={(val) => updateLogic(index, 'if', 'metric', val)}
                 />
                 <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -342,7 +376,7 @@ export function RuleSetupModal({
               </View>
             </View>
           ))}
-        </ScrollView>
+        </BottomSheetScrollView>
 
         <View style={styles.footer}>
           <TouchableOpacity 
@@ -356,7 +390,7 @@ export function RuleSetupModal({
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+    </BottomSheetModal>
   )
 }
 
@@ -367,18 +401,20 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingTop: Platform.OS === 'android' ? 20 : 12,
+    paddingTop: 16,
     paddingBottom: 16,
     backgroundColor: 'white',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)'
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16
   },
   dragHandle: {
     width: 40,
     height: 4,
     backgroundColor: THEME.inkMuted,
     borderRadius: 2,
-    marginBottom: 16,
+    marginBottom: 24,
     opacity: 0.5
   },
   iconBtn: {

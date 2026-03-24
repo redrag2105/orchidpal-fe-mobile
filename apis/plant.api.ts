@@ -50,3 +50,8 @@ export const updatePlant = async (id: string, payload: UpdatePlantRequest) => {
   const response = await apiClient.patch(`/my-plants/${id}`, payload)
   return response.data
 }
+
+export const removePlantFromZone = async (id: string): Promise<any> => {
+  const response = await apiClient.delete(`/my-plants/${id}/remove-garden`)
+  return response.data
+}

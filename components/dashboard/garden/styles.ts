@@ -1,15 +1,48 @@
+import { FONTS, THEME } from '@/components/dashboard/theme'
 import { StyleSheet } from 'react-native'
-import { THEME, FONTS } from '@/components/dashboard/theme'
 
 export const gardenStyles = StyleSheet.create({
   root: { flex: 1, backgroundColor: THEME.paper },
-  header: { paddingHorizontal: 20, paddingVertical: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
   greeting: { fontSize: 12, color: THEME.inkMuted, letterSpacing: 0.5, textTransform: 'uppercase' },
-  headerTitle: { fontSize: 24, fontWeight: '600', fontFamily: FONTS.serif, color: THEME.ink, marginTop: 2 },
+  headerTitle: {
+    paddingTop: 8,
+    paddingBottom: 8,
+    lineHeight: 36,
+    fontSize: 28,
+    fontWeight: '600',
+    fontFamily: FONTS.serif,
+    color: THEME.ink,
+    marginTop: 2
+  },
   headerTitleAccent: { fontStyle: 'italic', color: THEME.orchidMain },
-  addBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
+  addBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    elevation: 2
+  },
   tabContainer: { paddingHorizontal: 20, marginBottom: 8 },
-  tabSwitcher: { flexDirection: 'row', backgroundColor: THEME.paperDark, borderRadius: 999, padding: 3, position: 'relative' },
+  tabSwitcher: {
+    flexDirection: 'row',
+    backgroundColor: THEME.paperDark,
+    borderRadius: 999,
+    padding: 3,
+    position: 'relative'
+  },
   tabButtonActiveIndicator: {
     position: 'absolute',
     top: 3,
@@ -21,14 +54,28 @@ export const gardenStyles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 2,
-    zIndex: 0,
+    zIndex: 0
   },
   tabButton: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 999, zIndex: 1 },
-  tabButtonActive: { backgroundColor: 'white', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
+  tabButtonActive: {
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2
+  },
   tabButtonText: { fontSize: 13, fontWeight: '600', color: THEME.inkMuted },
   tabButtonTextActive: { color: THEME.ink },
   filterContainer: { paddingHorizontal: 20, marginBottom: 8, flexDirection: 'row', gap: 8 },
-  filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: THEME.paper, borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)' },
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: THEME.paper,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)'
+  },
   filterChipActive: { backgroundColor: THEME.forest, borderColor: THEME.forest },
   filterChipText: { fontSize: 12, color: THEME.inkMuted, fontWeight: '600' },
   filterChipTextActive: { color: 'white' },
@@ -40,5 +87,5 @@ export const gardenStyles = StyleSheet.create({
   emptyStateText: { fontSize: 15, color: THEME.inkMuted, textAlign: 'center' },
   sheetBg: { backgroundColor: 'white', borderTopLeftRadius: 32, borderTopRightRadius: 32 },
   sheetIndicator: { width: 48, height: 5, backgroundColor: THEME.paperDeep, borderRadius: 3, marginTop: 10 },
-  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
+  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60 }
 })

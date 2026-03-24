@@ -1,27 +1,34 @@
+import { refreshAutomationRules } from '@/apis/zone.api'
 import { FONTS, THEME } from '@/components/dashboard/theme'
 import { CancelConfirmModal, RuleSetupModal } from '@/components/iot'
 import { Text } from '@/components/ui/text'
 import { Toast, ToastTitle, useToast } from '@/components/ui/toast'
+import { useAnalyzeSeasonalConfig } from '@/hooks/mutations/useAnalyzeSeasonalConfig'
 import { useAssignDeviceToZone } from '@/hooks/mutations/useAssignDeviceToZone'
 import { useAssignPlantToZone } from '@/hooks/mutations/useAssignPlantToZone'
 import { useControlDevice } from '@/hooks/mutations/useControlDevce'
+import { useRemoveDeviceFromZone } from '@/hooks/mutations/useRemoveDeviceFromZone'
+import { useRemovePlantFromZone } from '@/hooks/mutations/useRemovePlantFromZone'
 import { useUpdateAutomationRules } from '@/hooks/mutations/useUpdateAutomationRules'
 import { useUpdateZone } from '@/hooks/mutations/useUpdateZone'
 import { useDevices } from '@/hooks/queries/useDevices'
 import { usePlants } from '@/hooks/queries/usePlants'
+import { useTelemetryLatest } from '@/hooks/queries/useTelemetryLatest'
 import { useZoneDetail } from '@/hooks/queries/useZoneDetail'
-import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import * as ImagePicker from 'expo-image-picker'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeft, Settings, Camera } from 'lucide-react-native'
+import { ArrowLeft, Camera, Edit3, Settings, Sparkles } from 'lucide-react-native'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, TouchableOpacity, View, TextInput, Platform } from 'react-native'
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { AssignBottomSheet, AutomationRulesList, LinkedDeviceCard, LinkedPlantCard } from '@/components/zone'
 
+import { useQueryClient } from '@tanstack/react-query'
 export default function ZoneDetailScreen() {
+  const queryClient = useQueryClient()
   const { id } = useLocalSearchParams()
   const router = useRouter()
   const toast = useToast()
@@ -30,12 +37,19 @@ export default function ZoneDetailScreen() {
   const zone = zoneData || null
   const { data: plantsData } = usePlants()
   const { data: devicesData } = useDevices()
+  const linkedDevice = zone?.devices?.[0]
+  const { data: telemetryData } = useTelemetryLatest(linkedDevice?.serial_number)
 
   const { mutateAsync: mutateAutomationRules } = useUpdateAutomationRules()
   const { mutateAsync: assignDevice } = useAssignDeviceToZone()
   const { mutateAsync: assignPlant } = useAssignPlantToZone()
   const { mutateAsync: controlDeviceMutate } = useControlDevice()
   const { mutateAsync: updateZone, isPending: isUpdating } = useUpdateZone()
+  const { mutateAsync: analyzeConfig, isPending: isAnalyzing } = useAnalyzeSeasonalConfig()
+  const { mutateAsync: removePlantFromZone } = useRemovePlantFromZone()
+  const { mutateAsync: removeDeviceFromZone } = useRemoveDeviceFromZone()
+
+  const [aiSuggestion, setAiSuggestion] = useState<any>(null)
 
   const [confirmModal, setConfirmModal] = useState({
     visible: false,
@@ -43,7 +57,8 @@ export default function ZoneDetailScreen() {
     message: '',
     cancelText: 'Cancel',
     confirmText: 'Confirm',
-    onConfirm: () => {}
+    onConfirm: () => {},
+    onCancel: undefined as (() => void) | undefined
   })
 
   const showConfirm = (
@@ -51,19 +66,22 @@ export default function ZoneDetailScreen() {
     message: string,
     onConfirm: () => void,
     confirmText = 'Confirm',
-    cancelText = 'Cancel'
+    cancelText = 'Cancel',
+    onCancel?: () => void
   ) => {
-    setConfirmModal({ visible: true, title, message, onConfirm, confirmText, cancelText })
+    setConfirmModal({ visible: true, title, message, onConfirm, confirmText, cancelText, onCancel })
   }
 
   const linkedPlant = zone?.my_plants?.[0]
-  const linkedDevice = zone?.devices?.[0]
   const activeRelays = linkedDevice?.hardware_config?.relays
     ? (Object.values(linkedDevice.hardware_config.relays).filter((v: any) => v !== 'null') as string[])
     : []
-  const activeSensors = linkedDevice?.hardware_config?.sensors
-    ? Object.values(linkedDevice.hardware_config.sensors).filter(Boolean).length
-    : 0
+  const availableSensors = linkedDevice?.hardware_config?.sensors
+    ? Object.entries(linkedDevice.hardware_config.sensors)
+        .filter(([_, v]) => v === true)
+        .map(([k]) => k)
+    : []
+  const activeSensors = availableSensors.length
   const rules = zone?.automation_rules || []
 
   const availablePlants = (plantsData?.plants || []).filter((p: any) => !p.zone_id)
@@ -128,6 +146,40 @@ export default function ZoneDetailScreen() {
   const assignSheetRef = useRef<BottomSheet>(null)
   const editProfileSheetRef = useRef<BottomSheet>(null)
   const assignSnapPoints = useMemo(() => ['50%', '67%'], [])
+  const isSheetProgrammaticallyClosing = useRef(false)
+
+  const renderEditBackdrop = useCallback(
+    (props: any) => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.3} />,
+    []
+  )
+
+  const handleEditSheetChange = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        if (isSheetProgrammaticallyClosing.current) {
+          isSheetProgrammaticallyClosing.current = false
+          return
+        }
+
+        const hasChanges = editForm.nickname !== zone?.name || editForm.imageUrl !== zone?.image_url
+        if (hasChanges) {
+          showConfirm(
+            'Discard Changes',
+            'You have unsaved changes. Are you sure you want to discard them?',
+            () => {
+              setEditForm({ nickname: zone?.name || '', imageUrl: zone?.image_url || '' })
+            },
+            'Discard',
+            'Cancel',
+            () => {
+              editProfileSheetRef.current?.expand()
+            }
+          )
+        }
+      }
+    },
+    [editForm, zone]
+  )
   const editProfileSnapPoints = useMemo(() => ['50%'], [])
 
   const [editForm, setEditForm] = useState({ nickname: '', imageUrl: '' })
@@ -154,19 +206,31 @@ export default function ZoneDetailScreen() {
     assignSheetRef.current?.expand()
   }
   const handleUnassignPlant = () => {
-    showConfirm('Unassign Plant', 'Are you sure you want to remove the plant from this zone?', () => {
-      assignPlant({ plant_id: linkedPlant?.id!, zone_id: null })
-        .then(() => showToast('Plant unassigned successfully!'))
-        .catch(() => showToast('Failed to unassign plant.'))
-    }, 'Unassign', 'Cancel')
+    showConfirm(
+      'Unassign Plant',
+      'Are you sure you want to remove the plant from this zone?',
+      () => {
+        removePlantFromZone(linkedPlant?.id!)
+          .then(() => showToast('Plant unassigned successfully!'))
+          .catch(() => showToast('Failed to unassign plant.'))
+      },
+      'Unassign',
+      'Cancel'
+    )
   }
 
   const handleUnassignDevice = () => {
-    showConfirm('Unassign Device', 'Are you sure you want to remove the device from this zone?', () => {
-      assignDevice({ serialNumber: linkedDevice?.serial_number!, payload: { zone_id: null } })
-        .then(() => showToast('Device unassigned successfully!'))
-        .catch(() => showToast('Failed to unassign device.'))
-    }, 'Unassign', 'Cancel')
+    showConfirm(
+      'Unassign Device',
+      'Are you sure you want to remove the device from this zone?',
+      () => {
+        removeDeviceFromZone(linkedDevice?.id!)
+          .then(() => showToast('Device unassigned successfully!'))
+          .catch(() => showToast('Failed to unassign device.'))
+      },
+      'Unassign',
+      'Cancel'
+    )
   }
   const handleOpenEditProfile = () => {
     setEditForm({ nickname: zone?.name || '', imageUrl: zone?.image_url || '' })
@@ -218,6 +282,7 @@ export default function ZoneDetailScreen() {
         }
       })
       showToast('Zone profile updated successfully.')
+      isSheetProgrammaticallyClosing.current = true
       editProfileSheetRef.current?.close()
     } catch (error) {
       showToast('Failed to update zone profile.')
@@ -227,6 +292,60 @@ export default function ZoneDetailScreen() {
   const handleOpenRule = (rule: any = null) => {
     setEditingRule(rule)
     setIsRuleModalVisible(true)
+  }
+
+  const handleAnalyze = async () => {
+    if (!zone?.id) return
+    try {
+      const response = await analyzeConfig({ zoneId: zone.id, days: 30 })
+      if (response?.suggestion) {
+        setAiSuggestion(response)
+      } else {
+        showToast('No suggestion available.')
+      }
+    } catch (e: any) {
+      console.error(e)
+      const errorMsg = e.response?.data?.message || 'Failed to analyze stats.'
+      showToast(errorMsg)
+    }
+  }
+
+  const handleApproveAiRule = async () => {
+    if (!zone?.id || !aiSuggestion) return
+    try {
+      await mutateAutomationRules({ id: zone.id, logic: aiSuggestion.suggestion.logic_config })
+      showToast('Automation rules updated successfully with AI suggestion!')
+      setAiSuggestion(null)
+    } catch (err: any) {
+      console.error(err)
+      showToast('Failed to update rules.')
+    }
+  }
+
+  const summarizeAiLogic = (logicArr: any[]) => {
+    if (!Array.isArray(logicArr)) return []
+    return logicArr.map((logic, index) => {
+      const metricMap: Record<string, string> = {
+        temp: 'temperature',
+        temperature: 'temperature',
+        moisture: 'soil moisture',
+        soil_moisture: 'soil moisture',
+        humidity: 'air humidity',
+        light: 'light level'
+      }
+      const opMap: Record<string, string> = {
+        '>': 'rises above',
+        '<': 'drops below',
+        '>=': 'is at least',
+        '<=': 'is at most',
+        '==': 'is exactly'
+      }
+      const metric = metricMap[logic?.if?.metric] || logic?.if?.metric || 'metric'
+      const op = opMap[logic?.if?.op] || logic?.if?.op || 'changes'
+      const action = logic?.then?.action?.replace(/_/g, ' ') || 'action'
+      const durationSecs = logic?.then?.duration_ms ? Math.round(logic.then.duration_ms / 1000) : 0
+      return `When ${metric} ${op} ${logic?.if?.value || ''}, turn on ${action} for ${durationSecs}s`
+    })
   }
 
   const showToast = (message: string) => {
@@ -282,26 +401,30 @@ export default function ZoneDetailScreen() {
           </View>
 
           <View style={styles.section}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 10 }}>
-                <Text style={styles.sectionTitle}>Linked Plant</Text>
-                {linkedPlant && (
-                  <TouchableOpacity onPress={handleUnassignPlant}>
-                    <Text style={{ fontSize: 13, color: THEME.orchidMain, fontWeight: '600' }}>Unassign</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-              <LinkedPlantCard linkedPlant={linkedPlant} onAddPlant={() => handleOpenAssign('plant')} />
+            <View
+              style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 10 }}
+            >
+              <Text style={styles.sectionTitle}>Linked Plant</Text>
+              {linkedPlant && (
+                <TouchableOpacity onPress={handleUnassignPlant}>
+                  <Text style={{ fontSize: 13, color: THEME.orchidMain, fontWeight: '600' }}>Unassign</Text>
+                </TouchableOpacity>
+              )}
             </View>
+            <LinkedPlantCard linkedPlant={linkedPlant} onAddPlant={() => handleOpenAssign('plant')} />
+          </View>
 
-            <View style={styles.section}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 10 }}>
-                <Text style={styles.sectionTitle}>Linked Device</Text>
-                {linkedDevice && (
-                  <TouchableOpacity onPress={handleUnassignDevice}>
-                    <Text style={{ fontSize: 13, color: THEME.orchidMain, fontWeight: '600' }}>Unassign</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+          <View style={styles.section}>
+            <View
+              style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 10 }}
+            >
+              <Text style={styles.sectionTitle}>Linked Device</Text>
+              {linkedDevice && (
+                <TouchableOpacity onPress={handleUnassignDevice}>
+                  <Text style={{ fontSize: 13, color: THEME.orchidMain, fontWeight: '600' }}>Unassign</Text>
+                </TouchableOpacity>
+              )}
+            </View>
             <LinkedDeviceCard
               linkedDevice={linkedDevice}
               activeSensors={activeSensors}
@@ -311,10 +434,61 @@ export default function ZoneDetailScreen() {
               onToggleRelay={toggleRelay}
               onSaveRelayState={saveRelayState}
               onLinkDevice={() => handleOpenAssign('device')}
+              telemetryData={telemetryData}
             />
           </View>
 
-          <AutomationRulesList rules={rules} onOpenRule={handleOpenRule} />
+          {linkedDevice && (activeSensors > 0 || activeRelays.length > 0) && (
+            <AutomationRulesList rules={rules} onOpenRule={handleOpenRule} />
+          )}
+
+          {linkedDevice && (
+            <View style={styles.section}>
+              <TouchableOpacity style={styles.aiButton} onPress={handleAnalyze} disabled={isAnalyzing}>
+                {isAnalyzing ? (
+                  <ActivityIndicator color={THEME.orchidMain} style={{ marginRight: 8 }} />
+                ) : (
+                  <Sparkles size={20} color={THEME.orchidMain} style={{ marginRight: 8 }} />
+                )}
+                <Text style={styles.aiButtonText}>Analyze Stats & Get AI Suggestion</Text>
+              </TouchableOpacity>
+
+              {aiSuggestion && (
+                <View style={styles.aiCard}>
+                  <View style={styles.aiCardHeader}>
+                    <Sparkles size={16} color={THEME.orchidMain} />
+                    <Text style={styles.aiCardTitle}>AI Suggestion</Text>
+                  </View>
+
+                  <Text style={styles.aiNote}>{aiSuggestion.analysis?.ai_note}</Text>
+
+                  <View style={styles.aiLogicContainer}>
+                    <Text style={styles.aiLogicTitle}>Suggested Rules:</Text>
+                    {summarizeAiLogic(aiSuggestion.suggestion?.logic_config || []).map((desc, idx) => (
+                      <Text key={idx} style={styles.aiLogicText}>
+                        • {desc}
+                      </Text>
+                    ))}
+                  </View>
+
+                  <View style={styles.aiActions}>
+                    <TouchableOpacity
+                      style={[styles.aiActionButton, styles.aiButtonDismiss]}
+                      onPress={() => setAiSuggestion(null)}
+                    >
+                      <Text style={styles.aiButtonDismissText}>Dismiss</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.aiActionButton, styles.aiButtonApprove]}
+                      onPress={handleApproveAiRule}
+                    >
+                      <Text style={styles.aiButtonApproveText}>Approve</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -331,7 +505,15 @@ export default function ZoneDetailScreen() {
             `Are you sure you want to link plant "${p.nickname}"?`,
             () => {
               assignPlant({ plant_id: p.id, zone_id: id as string })
-                .then(() => {
+                .then(async () => {
+                  if (linkedDevice) {
+                    try {
+                      await refreshAutomationRules(id as string)
+                      queryClient.invalidateQueries({ queryKey: ['zone', id] })
+                    } catch (e) {
+                      console.error('Failed to refresh automation rules:', e)
+                    }
+                  }
                   assignSheetRef.current?.close()
                   showToast('Successfully linked plant!')
                 })
@@ -371,6 +553,7 @@ export default function ZoneDetailScreen() {
         onClose={() => setIsRuleModalVisible(false)}
         initialRule={editingRule}
         availableRelays={activeRelays}
+        availableSensors={availableSensors}
         defaultRuleName={zone.name + ' Auto Mode'}
         onSave={async (ruleData) => {
           try {
@@ -391,8 +574,10 @@ export default function ZoneDetailScreen() {
         ref={editProfileSheetRef}
         index={-1}
         snapPoints={editProfileSnapPoints}
-        enablePanDownToClose
-        backdropComponent={renderBackdrop}
+        enablePanDownToClose={true}
+        backdropComponent={renderEditBackdrop}
+        keyboardBehavior='interactive'
+        onChange={handleEditSheetChange}
         backgroundStyle={styles.sheetBackground}
         handleIndicatorStyle={styles.sheetIndicator}
       >
@@ -422,10 +607,24 @@ export default function ZoneDetailScreen() {
                 <Camera size={32} color={THEME.inkLight} />
               </View>
             )}
+            <View
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                right: 0,
+                backgroundColor: THEME.orchidMain,
+                padding: 8,
+                borderRadius: 20,
+                borderWidth: 3,
+                borderColor: THEME.paper
+              }}
+            >
+              <Edit3 size={16} color='white' />
+            </View>
           </TouchableOpacity>
 
           <Text style={styles.inputLabel}>Zone Name</Text>
-          <TextInput
+          <BottomSheetTextInput
             style={styles.input}
             value={editForm.nickname}
             onChangeText={(t) => setEditForm((prev) => ({ ...prev, nickname: t }))}
@@ -435,7 +634,13 @@ export default function ZoneDetailScreen() {
 
           <TouchableOpacity
             onPress={handleSaveProfile}
-            style={[styles.assignButtonBig, { marginTop: 32 }, (isUpdating || (editForm.nickname === zone?.name && editForm.imageUrl === zone?.image_url)) && { opacity: 0.5 }]}
+            style={[
+              styles.assignButtonBig,
+              { marginTop: 32 },
+              (isUpdating || (editForm.nickname === zone?.name && editForm.imageUrl === zone?.image_url)) && {
+                opacity: 0.5
+              }
+            ]}
             disabled={isUpdating || (editForm.nickname === zone?.name && editForm.imageUrl === zone?.image_url)}
           >
             {isUpdating ? (
@@ -455,7 +660,12 @@ export default function ZoneDetailScreen() {
         message={confirmModal.message}
         cancelText={confirmModal.cancelText}
         confirmText={confirmModal.confirmText}
-        onCancel={() => setConfirmModal((prev) => ({ ...prev, visible: false }))}
+        onCancel={() => {
+          setConfirmModal((prev) => ({ ...prev, visible: false }))
+          if (confirmModal.onCancel) {
+            confirmModal.onCancel()
+          }
+        }}
         onConfirm={() => {
           confirmModal.onConfirm()
           setConfirmModal((prev) => ({ ...prev, visible: false }))
@@ -471,7 +681,17 @@ const styles = StyleSheet.create({
   overviewContainer: { width: '100%', height: 380, position: 'relative' },
   coverImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   coverGradient: { position: 'absolute', top: 0, height: 120, left: 0, right: 0 },
-  headerSafeArea: { position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: 20, paddingTop: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  headerSafeArea: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
   backButton: {
     width: 44,
     height: 44,
@@ -486,10 +706,17 @@ const styles = StyleSheet.create({
     elevation: 4
   },
   overviewContent: { marginBottom: 24 },
-  zoneName: { fontSize: 36, fontWeight: '800', fontFamily: FONTS.serif, color: THEME.ink, letterSpacing: -0.5, lineHeight: 42 },
+  zoneName: {
+    fontSize: 36,
+    fontWeight: '800',
+    fontFamily: FONTS.serif,
+    color: THEME.ink,
+    letterSpacing: -0.5,
+    lineHeight: 42
+  },
   zoneCity: { fontSize: 16, color: THEME.inkMuted, marginTop: 4, fontFamily: FONTS.sans },
-  body: { 
-    padding: 24, 
+  body: {
+    padding: 24,
     gap: 32,
     backgroundColor: THEME.paper,
     borderTopRightRadius: 80,
@@ -521,7 +748,7 @@ const styles = StyleSheet.create({
     color: THEME.ink,
     borderWidth: 1,
     borderColor: 'rgba(20,40,29,0.1)',
-    fontFamily: FONTS.sans,
+    fontFamily: FONTS.sans
   },
   assignButtonBig: {
     backgroundColor: THEME.forest,
@@ -551,5 +778,95 @@ const styles = StyleSheet.create({
     elevation: 6
   },
   toastDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: THEME.gold },
-  toastTitle: { color: 'white', fontWeight: '600', fontSize: 15 }
+  toastTitle: { color: 'white', fontWeight: '600', fontSize: 15 },
+  aiButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(159, 95, 128, 0.1)',
+    borderRadius: 999,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginTop: 8
+  },
+  aiButtonText: {
+    color: THEME.orchidMain,
+    fontWeight: '700',
+    fontFamily: FONTS.sans,
+    fontSize: 15
+  },
+  aiCard: {
+    backgroundColor: 'rgba(255, 244, 230, 0.4)',
+    borderWidth: 1,
+    borderColor: 'rgba(240, 169, 52, 0.3)',
+    borderRadius: 20,
+    padding: 16,
+    marginTop: 12
+  },
+  aiCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8
+  },
+  aiCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: THEME.orchidMain,
+    fontFamily: FONTS.sans,
+    marginLeft: 6
+  },
+  aiNote: {
+    fontSize: 14,
+    color: THEME.ink,
+    lineHeight: 20,
+    fontFamily: FONTS.sans,
+    marginBottom: 12
+  },
+  aiLogicContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16
+  },
+  aiLogicTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: THEME.inkMuted,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
+  },
+  aiLogicText: {
+    fontSize: 14,
+    color: THEME.ink,
+    lineHeight: 20,
+    fontFamily: FONTS.sans,
+    marginBottom: 4
+  },
+  aiActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12
+  },
+  aiActionButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 999
+  },
+  aiButtonDismiss: {
+    backgroundColor: 'transparent'
+  },
+  aiButtonDismissText: {
+    color: THEME.inkLight,
+    fontWeight: '600',
+    fontSize: 14
+  },
+  aiButtonApprove: {
+    backgroundColor: THEME.orchidMain
+  },
+  aiButtonApproveText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 14
+  }
 })

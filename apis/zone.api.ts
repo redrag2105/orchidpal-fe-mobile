@@ -56,3 +56,14 @@ export const updateZone = async (id: string, payload: UpdateZoneRequest): Promis
   const response = await apiClient.patch(`/zones/${id}`, payload)
   return response.data
 }
+
+export const analyzeSeasonalConfig = async (zoneId: string, days: number = 30): Promise<any> => {
+  const response = await apiClient.post(`/zones/analyze-seasonal-config`, { zoneId, days })
+  return response.data
+}
+
+
+export const refreshAutomationRules = async (id: string): Promise<any> => {
+  const response = await apiClient.post(`/zones/${id}/automation-rules/refresh`)
+  return response.data
+}

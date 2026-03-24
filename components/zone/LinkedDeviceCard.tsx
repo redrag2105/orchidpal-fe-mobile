@@ -1,15 +1,15 @@
-import React from 'react'
-import { View, TouchableOpacity, StyleSheet } from 'react-native'
+import { CircularStat } from '@/components/dashboard/CircularStat'
+import { THEME } from '@/components/dashboard/theme'
+import { AddDeviceButton } from '@/components/devices/AddDeviceButton'
+import { HStack } from '@/components/ui/hstack'
+import { Text } from '@/components/ui/text'
+import { VStack } from '@/components/ui/vstack'
 import { useRouter } from 'expo-router'
 import { ChevronRight, Cpu, Droplets, Power, Sun, Thermometer } from 'lucide-react-native'
-import { Text } from '@/components/ui/text'
-import { HStack } from '@/components/ui/hstack'
-import { VStack } from '@/components/ui/vstack'
-import { THEME } from '@/components/dashboard/theme'
-import { CircularStat } from '@/components/dashboard/CircularStat'
+import React from 'react'
+import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import { DeviceDataChart } from './DeviceDataChart'
 import { RelayToggle } from './RelayToggle'
-import { AddDeviceButton } from '@/components/devices/AddDeviceButton'
 
 type LinkedDeviceCardProps = {
   linkedDevice?: any // TODO: strictly type this
@@ -20,6 +20,7 @@ type LinkedDeviceCardProps = {
   onToggleRelay: (relay: string) => void
   onSaveRelayState: () => void
   onLinkDevice: () => void
+  telemetryData?: any
 }
 
 const TRENDS = {
@@ -37,7 +38,8 @@ export function LinkedDeviceCard({
   hasRelayChanged,
   onToggleRelay,
   onSaveRelayState,
-  onLinkDevice
+  onLinkDevice,
+  telemetryData
 }: LinkedDeviceCardProps) {
   const router = useRouter()
 
@@ -45,14 +47,17 @@ export function LinkedDeviceCard({
     return (
       <View style={styles.card}>
         <Text style={styles.emptyText}>No device linked to this zone.</Text>
-        <AddDeviceButton title="Link Device" onPress={onLinkDevice} />
+        <AddDeviceButton title='Link Device' onPress={onLinkDevice} />
       </View>
     )
   }
 
   return (
     <View style={styles.card}>
-      <TouchableOpacity activeOpacity={0.7} onPress={() => router.push(`/device/${linkedDevice.id || linkedDevice.serial_number}`)}>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => router.push(`/device/${linkedDevice.id || linkedDevice.serial_number}`)}
+      >
         <HStack style={styles.deviceHeader}>
           <HStack style={{ gap: 16, alignItems: 'center' }}>
             <View style={styles.deviceIcon}>
@@ -74,23 +79,51 @@ export function LinkedDeviceCard({
 
       <View style={styles.statsGrid}>
         <View style={styles.statColumn}>
-          <CircularStat value={24} maxValue={40} label="Temp °C" color={THEME.orchidMain} icon={Thermometer} delay={150} />
+          <CircularStat
+            value={telemetryData?.temperature ?? 0}
+            maxValue={40}
+            label='Temp °C'
+            color={THEME.orchidMain}
+            icon={Thermometer}
+            delay={150}
+          />
         </View>
         <View style={styles.statColumn}>
-          <CircularStat value={60} maxValue={100} label="Humidity %" color="#3b82f6" icon={Droplets} delay={200} />
+          <CircularStat
+            value={telemetryData?.humidity ?? 0}
+            maxValue={100}
+            label='Humidity %'
+            color='#3b82f6'
+            icon={Droplets}
+            delay={200}
+          />
         </View>
         <View style={styles.statColumn}>
-          <CircularStat value={72} maxValue={100} label="Light %" color={THEME.gold} icon={Sun} delay={250} />
+          <CircularStat
+            value={Math.min(100, Math.round((telemetryData?.light ?? 0) / 1000))}
+            maxValue={100}
+            label='Light %'
+            color={THEME.gold}
+            icon={Sun}
+            delay={250}
+          />
         </View>
         <View style={styles.statColumn}>
-          <CircularStat value={45} maxValue={100} label="Moisture %" color={THEME.forest} icon={Droplets} delay={300} />
+          <CircularStat
+            value={telemetryData?.soil_moisture ?? 0}
+            maxValue={100}
+            label='Moisture %'
+            color={THEME.forest}
+            icon={Droplets}
+            delay={300}
+          />
         </View>
       </View>
 
       <DeviceDataChart />
 
       <View style={styles.divider} />
-      
+
       <Text style={styles.hardwareInfoText}>
         Hardware: {activeSensors} sensors, {activeRelays.length} relays
       </Text>
@@ -104,7 +137,9 @@ export function LinkedDeviceCard({
               </View>
               <VStack>
                 <Text style={styles.relayTitle}>{relay.charAt(0).toUpperCase() + relay.slice(1)}</Text>
-                <Text style={styles.relaySubtitle}>{relayState[relay] ? 'Currently Active' : 'Currently Inactive'}</Text>
+                <Text style={styles.relaySubtitle}>
+                  {relayState[relay] ? 'Currently Active' : 'Currently Inactive'}
+                </Text>
               </VStack>
             </HStack>
             <RelayToggle isActive={!!relayState[relay]} onToggle={() => onToggleRelay(relay)} />
@@ -114,7 +149,7 @@ export function LinkedDeviceCard({
 
       {hasRelayChanged && (
         <View style={{ marginTop: 24 }}>
-          <AddDeviceButton title="Save Changes" onPress={onSaveRelayState} />
+          <AddDeviceButton title='Save Changes' onPress={onSaveRelayState} />
         </View>
       )}
     </View>
@@ -169,7 +204,7 @@ const styles = StyleSheet.create({
   statColumn: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: '23%', 
+    width: '23%',
     backgroundColor: 'white',
     paddingVertical: 12,
     borderRadius: 16

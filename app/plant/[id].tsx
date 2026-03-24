@@ -5,10 +5,11 @@ import { Text } from '@/components/ui/text'
 import { Toast, ToastTitle, useToast } from '@/components/ui/toast'
 import { VStack } from '@/components/ui/vstack'
 import { useAssignPlantToZone } from '@/hooks/mutations/useAssignPlantToZone'
+import { useRemovePlantFromZone } from '@/hooks/mutations/useRemovePlantFromZone'
 import { useUpdatePlant } from '@/hooks/mutations/useUpdatePlant'
 import { usePlantDetail } from '@/hooks/queries/usePlantDetail'
 import { useZones } from '@/hooks/queries/useZones'
-import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import * as ImagePicker from 'expo-image-picker'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useLocalSearchParams, useRouter } from 'expo-router'
@@ -23,9 +24,9 @@ import {
   MapPin,
   Settings,
   ShieldCheck,
+  Sun,
   Thermometer,
-  Trees,
-  Sun
+  Trees
 } from 'lucide-react-native'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import {
@@ -36,7 +37,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   View
 } from 'react-native'
@@ -55,6 +55,7 @@ export default function PlantDetailScreen() {
   const plant = plantCallData?.data || plantCallData
 
   const { data: zones } = useZones()
+  const { mutateAsync: removePlantFromZone } = useRemovePlantFromZone()
   const { mutateAsync: assignPlant } = useAssignPlantToZone()
   const { mutateAsync: updatePlant, isPending: isUpdating } = useUpdatePlant()
 
@@ -64,7 +65,8 @@ export default function PlantDetailScreen() {
     message: '',
     cancelText: 'Cancel',
     confirmText: 'Confirm',
-    onConfirm: () => {}
+    onConfirm: () => {},
+    onCancel: undefined as (() => void) | undefined
   })
 
   const showConfirm = (
@@ -72,21 +74,55 @@ export default function PlantDetailScreen() {
     message: string,
     onConfirm: () => void,
     confirmText = 'Confirm',
-    cancelText = 'Cancel'
+    cancelText = 'Cancel',
+    onCancel?: () => void
   ) => {
-    setConfirmModal({ visible: true, title, message, onConfirm, confirmText, cancelText })
+    setConfirmModal({ visible: true, title, message, onConfirm, confirmText, cancelText, onCancel })
   }
 
   const assignSheetRef = useRef<BottomSheet>(null)
   const editProfileSheetRef = useRef<BottomSheet>(null)
   const assignSnapPoints = useMemo(() => ['50%', '67%'], [])
   const editProfileSnapPoints = useMemo(() => ['50%'], [])
+  const isSheetProgrammaticallyClosing = useRef(false)
   const renderBackdrop = useCallback(
     (props: any) => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.3} />,
     []
   )
 
   const [editForm, setEditForm] = useState({ nickname: '', imageUrl: '' })
+  const renderEditBackdrop = useCallback(
+    (props: any) => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.3} />,
+    []
+  )
+
+  const handleEditSheetChange = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        if (isSheetProgrammaticallyClosing.current) {
+          isSheetProgrammaticallyClosing.current = false
+          return
+        }
+
+        const hasChanges = editForm.nickname !== plant?.nickname || editForm.imageUrl !== plant?.image_url
+        if (hasChanges) {
+          showConfirm(
+            'Discard Changes',
+            'You have unsaved changes. Are you sure you want to discard them?',
+            () => {
+              setEditForm({ nickname: plant?.nickname || '', imageUrl: plant?.image_url || '' })
+            },
+            'Discard',
+            'Cancel',
+            () => {
+              editProfileSheetRef.current?.expand()
+            }
+          )
+        }
+      }
+    },
+    [editForm, plant]
+  )
 
   if (isLoading)
     return (
@@ -151,6 +187,7 @@ export default function PlantDetailScreen() {
         }
       })
       showToast('Plant profile updated successfully.')
+      isSheetProgrammaticallyClosing.current = true
       editProfileSheetRef.current?.close()
     } catch (error) {
       showToast('Failed to update plant profile.')
@@ -190,7 +227,7 @@ export default function PlantDetailScreen() {
       'Unassign Zone',
       'Are you sure you want to remove this plant from the zone?',
       () => {
-        assignPlant({ plant_id: plant.id as string, zone_id: null }).then(() => {
+        removePlantFromZone(plant.id as string).then(() => {
           showToast('Plant has been successfully unassigned.')
         })
       },
@@ -249,12 +286,7 @@ export default function PlantDetailScreen() {
               </View>
               <View style={styles.statusTextWrapper}>
                 <Text style={styles.statusLabelElegant}>Health Status</Text>
-                <Text
-                  style={[
-                    styles.statusValueElegant,
-                    { color: isHealthy ? THEME.forest : THEME.gold }
-                  ]}
-                >
+                <Text style={[styles.statusValueElegant, { color: isHealthy ? THEME.forest : THEME.gold }]}>
                   {plant.health_status ? plant.health_status.toUpperCase() : 'UNKNOWN'}
                 </Text>
               </View>
@@ -286,19 +318,21 @@ export default function PlantDetailScreen() {
             <Text style={styles.sectionTitle}>Botanical Guidelines</Text>
             {wikiInfo ? (
               <>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false} 
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
                   contentContainerStyle={{ paddingRight: 24, gap: 12, paddingBottom: 16 }}
                 >
                   <View style={styles.pillCardWrapper}>
                     <View style={styles.glassPill}>
                       <View style={styles.iconCircle}>
-                        <Thermometer size={20} color="#FF6B6B" />
+                        <Thermometer size={20} color='#FF6B6B' />
                       </View>
                       <View style={styles.pillTextContainer}>
                         <Text style={styles.pillLabel}>Ideal Temp</Text>
-                        <Text style={styles.pillValue}>{wikiInfo.ideal_temp_min}-{wikiInfo.ideal_temp_max}°C</Text>
+                        <Text style={styles.pillValue}>
+                          {wikiInfo.ideal_temp_min}-{wikiInfo.ideal_temp_max}°C
+                        </Text>
                       </View>
                     </View>
                   </View>
@@ -306,11 +340,13 @@ export default function PlantDetailScreen() {
                   <View style={styles.pillCardWrapper}>
                     <View style={styles.glassPill}>
                       <View style={styles.iconCircle}>
-                        <Droplets size={20} color="#4BA3E3" />
+                        <Droplets size={20} color='#4BA3E3' />
                       </View>
                       <View style={styles.pillTextContainer}>
                         <Text style={styles.pillLabel}>Humidity</Text>
-                        <Text style={styles.pillValue}>{wikiInfo.ideal_humid_min}-{wikiInfo.ideal_humid_max}%</Text>
+                        <Text style={styles.pillValue}>
+                          {wikiInfo.ideal_humid_min}-{wikiInfo.ideal_humid_max}%
+                        </Text>
                       </View>
                     </View>
                   </View>
@@ -318,7 +354,7 @@ export default function PlantDetailScreen() {
                   <View style={styles.pillCardWrapper}>
                     <View style={styles.glassPill}>
                       <View style={styles.iconCircle}>
-                        <Sun size={20} color="#FFA502" />
+                        <Sun size={20} color='#FFA502' />
                       </View>
                       <View style={styles.pillTextContainer}>
                         <Text style={styles.pillLabel}>Light Role</Text>
@@ -339,19 +375,16 @@ export default function PlantDetailScreen() {
                     <Text style={[styles.gridLabel, { marginTop: 0 }]}>Care Instructions</Text>
                   </HStack>
                   <Text style={styles.careText}>
-                    {wikiInfo.care_instruction ? (
-                      wikiInfo.care_instruction
-                        .split('.')
-                        .filter((s) => s.trim().length > 0)
-                        .map((sentence, index, arr) => (
-                          <React.Fragment key={index}>
-                            • {sentence.trim()}.
-                            {index !== arr.length - 1 && '\n\n'}
-                          </React.Fragment>
-                        ))
-                    ) : (
-                      'No specific care instructions found. Keep an eye on moisture and light levels.'
-                    )}
+                    {wikiInfo.care_instruction
+                      ? wikiInfo.care_instruction
+                          .split('.')
+                          .filter((s) => s.trim().length > 0)
+                          .map((sentence, index, arr) => (
+                            <React.Fragment key={index}>
+                              • {sentence.trim()}.{index !== arr.length - 1 && '\n\n'}
+                            </React.Fragment>
+                          ))
+                      : 'No specific care instructions found. Keep an eye on moisture and light levels.'}
                   </Text>
                 </View>
               </>
@@ -373,8 +406,8 @@ export default function PlantDetailScreen() {
               )}
             </View>
             {currentZone ? (
-              <TouchableOpacity 
-                activeOpacity={0.7} 
+              <TouchableOpacity
+                activeOpacity={0.7}
                 onPress={() => router.push(`/zone/${currentZone.id}`)}
                 style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}
               >
@@ -394,7 +427,9 @@ export default function PlantDetailScreen() {
             ) : (
               <View style={[styles.card, { alignItems: 'center', paddingVertical: 32 }]}>
                 <Trees size={40} color={THEME.paperDeep} style={{ marginBottom: 16 }} />
-                <Text style={styles.emptyZoneDesc}>This plant hasn't been placed in any monitoring zone yet.</Text>
+                <View style={{ alignItems: 'center', width: '100%' }}>
+                  <Text style={styles.emptyZoneDesc}>This plant hasn't been placed in any monitoring zone yet.</Text>
+                </View>
                 <TouchableOpacity onPress={handleOpenAssign} style={styles.assignButtonBig}>
                   <MapPin size={20} color={THEME.paper} />
                   <Text style={{ color: THEME.paper, fontFamily: FONTS.sans, fontWeight: '600', fontSize: 16 }}>
@@ -461,8 +496,10 @@ export default function PlantDetailScreen() {
         ref={editProfileSheetRef}
         index={-1}
         snapPoints={editProfileSnapPoints}
-        enablePanDownToClose
-        backdropComponent={renderBackdrop}
+        enablePanDownToClose={true}
+        backdropComponent={renderEditBackdrop}
+        keyboardBehavior='interactive'
+        onChange={handleEditSheetChange}
         backgroundStyle={styles.sheetBackground}
         handleIndicatorStyle={styles.sheetIndicator}
       >
@@ -498,7 +535,7 @@ export default function PlantDetailScreen() {
           </TouchableOpacity>
 
           <Text style={styles.detailLabel}>Nickname</Text>
-          <TextInput
+          <BottomSheetTextInput
             style={styles.sheetInput}
             value={editForm.nickname}
             onChangeText={(t) => setEditForm((prev) => ({ ...prev, nickname: t }))}
@@ -508,7 +545,13 @@ export default function PlantDetailScreen() {
 
           <TouchableOpacity
             onPress={handleSaveProfile}
-            style={[styles.assignButtonBig, { marginTop: 32 }, (isUpdating || (editForm.nickname === plant.nickname && editForm.imageUrl === plant.image_url)) && { opacity: 0.5 }]}
+            style={[
+              styles.assignButtonBig,
+              { marginTop: 32 },
+              (isUpdating || (editForm.nickname === plant.nickname && editForm.imageUrl === plant.image_url)) && {
+                opacity: 0.5
+              }
+            ]}
             disabled={isUpdating || (editForm.nickname === plant.nickname && editForm.imageUrl === plant.image_url)}
           >
             {isUpdating ? (
@@ -528,8 +571,16 @@ export default function PlantDetailScreen() {
         message={confirmModal.message}
         cancelText={confirmModal.cancelText}
         confirmText={confirmModal.confirmText}
-        onCancel={() => setConfirmModal((prev) => ({ ...prev, visible: false }))}
-        onConfirm={confirmModal.onConfirm}
+        onCancel={() => {
+          setConfirmModal((prev) => ({ ...prev, visible: false }))
+          if (confirmModal.onCancel) {
+            confirmModal.onCancel()
+          }
+        }}
+        onConfirm={() => {
+          confirmModal.onConfirm()
+          setConfirmModal((prev) => ({ ...prev, visible: false }))
+        }}
       />
     </View>
   )
@@ -570,21 +621,21 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.serif,
     color: THEME.ink,
     letterSpacing: -0.5,
-    lineHeight: 42,
+    lineHeight: 42
   },
   heroSpecies: {
     fontSize: 16,
     fontFamily: FONTS.sans,
     color: THEME.inkMuted,
-    marginTop: 4,
+    marginTop: 4
   },
-  body: { 
-    paddingHorizontal: 24, 
-    paddingBottom: 40, 
-    backgroundColor: THEME.paper, 
-    borderTopRightRadius: 80, 
-    marginTop: -40, 
-    paddingTop: 32 
+  body: {
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    backgroundColor: THEME.paper,
+    borderTopRightRadius: 80,
+    marginTop: -40,
+    paddingTop: 32
   },
   statusBar: {
     flexDirection: 'row',
@@ -730,13 +781,13 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
     borderWidth: 1,
-    borderColor: 'rgba(240, 239, 234, 0.8)',
+    borderColor: 'rgba(240, 239, 234, 0.8)'
   },
   glassPill: {
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 8,
-    width: 90,
+    width: 90
   },
   iconCircle: {
     width: 44,
@@ -750,10 +801,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
-    elevation: 1,
+    elevation: 1
   },
   pillTextContainer: {
-    alignItems: 'center',
+    alignItems: 'center'
   },
   pillLabel: {
     fontSize: 11,
@@ -766,7 +817,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: FONTS.sans,
     fontWeight: '700',
-    color: THEME.ink,
+    color: THEME.ink
   },
   assignButtonBig: {
     backgroundColor: THEME.forest,

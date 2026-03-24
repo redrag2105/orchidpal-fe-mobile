@@ -1,10 +1,10 @@
-import React from 'react'
-import { View, TouchableOpacity, StyleSheet } from 'react-native'
-import { Settings2, Zap, ZapOff } from 'lucide-react-native'
-import { Text } from '@/components/ui/text'
+import { FONTS, THEME } from '@/components/dashboard/theme'
 import { HStack } from '@/components/ui/hstack'
+import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
-import { THEME, FONTS } from '@/components/dashboard/theme'
+import { Zap, ZapOff } from 'lucide-react-native'
+import React from 'react'
+import { StyleSheet, TouchableOpacity, View } from 'react-native'
 
 type AutomationRulesListProps = {
   rules: any[] // TODO: strongly type this
@@ -14,25 +14,44 @@ type AutomationRulesListProps = {
 const summarizeRule = (rule: any) => {
   if (rule.condition && rule.action) return `When ${rule.condition}, ${rule.action}`
   const logic = rule.logic_config?.[0]
-  if (!logic) return "No logic defined"
+  if (!logic) return 'No logic defined'
 
   // Convert logic operators to human readable language
-  const metricMap: Record<string, string> = { temp: 'temperature', temperature: 'temperature', moisture: 'soil moisture', soil_moisture: 'soil moisture', humidity: 'air humidity', light: 'light level' }
-  const opMap: Record<string, string> = { '>': 'rises above', '<': 'drops below', '>=': 'is at least', '<=': 'is at most', '==': 'is exactly' }
+  const metricMap: Record<string, string> = {
+    temp: 'temperature',
+    temperature: 'temperature',
+    moisture: 'soil moisture',
+    soil_moisture: 'soil moisture',
+    humidity: 'air humidity',
+    light: 'light level'
+  }
+  const opMap: Record<string, string> = {
+    '>': 'rises above',
+    '<': 'drops below',
+    '>=': 'is at least',
+    '<=': 'is at most',
+    '==': 'is exactly'
+  }
   const metric = metricMap[logic.if.metric] || logic.if.metric
   const op = opMap[logic.if.op] || logic.if.op
   const action = logic.then.action?.replace(/_/g, ' ') || 'action'
   const durationSecs = logic.then.duration_ms ? Math.round(logic.then.duration_ms / 1000) : 0
-  
+
   return `When ${metric} ${op} ${logic.if.value}, turn on ${action} for ${durationSecs}s`
 }
 
 export function AutomationRulesList({ rules, onOpenRule }: AutomationRulesListProps) {
-  // Sort rules so active ones are always on top
-  const sortedRules = [...rules].sort((a, b) => {
-    if (a.is_active === b.is_active) return 0
-    return a.is_active ? -1 : 1
+  const activeRules = rules.filter((r) => r.is_active)
+  const inactiveRules = rules.filter((r) => !r.is_active)
+
+  // Sort inactive rules by created_at descending (latest first)
+  const sortedInactive = inactiveRules.sort((a, b) => {
+    const timeA = a.created_at ? new Date(a.created_at).getTime() : 0
+    const timeB = b.created_at ? new Date(b.created_at).getTime() : 0
+    return timeB - timeA
   })
+
+  const displayRules = [...activeRules, ...(sortedInactive.length > 0 ? [sortedInactive[0]] : [])]
 
   return (
     <View style={styles.section}>
@@ -40,13 +59,13 @@ export function AutomationRulesList({ rules, onOpenRule }: AutomationRulesListPr
         <Text style={styles.sectionTitle}>Automation Rules</Text>
       </HStack>
 
-      {sortedRules.length > 0 ? (
+      {displayRules.length > 0 ? (
         <VStack style={{ gap: 12 }}>
-          {sortedRules.map((rule: any) => (
-            <TouchableOpacity 
-              key={rule.id} 
-              style={[styles.ruleCard, !rule.is_active && styles.ruleCardInactive]} 
-              onPress={() => onOpenRule(rule)} 
+          {displayRules.map((rule: any) => (
+            <TouchableOpacity
+              key={rule.id}
+              style={[styles.ruleCard, !rule.is_active && styles.ruleCardInactive]}
+              onPress={() => onOpenRule(rule)}
               activeOpacity={0.8}
             >
               <View style={[styles.ruleIcon, !rule.is_active && styles.ruleIconInactive]}>
@@ -56,16 +75,22 @@ export function AutomationRulesList({ rules, onOpenRule }: AutomationRulesListPr
                   <ZapOff size={20} color={THEME.inkMuted} />
                 )}
               </View>
-              
+
               <VStack style={{ flex: 1, gap: 4 }}>
                 <HStack style={{ justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text style={[styles.ruleName, !rule.is_active && styles.ruleNameInactive]} numberOfLines={1}>
                     {rule.name}
                   </Text>
-                  
-                  <View style={[styles.statusPill, rule.is_active ? styles.statusPillActive : styles.statusPillInactive]}>
-                    <View style={[styles.statusDot, rule.is_active ? styles.statusDotActive : styles.statusDotInactive]} />
-                    <Text style={[styles.statusText, rule.is_active ? styles.statusTextActive : styles.statusTextInactive]}>
+
+                  <View
+                    style={[styles.statusPill, rule.is_active ? styles.statusPillActive : styles.statusPillInactive]}
+                  >
+                    <View
+                      style={[styles.statusDot, rule.is_active ? styles.statusDotActive : styles.statusDotInactive]}
+                    />
+                    <Text
+                      style={[styles.statusText, rule.is_active ? styles.statusTextActive : styles.statusTextInactive]}
+                    >
                       {rule.is_active ? 'Running' : 'Paused'}
                     </Text>
                   </View>
@@ -143,7 +168,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   ruleIconInactive: {
-    backgroundColor: THEME.paperDark,
+    backgroundColor: THEME.paperDark
   },
   ruleName: {
     fontSize: 16,
@@ -153,7 +178,7 @@ const styles = StyleSheet.create({
     marginRight: 8
   },
   ruleNameInactive: {
-    color: THEME.inkLight,
+    color: THEME.inkLight
   },
   ruleDetail: {
     fontSize: 14,
@@ -161,7 +186,7 @@ const styles = StyleSheet.create({
     lineHeight: 20
   },
   ruleDetailInactive: {
-    color: THEME.inkMuted,
+    color: THEME.inkMuted
   },
   statusPill: {
     flexDirection: 'row',
@@ -183,7 +208,7 @@ const styles = StyleSheet.create({
   statusDot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
+    borderRadius: 3
   },
   statusDotActive: {
     backgroundColor: THEME.forest,

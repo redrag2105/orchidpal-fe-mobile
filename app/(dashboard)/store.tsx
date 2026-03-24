@@ -4,29 +4,21 @@
  */
 
 import { logout } from '@/apis'
+import { NotificationBell } from '@/components/dashboard'
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
-import { NotificationBell } from '@/components/dashboard'
+import { useDevices } from '@/hooks/queries/useDevices'
+import { useDynamicBottomTab } from '@/hooks/useDynamicBottomTab'
+import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import * as SecureStore from 'expo-secure-store'
 import { Bell, ChevronRight, CircleUser, HelpCircle, LogOut, Moon, Shield, Smartphone, Wifi } from 'lucide-react-native'
-import React, { useState, useCallback, useEffect } from 'react'
-import { Image } from 'react-native'
-import { useDevices } from '@/hooks/queries/useDevices'
-import { useQueryClient } from '@tanstack/react-query'
-import { Alert, ScrollView, StyleSheet, TouchableOpacity, View, RefreshControl } from 'react-native'
+import React, { useCallback, useEffect, useState } from 'react'
+import { Alert, Image, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useDynamicBottomTab } from '@/hooks/useDynamicBottomTab'
 
-const THEME = {
-  paper: '#fdfcf8',
-  paperDark: '#f0efea',
-  ink: '#14281d',
-  inkLight: '#3a5a40',
-  orchidMain: '#9f5f80',
-  forest: '#4a795f'
-}
+import { FONTS, THEME } from '@/components/dashboard/theme'
 
 function SettingsItem({
   icon: Icon,
@@ -86,7 +78,7 @@ export default function SettingsScreen() {
   const handleScroll = useDynamicBottomTab()
   const router = useRouter()
   const queryClient = useQueryClient()
-  
+
   const { data: devicesData } = useDevices()
   const totalDevices = devicesData?.data?.length || 0
   const [user, setUser] = useState<{ name?: string; email?: string; picture?: string } | null>(null)
@@ -144,13 +136,15 @@ export default function SettingsScreen() {
   return (
     <View style={styles.root}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <HStack style={{ paddingHorizontal: 20, paddingVertical: 16, justifyContent: 'space-between', alignItems: 'center' }}>
+        <HStack
+          style={{ paddingHorizontal: 20, paddingVertical: 16, justifyContent: 'space-between', alignItems: 'center' }}
+        >
           <Text style={styles.headerTitle}>Settings</Text>
           <NotificationBell />
         </HStack>
 
-        <ScrollView 
-          contentContainerStyle={styles.content} 
+        <ScrollView
+          contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
           onScroll={handleScroll}
           scrollEventThrottle={16}
@@ -175,7 +169,11 @@ export default function SettingsScreen() {
           {/* Devices */}
           <SettingsSection title='Devices'>
             <SettingsItem icon={Wifi} label='Connected Devices' value={totalDevices.toString()} />
-            <SettingsItem icon={Smartphone} label='Add New Device' onPress={() => router.push('/(modals)/device-setup')} />
+            <SettingsItem
+              icon={Smartphone}
+              label='Add New Device'
+              onPress={() => router.push('/(modals)/device-setup')}
+            />
           </SettingsSection>
 
           {/* Preferences */}
@@ -186,7 +184,11 @@ export default function SettingsScreen() {
           {/* Support */}
           <SettingsSection title='Support'>
             <SettingsItem icon={HelpCircle} label='Help Center' onPress={() => router.push('/(modals)/help-center')} />
-            <SettingsItem icon={Shield} label='Privacy Policy' onPress={() => router.push('/(modals)/privacy-policy')} />
+            <SettingsItem
+              icon={Shield}
+              label='Privacy Policy'
+              onPress={() => router.push('/(modals)/privacy-policy')}
+            />
           </SettingsSection>
 
           {/* Account */}
@@ -211,8 +213,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
+    paddingTop: 8,
+    paddingBottom: 8,
+    lineHeight: 36,
+    fontSize: 28,
+    fontWeight: '600',
+    fontFamily: FONTS.serif,
     color: THEME.ink
   },
   content: {

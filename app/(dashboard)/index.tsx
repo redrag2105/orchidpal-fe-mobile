@@ -12,42 +12,39 @@ import {
   NotificationBell,
   THEME,
   ZoneCard,
-  type Insight,
-  type Zone
+  type Insight
 } from '@/components/dashboard'
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
 import { useRouter } from 'expo-router'
-import { Bell, Leaf, Sparkles } from 'lucide-react-native'
-import React, { useState, useCallback } from 'react'
-import { ScrollView, StyleSheet, TouchableOpacity, View, RefreshControl } from 'react-native'
+import { Leaf, Sparkles } from 'lucide-react-native'
+import React, { useCallback, useState } from 'react'
+import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated'
 import { SafeAreaView } from 'react-native-safe-area-context'
-
 
 const AI_INSIGHTS: Insight[] = [
   { id: '1', text: 'Early heatwave detected — consider +1 mist cycle', type: 'warning' },
   { id: '2', text: 'VPD optimal for blooming phase', type: 'success' }
 ]
 
-import { useQueryClient } from '@tanstack/react-query'
 import { useZones } from '@/hooks/queries/useZones'
 import { useDynamicBottomTab } from '@/hooks/useDynamicBottomTab'
+import { useQueryClient } from '@tanstack/react-query'
 
 export default function Dashboard() {
   const router = useRouter()
   const handleScroll = useDynamicBottomTab()
   const queryClient = useQueryClient()
   const { data: zones = [], isLoading: isLoadingZones } = useZones()
-  
+
   const [refreshing, setRefreshing] = useState(false)
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
     await queryClient.invalidateQueries()
     setRefreshing(false)
   }, [queryClient])
-
 
   return (
     <View style={styles.root}>
@@ -65,9 +62,9 @@ export default function Dashboard() {
           </HStack>
         </Animated.View>
 
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent} 
-          showsVerticalScrollIndicator={false} 
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
           onScroll={handleScroll}
           scrollEventThrottle={16}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME.forest} />}
@@ -82,7 +79,7 @@ export default function Dashboard() {
                 <Leaf size={18} color={THEME.forest} strokeWidth={1.5} />
                 <Text style={styles.sectionTitle}>My Zones</Text>
               </HStack>
-                <TouchableOpacity onPress={() => router.push('/(dashboard)/garden?tab=zones')}>
+              <TouchableOpacity onPress={() => router.push('/(dashboard)/garden?tab=zones')}>
                 <Text style={styles.seeAll}>Manage</Text>
               </TouchableOpacity>
             </HStack>
@@ -139,6 +136,9 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase'
   },
   headerTitle: {
+    paddingTop: 8,
+    paddingBottom: 8,
+    lineHeight: 36,
     fontSize: 28,
     fontWeight: '600',
     fontFamily: FONTS.serif,
@@ -197,5 +197,3 @@ const styles = StyleSheet.create({
     paddingRight: 20
   }
 })
-
-

@@ -15,29 +15,29 @@ import {
 } from 'lucide-react-native'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Image } from 'react-native'
-import { MOCK_ZONES } from '../(dashboard)/garden'
+import { useZones } from '@/hooks/queries/useZones'
+import { useAssignDeviceToZone } from '@/hooks/mutations/useAssignDeviceToZone'
 
 import { FONTS, THEME } from '@/components/devices/theme'
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
+import { useRemoveDeviceFromZone } from '@/hooks/mutations/useRemoveDeviceFromZone'
 import { useDeviceDetail } from '@/hooks/queries/useDeviceDetail'
-import { useAssignDeviceToZone } from '@/hooks/mutations/useAssignDeviceToZone'
 import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-const MOCK_LOGS = [
-  { id: '1', time: '10:45 AM', event: 'Pump activated automatically (Rule: Low Humidity)', type: 'action' },
-  { id: '2', time: '09:00 AM', event: 'Device connected to WiFi', type: 'system' },
-  { id: '3', time: 'Yest, 2:30 PM', event: 'Sensor reading anomaly detected', type: 'alert' },
-  { id: '4', time: 'Yest, 1:00 PM', event: 'Firmware updated to v1.2.4', type: 'system' }
-]
 
+
+import { useDeviceLogs } from '@/hooks/queries/useDeviceLogs'
 export default function DeviceDetailScreen() {
   const router = useRouter()
   const { id } = useLocalSearchParams()
 
   const { data: apiDevice, isLoading, error, refetch } = useDeviceDetail(id as string)
+
+  const { data: logsData } = useDeviceLogs(apiDevice?.serial_number as string, 1, 4)
+  const { mutateAsync: removeDeviceFromZone } = useRemoveDeviceFromZone()
   const { mutateAsync: assignDeviceMutate } = useAssignDeviceToZone()
 
   const [refreshing, setRefreshing] = useState(false)
@@ -57,7 +57,8 @@ export default function DeviceDetailScreen() {
   const toast = useToast()
 
   // Available zones: has plant but NO device
-  const availableZones = MOCK_ZONES.filter((z) => z.plant_id !== null && z.device_id === null)
+  const { data: zones } = useZones()
+  const availableZones = (zones || []).filter((z: any) => !z.has_device)
 
   const assignSheetRef = useRef<BottomSheetModal>(null)
   const assignSnapPoints = useMemo(() => ['50%', '67%'], [])
@@ -82,10 +83,10 @@ export default function DeviceDetailScreen() {
   const showToast = (message: string) => {
     toast.show({
       placement: 'bottom',
-      duration: 2000,
+      duration: 1500,
       render: ({ id }) => (
         <Toast nativeID={id} action='success' variant='solid' style={styles.toast}>
-          <CheckCircle size={20} color='white' />
+          <View style={styles.toastDot} />
           <ToastTitle style={styles.toastTitle}>{message}</ToastTitle>
         </Toast>
       )
@@ -95,32 +96,42 @@ export default function DeviceDetailScreen() {
   const handleOpenAssign = () => assignSheetRef.current?.present()
 
   const handleConfirmLink = (zone: any) => {
-    showConfirm('Confirm Assignment', `Are you sure you want to assign this device to ${zone.name}?`, () => {
-      assignDeviceMutate({ serialNumber: id as string, payload: { zone_id: zone.id } })
-        .then(() => {
-          setIsAssigned(true)
-          if (device) {
-            device.zoneName = zone.name
-          }
-          assignSheetRef.current?.dismiss()
-          showToast('Device has been successfully assigned to the zone.')
-        })
-        .catch(() => showToast('Failed to assign device.'))
-    })
+    showConfirm(
+      'Confirm Assignment',
+      `Are you sure you want to assign this device to ${zone.name}?`,
+      () => {
+        assignDeviceMutate({ serialNumber: apiDevice?.serial_number as string, payload: { zone_id: zone.id } })
+          .then(() => {
+            setIsAssigned(true)
+            if (device) {
+              device.zoneName = zone.name
+            }
+            assignSheetRef.current?.dismiss()
+            showToast('Device has been successfully assigned to the zone.')
+          })
+          .catch(() => showToast('Failed to assign device.'))
+      },
+      'Assign'
+    )
   }
 
   const handleUnassignDevice = () => {
-    showConfirm('Unassign Device', 'Are you sure you want to remove this device from the zone?', () => {
-      assignDeviceMutate({ serialNumber: id as string, payload: { zone_id: null } })
-        .then(() => {
-          setIsAssigned(false)
-          if (device) {
-            device.zoneName = undefined
-          }
-          showToast('Device has been successfully unassigned.')
-        })
-        .catch(() => showToast('Failed to unassign device.'))
-    })
+    showConfirm(
+      'Unassign Device',
+      'Are you sure you want to remove this device from the zone?',
+      () => {
+        removeDeviceFromZone(device?.id as string)
+          .then(() => {
+            setIsAssigned(false)
+            if (device) {
+              device.zoneName = undefined
+            }
+            showToast('Device has been successfully unassigned.')
+          })
+          .catch(() => showToast('Failed to unassign device.'))
+      },
+      'Unassign'
+    )
   }
 
   if (isLoading) {
@@ -270,22 +281,37 @@ export default function DeviceDetailScreen() {
         {/* Device Logs */}
         <Text style={styles.sectionTitle}>Recent Logs</Text>
         <View style={[styles.card, { paddingHorizontal: 0, paddingBottom: 8 }]}>
-          {MOCK_LOGS.map((log, index) => (
-            <View key={log.id}>
-              <HStack style={styles.logItem}>
-                <View style={styles.logIcon}>
-                  {log.type === 'action' && <CheckCircle size={16} color={THEME.forest} />}
-                  {log.type === 'system' && <Router size={16} color={THEME.inkLight} />}
-                  {log.type === 'alert' && <AlertTriangle size={16} color={THEME.gold} />}
-                </View>
-                <VStack style={{ flex: 1 }}>
-                  <Text style={styles.logEvent}>{log.event}</Text>
-                  <Text style={styles.logTime}>{log.time}</Text>
-                </VStack>
-              </HStack>
-              {index < MOCK_LOGS.length - 1 && <View style={styles.logDivider} />}
+          {(!logsData?.data || logsData.data.length === 0) ? (
+            <View style={{ padding: 24, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: THEME.inkLight, fontSize: 14, marginTop: 8 }}>No recent logs for this device</Text>
             </View>
-          ))}
+          ) : (
+          (logsData?.data || []).map((log, index) => {
+              const isAction = log.action && !log.action.includes('error') && !log.action.includes('fail')
+              const isAlert = log.action && (log.action.includes('error') || log.action.includes('fail'))
+              return (
+              <View key={log._id}>
+                <HStack style={styles.logItem}>
+                  <View style={styles.logIcon}>
+                    {isAction && <CheckCircle size={16} color={THEME.forest} />}
+                    {isAlert && <AlertTriangle size={16} color={THEME.gold} />}
+                    {!isAction && !isAlert && <Router size={16} color={THEME.inkLight} />}
+                  </View>
+                  <VStack style={{ flex: 1 }}>
+                    <Text style={styles.logEvent}>{log.action}</Text>
+                    <Text style={styles.logTime}>{new Date(log.created_at).toLocaleString()}</Text>
+                  </VStack>
+                </HStack>
+                {index < (logsData?.data?.length || 0) - 1 && <View style={styles.logDivider} />}
+              </View>
+            )
+          })
+          )}
+            {logsData && logsData.data && logsData.data.length > 0 && logsData.total > 4 && (
+              <TouchableOpacity style={styles.viewMoreBtn} onPress={() => router.push({ pathname: `/device/${id}/logs`, params: { serial_number: apiDevice?.serial_number } } as any)}>
+                <Text style={styles.viewMoreText}>View Complete Logs</Text>
+              </TouchableOpacity>
+            )}
         </View>
       </ScrollView>
 
@@ -340,6 +366,17 @@ export default function DeviceDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  viewMoreBtn: {
+    padding: 16,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)'
+  },
+  viewMoreText: {
+    fontSize: 14,
+    color: THEME.forest,
+    fontWeight: '600'
+  },
   container: {
     flex: 1,
     backgroundColor: THEME.paper
@@ -533,32 +570,16 @@ const styles = StyleSheet.create({
   toast: {
     backgroundColor: THEME.forest,
     borderRadius: 999,
-    paddingVertical: 12,
     paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginBottom: 80,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-    width: 340,
-    maxWidth: '90%'
+    gap: 8,
+    elevation: 6
   },
-  toastDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: THEME.forest
-  },
-  toastTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'white',
-    flex: 1,
-    flexWrap: 'wrap'
-  },
+  toastDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: THEME.gold },
+  toastTitle: { color: 'white', fontWeight: '600', fontSize: 15 },
   sheetBackground: {
     backgroundColor: 'white',
     borderTopLeftRadius: 32,
@@ -620,3 +641,4 @@ const styles = StyleSheet.create({
     color: THEME.inkMuted
   }
 })
+

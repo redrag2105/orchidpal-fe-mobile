@@ -42,7 +42,9 @@ export function HeroDeviceCard() {
     humidity: 68,
     light: 72,
     moisture: 45,
-    lastSync: device.last_online_at ? new Date(device.last_online_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'medium' }) : 'Unknown'
+    lastSync: device.last_online_at
+      ? new Date(device.last_online_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'medium' })
+      : 'Unknown'
   }
 
   return (
@@ -76,7 +78,7 @@ export function HeroDeviceCard() {
               <HStack style={{ gap: 6, alignItems: 'center' }}>
                 <View style={[styles.onlineDot, DEVICE_DATA.status !== 'online' && { backgroundColor: '#9e9e9e' }]} />
                 <Text style={styles.heroSyncText}>
-                  {DEVICE_DATA.status === 'online' ? 'Online' : 'Offline'} • Last sync {DEVICE_DATA.lastSync}
+                  {DEVICE_DATA.status === 'online' ? 'Online' : 'Offline'} - Last sync {DEVICE_DATA.lastSync}
                 </Text>
               </HStack>
             </VStack>

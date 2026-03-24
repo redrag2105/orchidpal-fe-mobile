@@ -210,6 +210,9 @@ const styles = StyleSheet.create({
     paddingBottom: 20
   },
   headerTitle: {
+    paddingTop: 8,
+    paddingBottom: 8,
+    lineHeight: 36,
     fontSize: 28,
     fontWeight: '600',
     fontFamily: FONTS.serif,

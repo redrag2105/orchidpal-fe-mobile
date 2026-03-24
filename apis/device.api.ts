@@ -184,3 +184,33 @@ export async function getLatestDevice(): Promise<any> {
   const response = await apiClient.get('/devices/latest')
   return response.data
 }
+
+export async function removeDeviceFromZone(id: string): Promise<any> {
+  const response = await apiClient.delete(`/devices/${id}/remove-garden`)
+  return response.data
+}
+
+export interface DeviceLog {
+  _id: string
+  zone_id: string
+  device_id: string
+  action: string
+  trigger_reason: string
+  created_at: string
+  __v: number
+}
+
+export interface GetDeviceLogsResponse {
+  data: DeviceLog[]
+  total: number
+  page: number
+  limit: number
+  last_page: number
+}
+
+export const getDeviceLogs = async (serialNumber: string, page = 1, limit = 10): Promise<GetDeviceLogsResponse> => {
+  const response = await apiClient.get(`/devices/${serialNumber}/logs`, {
+    params: { page, limit }
+  })
+  return response.data
+}
