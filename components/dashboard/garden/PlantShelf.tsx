@@ -76,6 +76,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   shelfContent: {
+    minHeight: 185, // Height of PlantPotCard to prevent layout collapse when empty
     paddingBottom: 4, 
     gap: 16,
     flexDirection: 'row',

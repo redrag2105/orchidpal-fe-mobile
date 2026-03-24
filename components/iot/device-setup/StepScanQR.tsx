@@ -1,24 +1,38 @@
 import { CameraView, useCameraPermissions } from 'expo-camera'
-import { AlertCircle, QrCode, X } from 'lucide-react-native'
+import { AlertCircle, Eye, EyeOff, QrCode, X } from 'lucide-react-native'
 import React, { useState } from 'react'
 import { ActivityIndicator, Linking, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { styles } from './styles'
+import { THEME } from './theme'
 
 interface StepScanQRProps {
   onScanned: (data: string) => void
-  onDemoScan: () => void
   isLoading: boolean
 }
 
-export function StepScanQR({ onScanned, onDemoScan, isLoading }: StepScanQRProps) {
+export function StepScanQR({ onScanned, isLoading }: StepScanQRProps) {
   const [permission, requestPermission] = useCameraPermissions()
   const [showCamera, setShowCamera] = useState(false)
-  const [manualInput, setManualInput] = useState('')
+  const [serialNumberInput, setSerialNumberInput] = useState('')
+  const [secretKeyInput, setSecretKeyInput] = useState('')
+  const [showSecretKey, setShowSecretKey] = useState(false)
   const [showManual, setShowManual] = useState(false)
   const [hasScanned, setHasScanned] = useState(false)
   const [scannedData, setScannedData] = useState<{ serial_number: string; secret_key: string } | null>(null)
   const [parseError, setParseError] = useState<string | null>(null)
+
+  const isManualValid = serialNumberInput.trim().length > 0 && secretKeyInput.trim().length > 0
+
+  const handleManualSubmit = () => {
+    if (isManualValid) {
+      const payload = {
+        serial_number: serialNumberInput.trim(),
+        secret_key: secretKeyInput.trim()
+      }
+      onScanned(JSON.stringify(payload))
+    }
+  }
 
   const handleOpenCamera = async () => {
     if (!permission?.granted) {
@@ -144,34 +158,73 @@ export function StepScanQR({ onScanned, onDemoScan, isLoading }: StepScanQRProps
           )}
         </TouchableOpacity>
 
-        {/* Demo button for testing without camera */}
-        <TouchableOpacity style={[styles.secondaryButton, { marginTop: 12 }]} onPress={onDemoScan} disabled={isLoading}>
-          <Text style={styles.secondaryButtonText}>Use Demo Device (Testing)</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.linkButton} onPress={() => setShowManual(!showManual)}>
-          <Text style={styles.linkButtonText}>{showManual ? 'Hide manual entry' : 'Enter code manually'}</Text>
-        </TouchableOpacity>
+        {/* Extra options row */}
+        <View style={styles.actionRow}>
+          <TouchableOpacity 
+            style={[styles.secondaryButtonSmall, { flex: 1 }]} 
+            onPress={() => setShowManual(!showManual)} 
+            disabled={isLoading}
+          >
+            <Text style={styles.secondaryButtonTextSmall} numberOfLines={1}>
+              {showManual ? 'Hide Manual' : 'Manual Entry'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {showManual && (
-          <View style={styles.inputGroup}>
-            <Text style={styles.fieldLabel}>Device Code</Text>
-            <View style={styles.fieldRow}>
-              <TextInput
-                style={styles.input}
-                placeholder='{"serial_number":"...", "secret_key":"..."}'
-                placeholderTextColor='#9ca3af'
-                value={manualInput}
-                onChangeText={setManualInput}
-                multiline
-              />
+          <View style={[styles.inputGroup, { marginTop: 16 }]}>
+            <View style={{ marginBottom: 12 }}>
+              <Text style={styles.fieldLabel}>Serial Number</Text>
+              <View style={styles.fieldRow}>
+                <TextInput
+                  style={styles.input}
+                  placeholder='ESP-XXXXXX'
+                  placeholderTextColor='#9ca3af'
+                  value={serialNumberInput}
+                  onChangeText={setSerialNumberInput}
+                  autoCapitalize="characters"
+                />
+              </View>
             </View>
+
+            <View style={{ marginBottom: 12 }}>
+              <Text style={styles.fieldLabel}>Secret Key</Text>
+              <View style={styles.fieldRow}>
+                <TextInput
+                  style={styles.input}
+                  placeholder='Enter secret key'
+                  placeholderTextColor='#9ca3af'
+                  value={secretKeyInput}
+                  onChangeText={setSecretKeyInput}
+                  secureTextEntry={!showSecretKey}
+                />
+                <TouchableOpacity 
+                  onPress={() => setShowSecretKey(!showSecretKey)}
+                  style={{ padding: 8 }}
+                >
+                  {showSecretKey ? (
+                    <EyeOff size={20} color={THEME.inkMuted} />
+                  ) : (
+                    <Eye size={20} color={THEME.inkMuted} />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+
             <TouchableOpacity
-              style={[styles.secondaryButton, { marginTop: 12 }]}
-              onPress={() => onScanned(manualInput)}
-              disabled={!manualInput.trim()}
+              style={[
+                styles.secondaryButton, 
+                { marginTop: 8 },
+                (!isManualValid || isLoading) && styles.buttonDisabled
+              ]}
+              onPress={handleManualSubmit}
+              disabled={!isManualValid || isLoading}
             >
-              <Text style={styles.secondaryButtonText}>Submit Code</Text>
+              {isLoading ? (
+                <ActivityIndicator color={THEME.forest} size='small' />
+              ) : (
+                <Text style={styles.secondaryButtonText}>Submit Credentials</Text>
+              )}
             </TouchableOpacity>
           </View>
         )}

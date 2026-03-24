@@ -17,7 +17,8 @@ import {
   StepSelectZone,
   StepWaitingOnline,
   styles,
-  THEME
+  THEME,
+  FONTS
 } from '@/components/iot/device-setup'
 import { useDeviceProvisioning } from '@/hooks/useDeviceProvisioning'
 import { useRouter } from 'expo-router'
@@ -78,17 +79,6 @@ export default function DeviceSetupScreen() {
     })
     .runOnJS(true)
 
-  // Handler for demo mode - triggers demo flow immediately
-  const handleDemoScan = () => {
-    setIsDemoMode(true)
-    const mockQR = JSON.stringify({
-      serial_number: 'ESP-ORCHID-DEMO',
-      secret_key: 'demo_secret_key'
-    })
-    // Pass forceDemo=true to bypass waiting for state update
-    provisioning.handleQRScanned(mockQR, true)
-  }
-
   return (
     <GestureHandlerRootView style={localStyles.flex}>
       <GestureDetector gesture={swipeGesture}>
@@ -98,30 +88,21 @@ export default function DeviceSetupScreen() {
               {/* Header */}
               <View style={localStyles.headerRow}>
                 {provisioning.canGoBack ? (
-                  <TouchableOpacity style={localStyles.backButton} onPress={provisioning.goBack}>
-                    <ChevronLeft size={20} color='#1f2937' />
+                  <TouchableOpacity style={localStyles.iconButton} onPress={provisioning.goBack}>
+                    <ChevronLeft size={22} color={THEME.ink} />
                   </TouchableOpacity>
                 ) : (
-                  <View style={localStyles.backButton}>
-                    <Router size={18} color='#8c4a7a' />
-                  </View>
+                  <View style={localStyles.iconButtonPlaceholder} />
                 )}
-                <TouchableOpacity onPress={handleClose}>
+                <View style={localStyles.headerTitleContainer}>
+                  <Text style={localStyles.headerTitle}>
+                    Add <Text style={localStyles.headerTitleAccent}>Device</Text>
+                  </Text>
+                  <Text style={localStyles.headerSubtitle}>OrchidPal IoT Kit</Text>
+                </View>
+                <TouchableOpacity style={localStyles.rightActionButton} onPress={handleClose}>
                   <Text style={localStyles.closeText}>{provisioning.step === 'COMPLETE' ? 'Done' : 'Cancel'}</Text>
                 </TouchableOpacity>
-              </View>
-
-              {/* Brand */}
-              <View style={localStyles.brandBlock}>
-                <View style={localStyles.brandRow}>
-                  <View style={localStyles.logoCircle}>
-                    <Text style={localStyles.logoMark}>*</Text>
-                  </View>
-                  <View>
-                    <Text style={localStyles.brandName}>Device Setup</Text>
-                    <Text style={localStyles.brandTagline}>Connect your OrchidPal IoT kit</Text>
-                  </View>
-                </View>
               </View>
 
               {/* Progress */}
@@ -134,7 +115,6 @@ export default function DeviceSetupScreen() {
                 {provisioning.step === 'SCAN_QR' && (
                   <StepScanQR
                     onScanned={provisioning.handleQRScanned}
-                    onDemoScan={handleDemoScan}
                     isLoading={provisioning.isLoading}
                   />
                 )}
@@ -241,55 +221,64 @@ const localStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16
+    marginBottom: 16,
+    height: 56,
+    position: 'relative'
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'white',
+  iconButton: {
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 2
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    zIndex: 10
   },
-  closeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: THEME.forest
-  },
-  brandBlock: {
-    marginBottom: 16
-  },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
-  logoCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'white',
+  rightActionButton: {
+    paddingHorizontal: 16,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    zIndex: 10,
+    minWidth: 44
   },
-  logoMark: {
-    fontSize: 24,
+  iconButtonPlaceholder: {
+    width: 44,
+    height: 44
+  },
+  headerTitleContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  headerTitle: {
+    fontSize: 22,
     fontWeight: '700',
-    color: '#8c4a7a',
+    color: THEME.ink,
+    letterSpacing: -0.5
+  },
+  headerTitleAccent: {
+    color: THEME.forest,
+    fontFamily: FONTS.serif,
     fontStyle: 'italic'
   },
-  brandName: {
-    fontSize: 20,
+  headerSubtitle: {
+    fontSize: 10,
     fontWeight: '700',
-    color: THEME.ink
+    color: THEME.inkMuted,
+    marginTop: -2,
+    textTransform: 'uppercase',
+    letterSpacing: 1
   },
-  brandTagline: {
-    fontSize: 12,
+  closeText: {
+    fontSize: 13,
+    fontWeight: '700',
     color: THEME.inkLight
   },
   cardWrapper: {

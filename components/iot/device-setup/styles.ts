@@ -1,5 +1,5 @@
 import { Platform, StyleSheet } from 'react-native'
-import { THEME, FONTS } from './theme'
+import { FONTS, THEME } from './theme'
 
 export const styles = StyleSheet.create({
   container: {
@@ -36,47 +36,50 @@ export const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: 'white',
-    borderRadius: 24,
-    padding: 28,
-    marginVertical: 8,
+    borderRadius: 32,
+    padding: 32,
+    marginVertical: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 16,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.02)'
   },
   iconContainer: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: 'rgba(74, 121, 95, 0.08)',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(74, 121, 95, 0.06)',
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    marginBottom: 20
+    marginBottom: 24
   },
   iconSuccess: {
-    backgroundColor: 'rgba(74, 121, 95, 0.1)'
+    backgroundColor: 'rgba(74, 121, 95, 0.08)'
   },
   iconError: {
-    backgroundColor: 'rgba(220, 38, 38, 0.1)'
+    backgroundColor: 'rgba(220, 38, 38, 0.08)'
   },
   completeIconContainer: {
-    backgroundColor: 'rgba(34, 197, 94, 0.1)'
+    backgroundColor: 'rgba(34, 197, 94, 0.08)'
   },
   stepTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
     color: THEME.ink,
     textAlign: 'center',
-    marginBottom: 10
+    marginBottom: 12,
+    letterSpacing: -0.5
   },
   stepDescription: {
     fontSize: 15,
-    color: 'rgba(0,0,0,0.55)',
+    color: THEME.inkMuted,
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24
+    lineHeight: 24,
+    marginBottom: 32
   },
   highlight: {
     color: THEME.orchidMain,
@@ -85,54 +88,66 @@ export const styles = StyleSheet.create({
   infoBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: 'rgba(74,121,95,0.06)',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 20,
-    gap: 10
+    backgroundColor: 'rgba(74,121,95,0.04)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(74,121,95,0.08)'
   },
   infoTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: THEME.ink,
-    marginBottom: 4
+    fontWeight: '700',
+    color: THEME.inkLight,
+    marginBottom: 4,
+    letterSpacing: -0.2
   },
   infoText: {
     flex: 1,
     fontSize: 13,
-    color: 'rgba(0,0,0,0.6)',
-    lineHeight: 19
+    color: THEME.inkMuted,
+    lineHeight: 20
   },
   primaryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: THEME.orchidMain,
-    paddingVertical: 14,
+    backgroundColor: THEME.forest,
+    paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 999,
-    gap: 8
+    borderRadius: 20,
+    gap: 8,
+    shadowColor: THEME.forest,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4
   },
   primaryButtonText: {
     color: 'white',
-    fontSize: 15,
-    fontWeight: '600'
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.2
   },
   secondaryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(74, 121, 95, 0.08)',
-    paddingVertical: 14,
+    backgroundColor: 'white',
+    paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 999,
+    borderRadius: 20,
     gap: 8,
-    marginBottom: 12
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)'
   },
   secondaryButtonText: {
-    color: THEME.forest,
-    fontSize: 15,
-    fontWeight: '600'
+    color: THEME.inkLight,
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.2
   },
   buttonSpacing: {
     marginTop: 8
@@ -311,16 +326,37 @@ export const styles = StyleSheet.create({
     gap: 10
   },
   wifiName: {
-    fontSize: 17,
+    fontSize: 14,
     fontWeight: '700',
     color: THEME.orchidMain,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    letterSpacing: 0.5
+    letterSpacing: 0.5,
+    flexShrink: 1
   },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(0,0,0,0.06)',
-    marginVertical: 20
+  actionRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+    width: '100%'
+  },
+  secondaryButtonSmall: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)'
+  },
+  secondaryButtonTextSmall: {
+    color: THEME.inkLight,
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 0.1
   },
   helperText: {
     fontSize: 12,
@@ -404,43 +440,56 @@ export const styles = StyleSheet.create({
     marginTop: 2
   },
   summaryBox: {
-    backgroundColor: 'rgba(74,121,95,0.06)',
-    borderRadius: 16,
-    padding: 18,
+    backgroundColor: 'white',
+    borderRadius: 24,
+    padding: 24,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: 'rgba(74,121,95,0.1)'
+    borderColor: 'rgba(0,0,0,0.04)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 10,
+    elevation: 2
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.02)'
   },
   summaryLabel: {
-    fontSize: 13,
-    color: 'rgba(0,0,0,0.55)'
+    fontSize: 14,
+    color: THEME.inkMuted,
+    fontWeight: '500'
   },
   summaryValue: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1f2937'
+    fontSize: 14,
+    fontWeight: '700',
+    color: THEME.ink
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6
+    gap: 6,
+    backgroundColor: 'rgba(34, 197, 94, 0.08)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 100
   },
   statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#22c55e'
   },
   statusText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#22c55e'
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#22c55e',
+    textTransform: 'uppercase'
   },
   // Camera styles
   permissionBox: {

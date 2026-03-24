@@ -59,18 +59,10 @@ export function ProgressIndicator({ step, onStepPress }: ProgressIndicatorProps)
     : currentActiveIndex !== -1
       ? currentActiveIndex
       : 0
-  const progressPercent = Math.min((completedIndex / (steps.length - 1)) * 100, 100)
 
   return (
     <View style={localStyles.stepperContainer}>
-      {/* Progress line background */}
-      <View style={localStyles.stepperLineContainer}>
-        <View style={localStyles.stepperLineBg} />
-        <View style={[localStyles.stepperLineProgress, { width: `${progressPercent}%` }]} />
-      </View>
-
-      {/* Steps */}
-      <View style={localStyles.stepperRow}>
+      <View style={localStyles.pillContainer}>
         {steps.map((s, i) => {
           const isCompleted = i < completedIndex || step === 'COMPLETE'
           const isActive = s.active
@@ -79,33 +71,25 @@ export function ProgressIndicator({ step, onStepPress }: ProgressIndicatorProps)
           return (
             <TouchableOpacity
               key={s.key}
-              style={[localStyles.stepperItem, s.disabled && !isActive && localStyles.stepperItemDisabled]}
+              style={[
+                localStyles.stepperItem,
+                isActive && localStyles.activePill,
+                s.disabled && !isActive && localStyles.stepperItemDisabled
+              ]}
               disabled={s.disabled || isActive}
               onPress={() => onStepPress?.(s.targetStep)}
               activeOpacity={0.7}
             >
-              <View
-                style={[
-                  localStyles.stepperDot,
-                  isCompleted && localStyles.stepperDotCompleted,
-                  isActive && localStyles.stepperDotActive
-                ]}
-              >
-                {isCompleted ? (
-                  <CheckCircle2 size={16} color='white' strokeWidth={2.5} />
-                ) : (
-                  <Icon size={14} color={isActive ? 'white' : THEME.inkLight} strokeWidth={isActive ? 2 : 1.5} />
-                )}
-              </View>
-              <Text
-                style={[
-                  localStyles.stepperLabel,
-                  isActive && localStyles.stepperLabelActive,
-                  isCompleted && localStyles.stepperLabelCompleted
-                ]}
-              >
-                {s.label}
-              </Text>
+              {isCompleted && !isActive ? (
+                <CheckCircle2 size={16} color={THEME.forest} strokeWidth={2.5} />
+              ) : (
+                <Icon
+                  size={isActive ? 14 : 16}
+                  color={isActive ? THEME.forest : THEME.inkMuted}
+                  strokeWidth={isActive ? 2.5 : 2}
+                />
+              )}
+              {isActive && <Text style={localStyles.activePillText}>{s.label}</Text>}
             </TouchableOpacity>
           )
         })}
@@ -116,90 +100,47 @@ export function ProgressIndicator({ step, onStepPress }: ProgressIndicatorProps)
 
 const localStyles = StyleSheet.create({
   stepperContainer: {
-    position: 'relative',
-    marginBottom: 32,
-    marginTop: 16,
-    paddingHorizontal: 8
+    marginBottom: 24,
+    marginTop: 8,
+    paddingHorizontal: 4
   },
-  stepperLineContainer: {
-    position: 'absolute',
-    top: 20, /* 40/2 */
-    left: '14%',
-    right: '14%',
-    height: 4,
-    zIndex: 1
-  },
-  stepperLineBg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 4,
-    backgroundColor: 'rgba(0,0,0,0.06)',
-    borderRadius: 2
-  },
-  stepperLineProgress: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    height: 4,
-    backgroundColor: THEME.forest,
-    borderRadius: 2
-  },
-  stepperRow: {
+  pillContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    zIndex: 2
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    borderRadius: 100,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.03)'
   },
   stepperItem: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 2
-  },
-  stepperDot: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: THEME.paper,
-    borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
-    shadowColor: THEME.ink,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 100
+  },
+  activePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 2
-  },
-  stepperDotActive: {
-    backgroundColor: THEME.forest,
-    borderColor: THEME.forest,
-    shadowColor: THEME.forest,
-    shadowOpacity: 0.25,
-    shadowRadius: 10
-  },
-  stepperDotCompleted: {
-    backgroundColor: THEME.forest,
-    borderColor: THEME.forest
-  },
-  stepperLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: THEME.inkMuted,
-    textAlign: 'center',
-    letterSpacing: 0.3
-  },
-  stepperLabelActive: {
-    color: THEME.forest,
-    fontWeight: '700'
-  },
-  stepperLabelCompleted: {
-    color: THEME.forest,
-    fontWeight: '600'
+    elevation: 2,
+    gap: 6
   },
   stepperItemDisabled: {
-    opacity: 0.5
+    opacity: 0.6
+  },
+  activePillText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: THEME.forest,
+    letterSpacing: 0.2
   }
 })

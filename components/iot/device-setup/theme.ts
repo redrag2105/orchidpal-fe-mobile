@@ -1,4 +1,5 @@
 import { Platform } from 'react-native'
+import { FONTS as DASHBOARD_FONTS } from '@/components/dashboard/theme'
 
 /**
  * Device Setup Theme Constants
@@ -17,9 +18,6 @@ export const THEME = {
   clay: '#e6b8a2'
 } as const
 
-export const FONTS = {
-  serif: Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' }),
-  sans: Platform.select({ ios: 'System', android: 'sans-serif', default: 'sans-serif' })
-} as const
+export const FONTS = DASHBOARD_FONTS
 
 export type ThemeColor = keyof typeof THEME

@@ -393,9 +393,13 @@ export default function GardenScreen() {
                     <EmptyState message='No plants found matching your criteria.' />
                   ) : (
                     (() => {
-                      const half = Math.ceil(filteredPlants.length / 2);
-                      const topShelfPlants = filteredPlants.slice(0, half);
-                      const bottomShelfPlants = filteredPlants.slice(half);
+                      // If 3 or fewer plants, keep all on the top shelf.
+                      // Otherwise, split them evenly between two shelves.
+                      const total = filteredPlants.length;
+                      const splitIndex = total <= 3 ? total : Math.ceil(total / 2);
+                      
+                      const topShelfPlants = filteredPlants.slice(0, splitIndex);
+                      const bottomShelfPlants = filteredPlants.slice(splitIndex);
 
                       return (
                         <>
