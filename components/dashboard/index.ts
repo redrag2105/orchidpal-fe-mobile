@@ -6,7 +6,7 @@ export { InsightCard, type Insight } from './InsightCard'
 export { ZoneCard, type Zone } from './ZoneCard'
 
 // Shared theme
-export { FONTS, THEME } from './theme'
+export { FONTS, THEME } from '../../constants/theme'
 
 // Existing components
 export { AutomationCard } from './AutomationCard'

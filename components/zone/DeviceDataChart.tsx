@@ -1,14 +1,14 @@
-import React, { useState } from 'react'
-import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native'
-import { LineChart } from 'react-native-gifted-charts'
 import { Text } from '@/components/ui/text'
-import { THEME } from '@/components/dashboard/theme'
+import { THEME } from '@/constants/theme'
+import React, { useState } from 'react'
+import { Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { LineChart } from 'react-native-gifted-charts'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 // Parent 'body' padding: 24 (left/right = 48)
 // 'LinkedDeviceCard' padding: 20 (left/right = 40)
-// Total padding = 88. 
+// Total padding = 88.
 // Available screen width for the whole chart component = SCREEN_WIDTH - 88
 // Y-Axis takes about 40px width.
 // Chart drawing area = (SCREEN_WIDTH - 88) - 40 = SCREEN_WIDTH - 128
@@ -28,31 +28,63 @@ export function DeviceDataChart() {
   // Mock 24-hour data (every 2 hours)
   const chartData = {
     temp: [
-      { value: 22, label: '00' }, { value: 21, label: '02' }, { value: 21, label: '04' },
-      { value: 22, label: '06' }, { value: 24, label: '08' }, { value: 26, label: '10' },
-      { value: 29, label: '12' }, { value: 31, label: '14' }, { value: 30, label: '16' },
-      { value: 28, label: '18' }, { value: 25, label: '20' }, { value: 23, label: '22' },
+      { value: 22, label: '00' },
+      { value: 21, label: '02' },
+      { value: 21, label: '04' },
+      { value: 22, label: '06' },
+      { value: 24, label: '08' },
+      { value: 26, label: '10' },
+      { value: 29, label: '12' },
+      { value: 31, label: '14' },
+      { value: 30, label: '16' },
+      { value: 28, label: '18' },
+      { value: 25, label: '20' },
+      { value: 23, label: '22' },
       { value: 22, label: '24' }
     ],
     humidity: [
-      { value: 65, label: '00' }, { value: 68, label: '02' }, { value: 70, label: '04' },
-      { value: 72, label: '06' }, { value: 65, label: '08' }, { value: 60, label: '10' },
-      { value: 55, label: '12' }, { value: 50, label: '14' }, { value: 52, label: '16' },
-      { value: 58, label: '18' }, { value: 62, label: '20' }, { value: 64, label: '22' },
+      { value: 65, label: '00' },
+      { value: 68, label: '02' },
+      { value: 70, label: '04' },
+      { value: 72, label: '06' },
+      { value: 65, label: '08' },
+      { value: 60, label: '10' },
+      { value: 55, label: '12' },
+      { value: 50, label: '14' },
+      { value: 52, label: '16' },
+      { value: 58, label: '18' },
+      { value: 62, label: '20' },
+      { value: 64, label: '22' },
       { value: 65, label: '24' }
     ],
     light: [
-      { value: 0, label: '00' }, { value: 0, label: '02' }, { value: 0, label: '04' },
-      { value: 20, label: '06' }, { value: 50, label: '08' }, { value: 80, label: '10' },
-      { value: 100, label: '12' }, { value: 95, label: '14' }, { value: 70, label: '16' },
-      { value: 30, label: '18' }, { value: 0, label: '20' }, { value: 0, label: '22' },
+      { value: 0, label: '00' },
+      { value: 0, label: '02' },
+      { value: 0, label: '04' },
+      { value: 20, label: '06' },
+      { value: 50, label: '08' },
+      { value: 80, label: '10' },
+      { value: 100, label: '12' },
+      { value: 95, label: '14' },
+      { value: 70, label: '16' },
+      { value: 30, label: '18' },
+      { value: 0, label: '20' },
+      { value: 0, label: '22' },
       { value: 0, label: '24' }
     ],
     moisture: [
-      { value: 45, label: '00' }, { value: 44, label: '02' }, { value: 43, label: '04' },
-      { value: 42, label: '06' }, { value: 40, label: '08' }, { value: 80, label: '10' },
-      { value: 75, label: '12' }, { value: 70, label: '14' }, { value: 65, label: '16' },
-      { value: 60, label: '18' }, { value: 55, label: '20' }, { value: 50, label: '22' },
+      { value: 45, label: '00' },
+      { value: 44, label: '02' },
+      { value: 43, label: '04' },
+      { value: 42, label: '06' },
+      { value: 40, label: '08' },
+      { value: 80, label: '10' },
+      { value: 75, label: '12' },
+      { value: 70, label: '14' },
+      { value: 65, label: '16' },
+      { value: 60, label: '18' },
+      { value: 55, label: '20' },
+      { value: 50, label: '22' },
       { value: 45, label: '24' }
     ]
   }
@@ -72,7 +104,9 @@ export function DeviceDataChart() {
               style={[styles.tab, isActive && { backgroundColor: tab.color }]}
               onPress={() => setActiveTab(tab.id as any)}
             >
-              <Text style={[styles.tabText, isActive && { color: 'white' }]} numberOfLines={1}>{tab.label}</Text>
+              <Text style={[styles.tabText, isActive && { color: 'white' }]} numberOfLines={1}>
+                {tab.label}
+              </Text>
             </TouchableOpacity>
           )
         })}
@@ -86,7 +120,6 @@ export function DeviceDataChart() {
           spacing={SPACING}
           initialSpacing={10}
           endSpacing={10}
-
           color1={activeColor}
           textColor1={activeColor}
           dataPointsColor1={activeColor}
@@ -123,7 +156,7 @@ export function DeviceDataChart() {
                     width: 70,
                     justifyContent: 'center',
                     backgroundColor: '#1E1E1E',
-                    borderRadius: 8,
+                    borderRadius: 8
                   }}
                 >
                   <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>
@@ -131,7 +164,7 @@ export function DeviceDataChart() {
                   </Text>
                 </View>
               )
-            },
+            }
           }}
         />
       </View>
@@ -144,13 +177,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     paddingTop: 16,
     marginTop: 0,
-    borderWidth: 0,
+    borderWidth: 0
   },
   title: {
     fontSize: 16,
     fontWeight: '700',
     color: THEME.ink,
-    marginBottom: 16,
+    marginBottom: 16
   },
   tabs: {
     flexDirection: 'row',
@@ -167,12 +200,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: 'white',
     borderWidth: 1,
-    borderColor: 'rgba(20,40,29,0.05)',
+    borderColor: 'rgba(20,40,29,0.05)'
   },
   tabText: {
     fontSize: 12,
     fontWeight: '600',
-    color: THEME.inkLight,
+    color: THEME.inkLight
   },
   chartWrapper: {
     alignItems: 'center',

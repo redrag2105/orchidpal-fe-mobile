@@ -1,7 +1,7 @@
-import { FONTS, THEME } from '@/components/dashboard/theme'
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
+import { FONTS, THEME } from '@/constants/theme'
 import { Zap, ZapOff } from 'lucide-react-native'
 import React from 'react'
 import { StyleSheet, TouchableOpacity, View } from 'react-native'

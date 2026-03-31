@@ -1,4 +1,4 @@
-import { FONTS, THEME } from '@/components/dashboard/theme'
+import { FONTS, THEME } from '@/constants/theme'
 import { StyleSheet } from 'react-native'
 
 export const gardenStyles = StyleSheet.create({

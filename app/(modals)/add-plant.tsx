@@ -1,5 +1,5 @@
-﻿import { FONTS, THEME } from '@/components/dashboard/theme'
-import { CancelConfirmModal } from '@/components/iot/device-setup'
+﻿import { CancelConfirmModal } from '@/components/iot/device-setup'
+import { FONTS, THEME } from '@/constants/theme'
 import * as Haptics from 'expo-haptics'
 import * as ImagePicker from 'expo-image-picker'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -178,15 +178,31 @@ export default function AddPlantStoryScreen() {
   const renderStep = () => {
     if (isSuccess) {
       return (
-        <Animated.View entering={enteringAnim} style={{ flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center' }}>
+        <Animated.View
+          entering={enteringAnim}
+          style={{ flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center' }}
+        >
           <CheckCircle2 size={100} color={THEME.forest} style={{ marginBottom: 24 }} />
-          <Text style={{ fontFamily: FONTS.serif, fontSize: 32, color: THEME.ink, marginBottom: 12, textAlign: 'center' }}>
+          <Text
+            style={{ fontFamily: FONTS.serif, fontSize: 32, color: THEME.ink, marginBottom: 12, textAlign: 'center' }}
+          >
             Plant Created!
           </Text>
-          <Text style={{ fontFamily: FONTS.sans, fontSize: 16, color: THEME.inkMuted, textAlign: 'center', marginBottom: 40 }}>
+          <Text
+            style={{
+              fontFamily: FONTS.sans,
+              fontSize: 16,
+              color: THEME.inkMuted,
+              textAlign: 'center',
+              marginBottom: 40
+            }}
+          >
             Redirecting to detail page...
           </Text>
-          <TouchableOpacity onPress={() => router.replace(`/plant/${newBrandPlantId}`)} style={{ backgroundColor: THEME.forest, paddingVertical: 16, paddingHorizontal: 32, borderRadius: 30 }}>
+          <TouchableOpacity
+            onPress={() => router.replace(`/plant/${newBrandPlantId}`)}
+            style={{ backgroundColor: THEME.forest, paddingVertical: 16, paddingHorizontal: 32, borderRadius: 30 }}
+          >
             <Text style={{ fontFamily: FONTS.sans, fontSize: 16, color: THEME.paper, fontWeight: '600' }}>
               Let's see
             </Text>
@@ -248,7 +264,6 @@ export default function AddPlantStoryScreen() {
                       onPress={() => {
                         Haptics.selectionAsync()
                         setPlantData({ ...plantData, species_id: species.id! })
-                        
                       }}
                       style={{
                         backgroundColor: isActive ? THEME.forestLight : 'rgba(255,255,255,0.8)',
@@ -560,7 +575,8 @@ export default function AddPlantStoryScreen() {
                       textAlign: 'center'
                     }}
                   >
-                    {currentSpecies?.ideal_temp_min}-{currentSpecies?.ideal_temp_max}{'\u00B0'}C
+                    {currentSpecies?.ideal_temp_min}-{currentSpecies?.ideal_temp_max}
+                    {'\u00B0'}C
                   </Text>
                   <Text style={{ fontFamily: FONTS.sans, fontSize: 12, color: THEME.inkMuted, marginTop: 4 }}>
                     Temp
@@ -762,7 +778,16 @@ export default function AddPlantStoryScreen() {
                       style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 2, borderColor: THEME.forest }}
                     />
                   ) : (
-                    <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(74, 121, 95, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
+                    <View
+                      style={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: 40,
+                        backgroundColor: 'rgba(74, 121, 95, 0.1)',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                      }}
+                    >
                       <Leaf size={40} color={THEME.forest} />
                     </View>
                   )}

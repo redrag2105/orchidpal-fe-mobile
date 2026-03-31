@@ -1,37 +1,33 @@
-import React from 'react'
-import { TouchableOpacity, Image, View, StyleSheet } from 'react-native'
 import { Text } from '@/components/ui/text'
-import { THEME, FONTS } from '@/components/dashboard/theme'
+import { THEME } from '@/constants/theme'
 import { Plant } from '@/types/garden.types'
 import { AlertCircle, Leaf } from 'lucide-react-native'
+import React from 'react'
+import { Image, StyleSheet, TouchableOpacity, View } from 'react-native'
 
 interface PlantShelfCardProps {
-  plant: Plant;
-  zoneName?: string;
-  onPress: () => void;
+  plant: Plant
+  zoneName?: string
+  onPress: () => void
 }
 
 export function PlantShelfCard({ plant, zoneName, onPress }: PlantShelfCardProps) {
-  const isAssigned = !!plant.zone_id;
+  const isAssigned = !!plant.zone_id
 
   return (
-    <TouchableOpacity 
-      style={styles.cardContainer} 
-      activeOpacity={0.9}
-      onPress={onPress}
-    >
+    <TouchableOpacity style={styles.cardContainer} activeOpacity={0.9} onPress={onPress}>
       {/* Visual top half */}
       <View style={styles.imageWrapper}>
-        <Image 
-          source={{ uri: plant.image_url || 'https://via.placeholder.com/200?text=No+Image' }} 
-          style={styles.plantImage} 
-          resizeMode="cover"
+        <Image
+          source={{ uri: plant.image_url || 'https://via.placeholder.com/200?text=No+Image' }}
+          style={styles.plantImage}
+          resizeMode='cover'
         />
 
         {/* Dummy notification/status icon inside the image (like the red dot in design) */}
         {!isAssigned && (
           <View style={styles.alertIcon}>
-            <AlertCircle color="#FF4D4F" fill="white" size={24} />
+            <AlertCircle color='#FF4D4F' fill='white' size={24} />
           </View>
         )}
       </View>
@@ -39,7 +35,9 @@ export function PlantShelfCard({ plant, zoneName, onPress }: PlantShelfCardProps
       {/* Info bottom half */}
       <View style={styles.infoWrapper}>
         <View style={styles.titleRow}>
-          <Text style={styles.plantNickname} numberOfLines={1}>{plant.nickname}</Text>
+          <Text style={styles.plantNickname} numberOfLines={1}>
+            {plant.nickname}
+          </Text>
           {isAssigned && <Leaf size={14} color={THEME.forest} />}
         </View>
         <Text style={styles.plantLocation} numberOfLines={1}>
@@ -62,20 +60,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 15,
     elevation: 6,
-    marginBottom: 0, 
-    overflow: 'visible',
+    marginBottom: 0,
+    overflow: 'visible'
   },
   imageWrapper: {
-    height: 115, 
+    height: 115,
     width: '100%',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     overflow: 'hidden',
-    backgroundColor: THEME.paper,
+    backgroundColor: THEME.paper
   },
   plantImage: {
     width: '100%',
-    height: '100%',
+    height: '100%'
   },
   alertIcon: {
     position: 'absolute',
@@ -91,7 +89,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
-    zIndex: 2,
+    zIndex: 2
   },
   infoWrapper: {
     paddingHorizontal: 12,
@@ -100,23 +98,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
-    backgroundColor: 'white',
+    backgroundColor: 'white'
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginBottom: 2,
+    marginBottom: 2
   },
   plantNickname: {
     fontSize: 15,
     fontWeight: '700',
     color: '#2D3748', // Darker text for readability
-    flexShrink: 1,
+    flexShrink: 1
   },
   plantLocation: {
     fontSize: 12,
     color: '#A0AEC0', // Light Gray
-    fontWeight: '500',
-  },
+    fontWeight: '500'
+  }
 })

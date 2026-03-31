@@ -7,8 +7,8 @@ import { Cpu, Droplets, Leaf, Sun, Thermometer, Wifi } from 'lucide-react-native
 import React from 'react'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
+import { FONTS, THEME } from '../../constants/theme'
 import { CircularStat } from './CircularStat'
-import { FONTS, THEME } from './theme'
 
 export function HeroDeviceCard() {
   const { data, isLoading, error } = useLatestDevice()

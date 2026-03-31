@@ -4,7 +4,7 @@ import { Cpu, Flower2, Leaf, Plus } from 'lucide-react-native'
 import React, { useCallback, useState } from 'react'
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import Animated, { FadeInUp } from 'react-native-reanimated'
-import { THEME } from './theme'
+import { THEME } from '../../constants/theme'
 
 export interface FABAction {
   key: string

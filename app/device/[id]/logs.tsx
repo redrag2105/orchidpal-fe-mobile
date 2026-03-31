@@ -1,37 +1,39 @@
-import { THEME } from '@/components/dashboard/theme';
-import { useDeviceLogs } from '@/hooks/queries/useDeviceLogs';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { AlertTriangle, ArrowLeft, CheckCircle, Router as RouterIcon } from 'lucide-react-native';
-import React, { useState } from 'react';
-import { 
-  ActivityIndicator, 
-  FlatList, 
-  SafeAreaView, 
-  StyleSheet, 
-  Text, 
-  TouchableOpacity, 
-  View 
-} from 'react-native';
+import { THEME } from '@/constants/theme'
+import { useDeviceLogs } from '@/hooks/queries/useDeviceLogs'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { AlertTriangle, ArrowLeft, CheckCircle, Router as RouterIcon } from 'lucide-react-native'
+import React, { useState } from 'react'
+import { ActivityIndicator, FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
 export default function DeviceLogsScreen() {
   const router = useRouter()
   const { id, serial_number } = useLocalSearchParams()
   const [page, setPage] = useState(1)
-  
+
   const { data: logsData, isLoading, isFetching } = useDeviceLogs(serial_number as string, page, 20)
 
   const renderItem = ({ item: log }: { item: any }) => {
     const actionStr = typeof log.action === 'string' ? log.action.toLowerCase() : ''
     const isAction = !actionStr.includes('error') && !actionStr.includes('fail')
     const isAlert = actionStr.includes('error') || actionStr.includes('fail')
-    
+
     return (
       <View style={styles.logItemContainer}>
         <View style={styles.logItem}>
-          <View style={[styles.logIcon, isAlert && { backgroundColor: 'rgba(235, 172, 86, 0.1)' }, isAction && { backgroundColor: 'rgba(40, 60, 40, 0.05)' }]}>
-            {isAction ? <CheckCircle size={16} color={THEME.forest} /> :
-             isAlert ? <AlertTriangle size={16} color={THEME.gold} /> : 
-             <RouterIcon size={16} color={THEME.inkLight} />}
+          <View
+            style={[
+              styles.logIcon,
+              isAlert && { backgroundColor: 'rgba(235, 172, 86, 0.1)' },
+              isAction && { backgroundColor: 'rgba(40, 60, 40, 0.05)' }
+            ]}
+          >
+            {isAction ? (
+              <CheckCircle size={16} color={THEME.forest} />
+            ) : isAlert ? (
+              <AlertTriangle size={16} color={THEME.gold} />
+            ) : (
+              <RouterIcon size={16} color={THEME.inkLight} />
+            )}
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.logEvent}>{log.action}</Text>
@@ -46,11 +48,11 @@ export default function DeviceLogsScreen() {
     if (isLoading || isFetching) {
       return (
         <View style={{ padding: 20 }}>
-          <ActivityIndicator size="small" color={THEME.forest} />
+          <ActivityIndicator size='small' color={THEME.forest} />
         </View>
       )
     }
-    
+
     if (logsData?.page === logsData?.last_page) {
       return (
         <View style={{ padding: 20, alignItems: 'center' }}>
@@ -58,7 +60,7 @@ export default function DeviceLogsScreen() {
         </View>
       )
     }
-    
+
     return null
   }
 
@@ -85,7 +87,7 @@ export default function DeviceLogsScreen() {
         ListFooterComponent={renderFooter}
         onEndReached={() => {
           if (logsData && logsData.page < logsData.last_page && !isFetching) {
-            setPage(p => p + 1)
+            setPage((p) => p + 1)
           }
         }}
         onEndReachedThreshold={0.5}

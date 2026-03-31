@@ -1,11 +1,18 @@
+import { Search, X } from 'lucide-react-native'
+import React from 'react'
+import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native'
+import Animated, { FadeInDown } from 'react-native-reanimated'
+import { THEME } from '../../constants/theme'
 
-import React from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
-import { Search, X } from 'lucide-react-native';
-import { THEME } from '../dashboard/theme';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-
-export function SearchBar({ value, onChangeText, placeholder }: { value: string, onChangeText: (text: string) => void, placeholder?: string }) {
+export function SearchBar({
+  value,
+  onChangeText,
+  placeholder
+}: {
+  value: string
+  onChangeText: (text: string) => void
+  placeholder?: string
+}) {
   return (
     <Animated.View entering={FadeInDown.duration(400)} style={styles.container}>
       <View style={styles.inputWrapper}>
@@ -26,13 +33,13 @@ export function SearchBar({ value, onChangeText, placeholder }: { value: string,
         )}
       </View>
     </Animated.View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 0,
-    marginBottom: 8,
+    marginBottom: 8
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -42,17 +49,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
+    borderColor: 'rgba(0,0,0,0.05)'
   },
   input: {
     flex: 1,
     marginLeft: 12,
     fontSize: 15,
-    color: THEME.ink,
+    color: THEME.ink
   },
   clearBtn: {
     padding: 4,
-    marginLeft: 8,
+    marginLeft: 8
   }
-});
-
+})

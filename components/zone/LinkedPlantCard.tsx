@@ -1,12 +1,12 @@
-import React from 'react'
-import { View, TouchableOpacity, Image, StyleSheet } from 'react-native'
+import { AddDeviceButton } from '@/components/devices/AddDeviceButton'
+import { HStack } from '@/components/ui/hstack'
+import { Text } from '@/components/ui/text'
+import { VStack } from '@/components/ui/vstack'
+import { THEME } from '@/constants/theme'
 import { useRouter } from 'expo-router'
 import { ChevronRight, Droplets, Thermometer } from 'lucide-react-native'
-import { Text } from '@/components/ui/text'
-import { HStack } from '@/components/ui/hstack'
-import { VStack } from '@/components/ui/vstack'
-import { THEME } from '@/components/dashboard/theme'
-import { AddDeviceButton } from '@/components/devices/AddDeviceButton'
+import React from 'react'
+import { Image, StyleSheet, TouchableOpacity, View } from 'react-native'
 
 type LinkedPlantCardProps = {
   linkedPlant?: any // TODO: strongly type this
@@ -21,17 +21,13 @@ export function LinkedPlantCard({ linkedPlant, onAddPlant }: LinkedPlantCardProp
     return (
       <View style={styles.card}>
         <Text style={styles.emptyText}>No plant assigned to this zone.</Text>
-        <AddDeviceButton title="Add Plant to Zone" onPress={onAddPlant} />
+        <AddDeviceButton title='Add Plant to Zone' onPress={onAddPlant} />
       </View>
     )
   }
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      activeOpacity={0.8}
-      onPress={() => router.push(`/plant/${linkedPlant.id}`)}
-    >
+    <TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={() => router.push(`/plant/${linkedPlant.id}`)}>
       <HStack style={{ gap: 16 }}>
         <Image
           source={{

@@ -1,6 +1,6 @@
-import { FONTS, THEME } from '@/components/dashboard/theme'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
+import { FONTS, THEME } from '@/constants/theme'
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { Cpu, Plus } from 'lucide-react-native'
 import React from 'react'
@@ -69,7 +69,8 @@ export function AssignBottomSheet({
                 <VStack style={{ flex: 1 }}>
                   <Text style={styles.sheetItemTitle}>{d.serial_number}</Text>
                   <Text style={styles.sheetItemSub}>
-                    {d.hardware_config?.sensors ? Object.values(d.hardware_config.sensors).filter(Boolean).length : 0} sensors
+                    {d.hardware_config?.sensors ? Object.values(d.hardware_config.sensors).filter(Boolean).length : 0}{' '}
+                    sensors
                   </Text>
                 </VStack>
                 <Plus size={20} color={THEME.orchidMain} />

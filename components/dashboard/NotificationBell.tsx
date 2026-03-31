@@ -1,28 +1,28 @@
-import React from 'react';
-import { StyleSheet, TouchableOpacity, View, TouchableOpacityProps } from 'react-native';
-import { Bell } from 'lucide-react-native';
-import { THEME } from './theme';
+import { Bell } from 'lucide-react-native'
+import React from 'react'
+import { StyleSheet, TouchableOpacity, TouchableOpacityProps, View } from 'react-native'
+import { THEME } from '../../constants/theme'
 
 interface NotificationBellProps extends TouchableOpacityProps {
-  color?: string;
-  size?: number;
-  hasNotification?: boolean;
+  color?: string
+  size?: number
+  hasNotification?: boolean
 }
 
-export const NotificationBell = ({ 
-  color = THEME.ink, 
-  size = 20, 
+export const NotificationBell = ({
+  color = THEME.ink,
+  size = 20,
   hasNotification = true,
   style,
-  ...props 
+  ...props
 }: NotificationBellProps) => {
   return (
     <TouchableOpacity style={[styles.headerBtn, style]} {...props}>
       <Bell size={size} color={color} strokeWidth={1.5} />
       {hasNotification && <View style={styles.notifDot} />}
     </TouchableOpacity>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   headerBtn: {
@@ -47,4 +47,4 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: THEME.orchidMain
   }
-});
+})

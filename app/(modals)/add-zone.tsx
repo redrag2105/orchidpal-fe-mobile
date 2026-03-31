@@ -1,4 +1,3 @@
-import { FONTS, THEME } from '@/components/dashboard/theme'
 import {
   Actionsheet,
   ActionsheetBackdrop,
@@ -9,6 +8,7 @@ import {
   ActionsheetItemText
 } from '@/components/ui/actionsheet'
 import { Toast, ToastTitle, useToast } from '@/components/ui/toast'
+import { FONTS, THEME } from '@/constants/theme'
 import { useCreateZone } from '@/hooks/mutations/useCreateZone'
 import * as Haptics from 'expo-haptics'
 import * as ImagePicker from 'expo-image-picker'

@@ -1,20 +1,20 @@
 import { FABMenu, NotificationBell } from '@/components/dashboard'
-import { THEME } from '@/components/dashboard/theme'
 import { HStack } from '@/components/ui/hstack'
 import { SearchBar } from '@/components/ui/SearchBar'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
+import { THEME } from '@/constants/theme'
 import { usePlants } from '@/hooks/queries/usePlants'
 import { useSpecies } from '@/hooks/queries/useSpecies'
 import { useZones } from '@/hooks/queries/useZones'
+import { useDynamicBottomTab } from '@/hooks/useDynamicBottomTab'
 import { BottomSheetBackdrop, BottomSheetModal } from '@gorhom/bottom-sheet'
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { Flower2, Leaf } from 'lucide-react-native'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Keyboard, ScrollView, TouchableWithoutFeedback, View, RefreshControl } from 'react-native'
+import { ActivityIndicator, Keyboard, RefreshControl, ScrollView, TouchableWithoutFeedback, View } from 'react-native'
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useDynamicBottomTab } from '@/hooks/useDynamicBottomTab'
 
 // Import extracted constants & components
 // import { useUIStore } from '@/hooks/useUIStore'
@@ -187,7 +187,7 @@ export default function GardenScreen() {
 
   const { tab } = useLocalSearchParams<{ tab?: 'zones' | 'plants' }>()
   const [activeTab, setActiveTab] = useState<'zones' | 'plants'>(tab || 'zones')
-  
+
   useEffect(() => {
     if (tab && (tab === 'zones' || tab === 'plants')) {
       setActiveTab(tab)
@@ -359,7 +359,13 @@ export default function GardenScreen() {
               keyboardShouldPersistTaps='handled'
               onScroll={handleScroll}
               scrollEventThrottle={16}
-              refreshControl={<RefreshControl refreshing={isRefetchingZones || isRefetchingPlants} onRefresh={onRefresh} tintColor={THEME.orchidMain} />}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefetchingZones || isRefetchingPlants}
+                  onRefresh={onRefresh}
+                  tintColor={THEME.orchidMain}
+                />
+              }
             >
               {(loadingZones && zones.length === 0) || (loadingPlants && plants.length === 0) ? (
                 <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: 100 }}>
@@ -395,18 +401,18 @@ export default function GardenScreen() {
                     (() => {
                       // If 3 or fewer plants, keep all on the top shelf.
                       // Otherwise, split them evenly between two shelves.
-                      const total = filteredPlants.length;
-                      const splitIndex = total <= 3 ? total : Math.ceil(total / 2);
-                      
-                      const topShelfPlants = filteredPlants.slice(0, splitIndex);
-                      const bottomShelfPlants = filteredPlants.slice(splitIndex);
+                      const total = filteredPlants.length
+                      const splitIndex = total <= 3 ? total : Math.ceil(total / 2)
+
+                      const topShelfPlants = filteredPlants.slice(0, splitIndex)
+                      const bottomShelfPlants = filteredPlants.slice(splitIndex)
 
                       return (
                         <>
                           <PlantShelf
                             plants={topShelfPlants}
                             zones={zones}
-                            layout="right-aligned"
+                            layout='right-aligned'
                             indexOffset={0}
                             onPressPlant={(plant) => {
                               isNavigatingToDetail.current = true
@@ -416,7 +422,7 @@ export default function GardenScreen() {
                           <PlantShelf
                             plants={bottomShelfPlants}
                             zones={zones}
-                            layout="full-width"
+                            layout='full-width'
                             indexOffset={topShelfPlants.length}
                             onPressPlant={(plant) => {
                               isNavigatingToDetail.current = true
@@ -483,4 +489,3 @@ export default function GardenScreen() {
     </View>
   )
 }
-

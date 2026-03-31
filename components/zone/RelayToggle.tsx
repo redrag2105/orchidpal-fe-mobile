@@ -1,8 +1,8 @@
+import { Text } from '@/components/ui/text'
+import { THEME } from '@/constants/theme'
+import { LinearGradient } from 'expo-linear-gradient'
 import React, { useEffect, useRef } from 'react'
 import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native'
-import { Text } from '@/components/ui/text'
-import { THEME } from '@/components/dashboard/theme'
-import { LinearGradient } from 'expo-linear-gradient'
 
 type RelayToggleProps = {
   isActive: boolean
@@ -16,7 +16,7 @@ export function RelayToggle({ isActive, onToggle }: RelayToggleProps) {
     Animated.timing(anim, {
       toValue: isActive ? 1 : 0,
       duration: 300,
-      useNativeDriver: false,
+      useNativeDriver: false
     }).start()
   }, [isActive])
 
@@ -28,14 +28,16 @@ export function RelayToggle({ isActive, onToggle }: RelayToggleProps) {
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onToggle}>
       <View style={styles.toggleTrack}>
-        <Animated.View style={{
-          position: 'absolute',
-          right: 12,
-          opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] })
-        }}>
+        <Animated.View
+          style={{
+            position: 'absolute',
+            right: 12,
+            opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] })
+          }}
+        >
           <Text style={styles.toggleOffText}>OFF</Text>
         </Animated.View>
-        
+
         <Animated.View style={[StyleSheet.absoluteFillObject, { opacity: anim, justifyContent: 'center' }]}>
           <LinearGradient
             colors={[THEME.forest, THEME.forestLight]}

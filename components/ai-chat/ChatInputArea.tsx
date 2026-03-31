@@ -1,4 +1,4 @@
-import { FONTS, THEME } from '@/components/dashboard/theme'
+import { FONTS, THEME } from '@/constants/theme'
 import { BlurView } from 'expo-blur'
 import { Camera, Send, X } from 'lucide-react-native'
 import React from 'react'

@@ -1,4 +1,4 @@
-import { FONTS, THEME } from '@/components/dashboard/theme'
+import { FONTS, THEME } from '@/constants/theme'
 import { ChatMessage } from '@/types/chat.types'
 import { BlurView } from 'expo-blur'
 import { Droplets, Flower2, Search, User } from 'lucide-react-native'

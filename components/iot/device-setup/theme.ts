@@ -1,5 +1,4 @@
-import { Platform } from 'react-native'
-import { FONTS as DASHBOARD_FONTS } from '@/components/dashboard/theme'
+import { FONTS as DASHBOARD_FONTS } from '@/constants/theme'
 
 /**
  * Device Setup Theme Constants

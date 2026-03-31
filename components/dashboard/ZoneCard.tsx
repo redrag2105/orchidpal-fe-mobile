@@ -1,11 +1,11 @@
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Droplets, Edit3, Thermometer, Cpu, Leaf, Plus } from 'lucide-react-native'
+import { Cpu, Droplets, Leaf, Plus, Thermometer } from 'lucide-react-native'
 import React from 'react'
 import { Image, StyleSheet, TouchableOpacity, View } from 'react-native'
 import Animated, { FadeInRight } from 'react-native-reanimated'
-import { FONTS, THEME } from './theme'
+import { FONTS, THEME } from '../../constants/theme'
 
 export interface Zone {
   id: string
@@ -44,18 +44,18 @@ export function ZoneCard({ zone, index, onPress }: ZoneCardProps) {
         {/* Indicators Top Corner */}
         <HStack style={styles.indicators}>
           <View style={[styles.indicatorIcon, hasPlant ? styles.indicatorActive : styles.indicatorDimmed]}>
-            {hasPlant ? <Leaf size={12} color={THEME.forest} /> : <Plus size={12} color="rgba(255,255,255,0.7)" />}
+            {hasPlant ? <Leaf size={12} color={THEME.forest} /> : <Plus size={12} color='rgba(255,255,255,0.7)' />}
           </View>
           <View style={[styles.indicatorIcon, hasDevice ? styles.indicatorActive : styles.indicatorDimmed]}>
-            {hasDevice ? <Cpu size={12} color={THEME.ink} /> : <Plus size={12} color="rgba(255,255,255,0.7)" />}
+            {hasDevice ? <Cpu size={12} color={THEME.ink} /> : <Plus size={12} color='rgba(255,255,255,0.7)' />}
           </View>
         </HStack>
 
         {/* Gradient overlay to ensure text contrast while keeping image visible */}
-        <LinearGradient 
-          colors={['transparent', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.85)']} 
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.85)']}
           locations={[0, 0.4, 1]}
-          style={styles.zoneGradient} 
+          style={styles.zoneGradient}
         />
 
         {/* Content (No Blur, relies on gradient and text shadows) */}
@@ -63,8 +63,18 @@ export function ZoneCard({ zone, index, onPress }: ZoneCardProps) {
           <Text style={styles.zoneName}>{zone.name}</Text>
           {zone.location_city ? <Text style={styles.zoneLocation}>{zone.location_city}</Text> : null}
           <HStack style={styles.zoneStats}>
-            {zone.temperature !== null && zone.temperature !== undefined ? <HStack style={{ gap: 4, alignItems: 'center' }}><Thermometer size={12} color='white' strokeWidth={1.5} /><Text style={styles.zoneStatText}>{zone.temperature}C</Text></HStack> : null}
-            {zone.humidity !== null && zone.humidity !== undefined ? <HStack style={{ gap: 4, alignItems: 'center' }}><Droplets size={12} color='white' strokeWidth={1.5} /><Text style={styles.zoneStatText}>{zone.humidity}%</Text></HStack> : null}
+            {zone.temperature !== null && zone.temperature !== undefined ? (
+              <HStack style={{ gap: 4, alignItems: 'center' }}>
+                <Thermometer size={12} color='white' strokeWidth={1.5} />
+                <Text style={styles.zoneStatText}>{zone.temperature}C</Text>
+              </HStack>
+            ) : null}
+            {zone.humidity !== null && zone.humidity !== undefined ? (
+              <HStack style={{ gap: 4, alignItems: 'center' }}>
+                <Droplets size={12} color='white' strokeWidth={1.5} />
+                <Text style={styles.zoneStatText}>{zone.humidity}%</Text>
+              </HStack>
+            ) : null}
           </HStack>
         </View>
       </TouchableOpacity>
@@ -85,30 +95,30 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover'
   },
-  indicators: { 
-    position: 'absolute', 
-    top: 12, 
-    right: 12, 
-    flexDirection: 'row', 
-    gap: 6 
+  indicators: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    gap: 6
   },
-  indicatorIcon: { 
-    width: 26, 
-    height: 26, 
-    borderRadius: 13, 
-    alignItems: 'center', 
-    justifyContent: 'center' 
+  indicatorIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
-  indicatorActive: { 
-    backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-    shadowColor: '#000', 
-    shadowOpacity: 0.1, 
-    shadowOffset: { width: 0, height: 2 }, 
-    shadowRadius: 4, 
-    elevation: 2 
+  indicatorActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2
   },
-  indicatorDimmed: { 
-    backgroundColor: 'rgba(255, 255, 255, 0.3)' 
+  indicatorDimmed: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)'
   },
   zoneGradient: {
     position: 'absolute',
@@ -132,14 +142,14 @@ const styles = StyleSheet.create({
     color: 'white',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    textShadowRadius: 3
   },
   zoneLocation: {
     fontSize: 11,
     color: 'rgba(255,255,255,0.85)',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowRadius: 2
   },
   zoneStats: {
     gap: 12,
@@ -151,6 +161,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowRadius: 2
   }
 })

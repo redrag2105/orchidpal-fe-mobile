@@ -1,4 +1,4 @@
-import { FONTS, THEME } from '@/components/dashboard/theme'
+import { FONTS, THEME } from '@/constants/theme'
 import { Camera, Droplets, Flower2, Leaf, Sun } from 'lucide-react-native'
 import React from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'

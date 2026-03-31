@@ -18,7 +18,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { Alert, Image, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-import { FONTS, THEME } from '@/components/dashboard/theme'
+import { FONTS, THEME } from '@/constants/theme'
 
 function SettingsItem({
   icon: Icon,
