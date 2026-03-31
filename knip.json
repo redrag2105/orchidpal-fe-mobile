@@ -1,0 +1,5 @@
+{
+  "entry": ["app/**/*.{ts,tsx,js,jsx}!", "app.config.ts", "babel.config.js"],
+  "ignore": ["components/ui/**"],
+  "ignoreDependencies": ["@react-navigation/native", "babel-preset-expo"]
+}

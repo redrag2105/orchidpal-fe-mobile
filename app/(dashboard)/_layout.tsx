@@ -3,7 +3,7 @@ import { useUIStore } from '@/hooks/useUIStore'
 import { Tabs } from 'expo-router'
 import { Cpu, Flower2, Home, Lightbulb, Settings } from 'lucide-react-native'
 import React, { useEffect, useState } from 'react'
-import { Keyboard, Platform, StyleSheet, TouchableOpacity } from 'react-native'
+import { Keyboard, Platform, TouchableOpacity } from 'react-native'
 import Animated, { useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -42,13 +42,17 @@ function TabButton({
 
   return (
     <TouchableOpacity
-      style={[styles.tabButton, { paddingVertical: isSticky ? 2 : 4 }]}
+      className='flex-1 items-center justify-center'
+      style={{ paddingVertical: isSticky ? 2 : 4 }}
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <Animated.View style={[styles.tabButtonInner, animatedBgStyle]}>{children}</Animated.View>
+      <Animated.View className='h-[42px] w-[42px] items-center justify-center rounded-[14px]' style={animatedBgStyle}>
+        {children}
+      </Animated.View>
       <Animated.Text
-        style={[styles.tabLabel, { color: isFocused ? activeColor : THEME.inkMuted }, animatedTextStyle]}
+        className='mt-[3px] font-sans text-[10px] font-semibold tracking-[0.1px]'
+        style={[{ color: isFocused ? activeColor : THEME.inkMuted }, animatedTextStyle]}
         numberOfLines={1}
       >
         {label}
@@ -59,6 +63,7 @@ function TabButton({
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false)
+
   useEffect(() => {
     const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () =>
       setKeyboardVisible(true)
@@ -71,44 +76,39 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
       hideSub.remove()
     }
   }, [])
+
   const insets = useSafeAreaInsets()
   const isTabBarSticky = useUIStore((s) => s.isTabBarSticky)
-  // const setTabBarSticky = useUIStore((s) => s.setTabBarSticky)
+
+  const springConfig = { damping: 14, stiffness: 90, mass: 0.8 }
 
   const wrapperAnimatedStyle = useAnimatedStyle(() => {
     return {
       opacity: withTiming(isKeyboardVisible ? 0 : 1, { duration: 200 }),
       transform: [{ translateY: withTiming(isKeyboardVisible ? 100 : 0, { duration: 200 }) }],
-      paddingHorizontal: withSpring(isTabBarSticky ? 0 : 20, { damping: 14, stiffness: 90, mass: 0.8 }),
-      paddingBottom: withSpring(isTabBarSticky ? 0 : Math.max(insets.bottom, 10), {
-        damping: 14,
-        stiffness: 90,
-        mass: 0.8
-      })
+      paddingHorizontal: withSpring(isTabBarSticky ? 0 : 20, springConfig),
+      paddingBottom: withSpring(isTabBarSticky ? 0 : Math.max(insets.bottom, 10), springConfig)
     }
   })
 
   const pillAnimatedStyle = useAnimatedStyle(() => {
     return {
-      borderBottomLeftRadius: withSpring(isTabBarSticky ? 0 : 28, { damping: 14, stiffness: 90, mass: 0.8 }),
-      borderBottomRightRadius: withSpring(isTabBarSticky ? 0 : 28, { damping: 14, stiffness: 90, mass: 0.8 }),
-      borderTopLeftRadius: withSpring(isTabBarSticky ? 24 : 28, { damping: 14, stiffness: 90, mass: 0.8 }),
-      borderTopRightRadius: withSpring(isTabBarSticky ? 24 : 28, { damping: 14, stiffness: 90, mass: 0.8 }),
-      paddingBottom: withSpring(isTabBarSticky ? Math.max(insets.bottom - 4, 4) : 8, {
-        damping: 14,
-        stiffness: 90,
-        mass: 0.8
-      }),
-      paddingTop: withSpring(isTabBarSticky ? 4 : 8, { damping: 14, stiffness: 90, mass: 0.8 })
+      borderRadius: withSpring(isTabBarSticky ? 0 : 28, springConfig),
+      paddingBottom: withSpring(isTabBarSticky ? Math.max(insets.bottom - 16, 4) : 8, springConfig),
+      paddingTop: withSpring(isTabBarSticky ? 11 : 8, springConfig)
     }
   })
 
   return (
     <Animated.View
-      style={[styles.tabBarWrapper, wrapperAnimatedStyle]}
+      className='absolute bottom-0 left-0 right-0 items-center'
+      style={wrapperAnimatedStyle}
       pointerEvents={isKeyboardVisible ? 'none' : 'auto'}
     >
-      <Animated.View style={[styles.tabBarPill, pillAnimatedStyle]}>
+      <Animated.View
+        className='shadow-tab-bar elevation-12 w-full flex-row items-center justify-between border border-forest/10 bg-paper/[.98] px-1.5'
+        style={pillAnimatedStyle}
+      >
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key]
           const isFocused = state.index === index
@@ -199,51 +199,3 @@ export default function DashboardLayout() {
     </Tabs>
   )
 }
-
-const styles = StyleSheet.create({
-  tabBarWrapper: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    paddingHorizontal: 20
-  },
-  tabBarPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    backgroundColor: 'rgba(253, 252, 248, 0.98)',
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: 'rgba(74, 121, 95, 0.1)',
-    paddingHorizontal: 6,
-    paddingVertical: 8,
-    shadowColor: THEME.ink,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 12
-  },
-  tabButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 4
-  },
-  tabButtonInner: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  tabLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    fontFamily: Platform.select({ ios: 'System', android: 'sans-serif-medium' }),
-    marginTop: 3,
-    letterSpacing: 0.1
-  }
-})

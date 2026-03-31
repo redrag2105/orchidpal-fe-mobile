@@ -225,7 +225,11 @@ module.exports = {
         'soft-4': '0px 0px 40px rgba(38, 38, 38, 0.1)',
         soft: '0px 8px 24px rgba(20, 40, 29, 0.03)',
         pill: '0px 6px 10px rgba(20, 40, 29, 0.05)',
-        icon: '0px 2px 6px rgba(0, 0, 0, 0.04)'
+        icon: '0px 2px 6px rgba(0, 0, 0, 0.04)',
+        'tab-bar': '0px 8px 20px rgba(20, 40, 29, 0.1)'
+      },
+      opacity: {
+        98: '.98'
       }
     }
   }

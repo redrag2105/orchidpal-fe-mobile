@@ -7,17 +7,12 @@ import {
   ActionsheetItem,
   ActionsheetItemText
 } from '@/components/ui/actionsheet'
+import { EXPOSURE_OPTIONS } from '@/types/add-zone.types'
 import * as Location from 'expo-location'
 import { ChevronLeft, ChevronRight, Flower2, MapPin } from 'lucide-react-native'
 import React, { useState } from 'react'
 import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { styles } from './styles'
-
-const EXPOSURE_OPTIONS = [
-  { value: 'FULL_SUN', label: 'Full Sun', description: 'Direct sunlight most of the day' },
-  { value: 'PARTIAL_SHADE', label: 'Partial Shade', description: 'Some direct sunlight' },
-  { value: 'FULL_SHADE', label: 'Full Shade', description: 'Little to no direct sun' }
-] as const
 
 interface StepCreateZoneProps {
   onSubmit: (data: {

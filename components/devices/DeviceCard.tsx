@@ -12,7 +12,7 @@ import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native'
 import Animated, { FadeInRight } from 'react-native-reanimated'
 
 import { THEME } from '@/constants/theme'
-import type { Device } from './types'
+import type { Device } from '@/types/device-ui.types'
 
 interface DeviceCardProps {
   device: Device
