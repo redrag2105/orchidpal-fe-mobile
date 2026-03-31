@@ -16,16 +16,30 @@ module.exports = {
         paper: '#fdfcf8',
         'paper-dark': '#f0efea',
         'paper-deep': '#e8e6df',
+
         ink: '#14281d',
         'ink-light': '#3a5a40',
         'ink-muted': '#5a7a68',
+
         'orchid-main': '#9f5f80',
         'orchid-deep': '#582c4d',
         'orchid-light': '#c89bae',
+
         forest: '#4a795f',
         'forest-light': '#6a9b7f',
+
         clay: '#e6b8a2',
         gold: '#d4a574',
+
+        info: '#3b82f6',
+        'info-bg': '#eff6ff',
+
+        warning: '#d97706',
+        'warning-bg': '#fef3c7',
+
+        error: '#ef4444', // #dc2626
+        'error-light': '#dc26261a',
+        'error-bg': '#fef2f2',
         primary: {
           0: 'rgb(var(--color-primary-0)/<alpha-value>)',
           50: 'rgb(var(--color-primary-50)/<alpha-value>)',
@@ -184,7 +198,7 @@ module.exports = {
       fontFamily: {
         heading: undefined,
         body: undefined,
-        mono: undefined,
+        mono: ['Menlo', 'monospace'],
         serif: ['Georgia', 'serif'],
         sans: ['System', 'sans-serif'],
         jakarta: ['var(--font-plus-jakarta-sans)'],

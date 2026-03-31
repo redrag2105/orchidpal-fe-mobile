@@ -8,12 +8,11 @@ import { ActivityIndicator, RefreshControl, ScrollView, TouchableOpacity, View }
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { AssignDeviceSheet } from '@/components/device-detail/AssignDeviceSheet'
-import { deviceStyles as styles } from '@/components/device-detail/DeviceDetailStyles'
 import { DeviceLogs } from '@/components/device-detail/DeviceLogs'
 import { DeviceOverviewCard } from '@/components/device-detail/DeviceOverviewCard'
 import { NetworkInfoCard } from '@/components/device-detail/NetworkInfoCard'
 import { ZoneAssignmentCard } from '@/components/device-detail/ZoneAssignmentCard'
-import { THEME } from '@/components/devices/theme'
+import { THEME } from '@/constants/theme'
 
 import { Text } from '@/components/ui/text'
 import { useAssignDeviceToZone } from '@/hooks/mutations/useAssignDeviceToZone'
@@ -72,9 +71,14 @@ export default function DeviceDetailScreen() {
       placement: 'bottom',
       duration: 1500,
       render: ({ id }) => (
-        <Toast nativeID={id} action='success' variant='solid' style={styles.toast}>
-          <View style={styles.toastDot} />
-          <ToastTitle style={styles.toastTitle}>{message}</ToastTitle>
+        <Toast
+          nativeID={id}
+          action='success'
+          variant='solid'
+          className='elevation-6 mb-20 flex-row items-center gap-2 rounded-full bg-forest px-5 py-3 shadow-[0_6px_12px_rgba(74,121,95,0.3)]'
+        >
+          <View className='h-2 w-2 rounded-full bg-gold' />
+          <ToastTitle className='font-sans text-[15px] font-semibold text-white'>{message}</ToastTitle>
         </Toast>
       )
     })
@@ -123,20 +127,23 @@ export default function DeviceDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]} edges={['top']}>
+      <SafeAreaView className='flex-1 items-center justify-center bg-paper' edges={['top']}>
         <ActivityIndicator size='large' color={THEME.forest} />
-        <Text style={{ marginTop: 16, color: THEME.inkMuted }}>Loading device info...</Text>
+        <Text className='mt-4 font-sans text-ink-muted'>Loading device info...</Text>
       </SafeAreaView>
     )
   }
 
   if (error || !apiDevice) {
     return (
-      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]} edges={['top']}>
+      <SafeAreaView className='flex-1 items-center justify-center bg-paper' edges={['top']}>
         <AlertTriangle size={48} color={THEME.gold} />
-        <Text style={{ marginTop: 16, color: THEME.ink }}>Failed to load device data.</Text>
-        <TouchableOpacity style={[styles.outlineButton, { marginTop: 16 }]} onPress={() => router.back()}>
-          <Text style={styles.outlineButtonText}>Go Back</Text>
+        <Text className='mt-4 font-sans text-ink'>Failed to load device data.</Text>
+        <TouchableOpacity
+          className='mt-4 items-center rounded-2xl border border-paper-deep p-3.5'
+          onPress={() => router.back()}
+        >
+          <Text className='font-sans text-[15px] font-semibold text-ink'>Go Back</Text>
         </TouchableOpacity>
       </SafeAreaView>
     )
@@ -158,18 +165,21 @@ export default function DeviceDetailScreen() {
   const isOnline = device.status === 'ONLINE'
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+    <SafeAreaView className='flex-1 bg-paper' edges={['top']}>
+      <View className='flex-row items-center justify-between px-5 py-3'>
+        <TouchableOpacity
+          className='h-11 w-11 items-center justify-center rounded-full bg-paper-dark'
+          onPress={() => router.back()}
+        >
           <ArrowLeft size={24} color={THEME.ink} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Device Details</Text>
+        <Text className='font-serif text-[20px] font-semibold text-ink'>Device Details</Text>
         <View style={{ width: 44 }} />
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerClassName='gap-4 px-5 pb-[60px] pt-5'
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME.forest} />}
       >
         <DeviceOverviewCard device={device} isOnline={isOnline} />
@@ -183,7 +193,7 @@ export default function DeviceDetailScreen() {
 
         <NetworkInfoCard device={device} />
 
-        <Text style={styles.sectionTitle}>Recent Logs</Text>
+        <Text className='mb-1 mt-2 font-serif text-[18px] font-bold text-ink'>Recent Logs</Text>
         <DeviceLogs logsData={logsData} serialNumber={device.serial_number} id={device.id} />
       </ScrollView>
 

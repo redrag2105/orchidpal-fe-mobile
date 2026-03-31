@@ -173,7 +173,7 @@ export default function PlantDetailScreen() {
           variant='solid'
           className='elevation-8 mb-20 flex-row items-center gap-2.5 rounded-full bg-forest px-5 py-3.5 shadow-[0_6px_12px_rgba(74,121,95,0.3)]'
         >
-          <View className='bg-gold h-2 w-2 rounded-full' />
+          <View className='h-2 w-2 rounded-full bg-gold' />
           <ToastTitle className='font-sans text-[15px] font-semibold text-white'>{message}</ToastTitle>
         </Toast>
       )

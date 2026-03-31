@@ -1,9 +1,9 @@
+import { THEME } from '@/constants/theme'
 import { CheckCircle2, ChevronRight, Map, MapPin, Plus } from 'lucide-react-native'
 import React, { useState } from 'react'
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import type { PlantingZone } from '../../../types/device.types'
 import { styles as defaultStyles } from './styles'
-import { THEME } from './theme'
 
 interface StepSelectZoneProps {
   zones: PlantingZone[]

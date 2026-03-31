@@ -1,22 +1,20 @@
-import { Plus, Trash2, ChevronDown } from 'lucide-react-native'
-import React, { useEffect, useState, useMemo } from 'react'
-import { 
+import { FONTS, THEME } from '@/constants/theme'
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet'
+import { ChevronDown, Plus, Trash2 } from 'lucide-react-native'
+import React, { useEffect, useMemo, useState } from 'react'
+import {
+  Alert,
   KeyboardAvoidingView,
   LayoutAnimation,
-  Modal,
   Platform,
+  Text as RNText,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Switch,
-  Text as RNText,
   TextInput,
   TouchableOpacity,
-  View,
-  Alert
- } from 'react-native'
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet'
-import { FONTS, THEME } from '../devices/theme'
+  View
+} from 'react-native'
 
 export interface RuleLogic {
   if: { metric: string; op: string; value: number }
@@ -78,7 +76,9 @@ function CustomSelect({ label, value, options, onChange }: CustomSelectProps) {
     <View style={styles.selectContainer}>
       <RNText style={styles.selectLabel}>{label}</RNText>
       <TouchableOpacity activeOpacity={0.8} style={styles.selectBox} onPress={toggleOpen}>
-        <RNText style={styles.selectText} numberOfLines={1}>{selectedLabel}</RNText>
+        <RNText style={styles.selectText} numberOfLines={1}>
+          {selectedLabel}
+        </RNText>
         <ChevronDown size={20} color={THEME.inkMuted} style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }} />
       </TouchableOpacity>
       {isOpen && (
@@ -125,21 +125,23 @@ export function RuleSetupModal({
   )
 
   const availableMetricOptions = React.useMemo(() => {
-    return ALL_METRICS.filter(m => availableSensors.includes(m.value) || m.value === 'time')
+    return ALL_METRICS.filter((m) => availableSensors.includes(m.value) || m.value === 'time')
   }, [availableSensors])
-
 
   const [name, setName] = useState('')
   const [isActive, setIsActive] = useState(true)
   const [logicConfig, setLogicConfig] = useState<RuleLogic[]>([])
 
   // Cấu hình mặc định khi tạo mới
-  const defaultLogicConfig = useMemo(() => [
-    {
-      if: { metric: 'humidity', op: '<', value: 60 },
-      then: { action: availableRelays[0] || 'pump', duration_ms: 10000 }
-    }
-  ], [availableRelays])
+  const defaultLogicConfig = useMemo(
+    () => [
+      {
+        if: { metric: 'humidity', op: '<', value: 60 },
+        then: { action: availableRelays[0] || 'pump', duration_ms: 10000 }
+      }
+    ],
+    [availableRelays]
+  )
 
   useEffect(() => {
     if (visible) {
@@ -153,27 +155,27 @@ export function RuleSetupModal({
         setLogicConfig(JSON.parse(JSON.stringify(defaultLogicConfig)))
       }
     }
-  }, [visible, initialRule, defaultRuleName = '', defaultLogicConfig])
+  }, [visible, initialRule, (defaultRuleName = ''), defaultLogicConfig])
 
   // Hàm kiểm tra xem dữ liệu hiện tại có khác với dữ liệu gốc không
   const checkHasChanges = () => {
-    const current = { 
-      name: name.trim(), 
-      is_active: isActive, 
-      logic_config: logicConfig 
+    const current = {
+      name: name.trim(),
+      is_active: isActive,
+      logic_config: logicConfig
     }
-    const original = initialRule 
-      ? { 
-          name: initialRule.name.trim(), 
-          is_active: initialRule.is_active ?? true, 
-          logic_config: initialRule.logic_config || [] 
+    const original = initialRule
+      ? {
+          name: initialRule.name.trim(),
+          is_active: initialRule.is_active ?? true,
+          logic_config: initialRule.logic_config || []
         }
-      : { 
-          name: defaultRuleName.trim(), 
-          is_active: true, 
-          logic_config: defaultLogicConfig 
+      : {
+          name: defaultRuleName.trim(),
+          is_active: true,
+          logic_config: defaultLogicConfig
         }
-    
+
     return JSON.stringify(current) !== JSON.stringify(original)
   }
 
@@ -183,7 +185,7 @@ export function RuleSetupModal({
 
   const handleAddCondition = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-    setLogicConfig(prev => [
+    setLogicConfig((prev) => [
       ...prev,
       {
         if: { metric: 'temperature', op: '>', value: 30 },
@@ -194,7 +196,7 @@ export function RuleSetupModal({
 
   const handleRemoveCondition = (index: number) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-    setLogicConfig(prev => {
+    setLogicConfig((prev) => {
       const newConfig = [...prev]
       newConfig.splice(index, 1)
       return newConfig
@@ -202,7 +204,7 @@ export function RuleSetupModal({
   }
 
   const updateLogic = (index: number, section: 'if' | 'then', field: string, value: any) => {
-    setLogicConfig(prev => {
+    setLogicConfig((prev) => {
       const newConfig = JSON.parse(JSON.stringify(prev))
       newConfig[index][section][field] = value
       return newConfig
@@ -211,27 +213,27 @@ export function RuleSetupModal({
 
   const handleSaveBtnClick = () => {
     // Check for exact duplicate IF conditions
-    const conditions = logicConfig.map(l => `${l.if.metric}-${l.if.op}-${l.if.value}`);
-    const uniqueConditions = new Set(conditions);
-    
+    const conditions = logicConfig.map((l) => `${l.if.metric}-${l.if.op}-${l.if.value}`)
+    const uniqueConditions = new Set(conditions)
+
     if (uniqueConditions.size !== conditions.length) {
       // Use native Alert so it shows over the modal properly on both iOS/Android
       Alert.alert(
-        "Duplicate Conditions",
-        "You cannot create two identical logic conditions. Please review and modify them."
-      );
-      return;
+        'Duplicate Conditions',
+        'You cannot create two identical logic conditions. Please review and modify them.'
+      )
+      return
     }
 
     // Use native Alert instead of Gluestack's AlertDialog avoiding iOS pageSheet overlay issues
     Alert.alert(
-      "Save Rule Changes",
-      "Are you sure you want to save these changes to your automation rule? Current running schedules may be affected.",
+      'Save Rule Changes',
+      'Are you sure you want to save these changes to your automation rule? Current running schedules may be affected.',
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Confirm Save", onPress: handleConfirmSave, isPreferred: true }
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Confirm Save', onPress: handleConfirmSave, isPreferred: true }
       ]
-    );
+    )
   }
 
   const handleConfirmSave = () => {
@@ -247,11 +249,13 @@ export function RuleSetupModal({
     })
   }
 
-  const relayOptions = useMemo(() => 
-    availableRelays.length > 0
-      ? availableRelays.map((r) => ({ label: r.charAt(0).toUpperCase() + r.slice(1), value: r }))
-      : [{ label: 'No relays available', value: '' }]
-  , [availableRelays])
+  const relayOptions = useMemo(
+    () =>
+      availableRelays.length > 0
+        ? availableRelays.map((r) => ({ label: r.charAt(0).toUpperCase() + r.slice(1), value: r }))
+        : [{ label: 'No relays available', value: '' }],
+    [availableRelays]
+  )
 
   return (
     <BottomSheetModal
@@ -260,14 +264,11 @@ export function RuleSetupModal({
       backdropComponent={renderBackdrop}
       enablePanDownToClose
       onDismiss={onClose}
-      keyboardBehavior="extend"
-      keyboardBlurBehavior="restore"
+      keyboardBehavior='extend'
+      keyboardBlurBehavior='restore'
       handleStyle={{ display: 'none' }}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.container}
-      >
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
         <SafeAreaView style={styles.header}>
           <View style={styles.dragHandle} />
           <RNText style={styles.headerTitle}>{initialRule ? 'Edit Rule' : 'New Rule'}</RNText>
@@ -326,8 +327,8 @@ export function RuleSetupModal({
                 <CustomSelect
                   label='Sensor'
                   value={logic.if.metric}
-                  options={availableMetricOptions.filter(m => 
-                    m.value === logic.if.metric || !logicConfig.some(l => l.if.metric === m.value)
+                  options={availableMetricOptions.filter(
+                    (m) => m.value === logic.if.metric || !logicConfig.some((l) => l.if.metric === m.value)
                   )}
                   onChange={(val) => updateLogic(index, 'if', 'metric', val)}
                 />
@@ -379,9 +380,9 @@ export function RuleSetupModal({
         </BottomSheetScrollView>
 
         <View style={styles.footer}>
-          <TouchableOpacity 
-            style={[styles.saveBtn, !isSaveEnabled && styles.saveBtnDisabled]} 
-            onPress={isSaveEnabled ? handleSaveBtnClick : undefined} 
+          <TouchableOpacity
+            style={[styles.saveBtn, !isSaveEnabled && styles.saveBtnDisabled]}
+            onPress={isSaveEnabled ? handleSaveBtnClick : undefined}
             activeOpacity={isSaveEnabled ? 0.8 : 1}
           >
             <RNText style={[styles.saveBtnText, !isSaveEnabled && styles.saveBtnTextDisabled]}>

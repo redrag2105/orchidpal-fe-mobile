@@ -4,31 +4,12 @@
  */
 
 import { Text } from '@/components/ui/text'
+import { FONTS, THEME } from '@/constants/theme'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { AlertCircle, QrCode, Sparkles, X } from 'lucide-react-native'
 import React, { useCallback, useRef, useState } from 'react'
-import { ActivityIndicator, Linking, Modal, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native'
+import { ActivityIndicator, Linking, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native'
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated'
-
-// Theme constants
-const THEME = {
-  paper: '#fdfcf8',
-  paperDark: '#f5f4ef',
-  ink: '#14281d',
-  inkLight: '#3a5a40',
-  inkMuted: '#5a7a68',
-  forest: '#4a795f',
-  orchidMain: '#9f5f80',
-  orchidDeep: '#582c4d',
-  clay: '#e6b8a2',
-  gold: '#d4a574',
-  warning: '#d97706',
-  warningBg: '#fef3c7'
-}
-
-const FONTS = {
-  serif: Platform.select({ ios: 'Georgia', default: 'serif' })
-}
 
 interface ScanQRStepProps {
   onScanned: (qrContent: string) => void

@@ -1,8 +1,8 @@
+import { THEME } from '@/constants/theme'
 import { CheckCircle2, ChevronRight } from 'lucide-react-native'
 import React from 'react'
 import { Text, TouchableOpacity, View } from 'react-native'
 import { styles } from './styles'
-import { THEME } from './theme'
 
 interface StepCompleteProps {
   serialNumber: string

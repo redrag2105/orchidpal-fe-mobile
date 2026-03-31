@@ -7,6 +7,7 @@
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
+import { FONTS, THEME } from '@/constants/theme'
 import { useGoogleAuth } from '@/hooks'
 import { useRouter } from 'expo-router'
 import { Flower2, Shield, Sparkles, Thermometer } from 'lucide-react-native'
@@ -23,23 +24,6 @@ import {
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Svg, { Path } from 'react-native-svg'
-
-// Theme constants synced with web
-const THEME = {
-  paper: '#fdfcf8', // Warm Off-White background
-  paperDark: '#f0efea', // Slightly darker paper
-  ink: '#14281d', // Very Deep Green (primary text)
-  inkLight: '#3a5a40', // Muted Green (secondary text)
-  orchidMain: '#9f5f80', // Muted Dusty Purple/Pink
-  orchidDeep: '#582c4d', // Deep Velvet Purple
-  forest: '#4a795f', // Forest green (titles)
-  clay: '#e6b8a2' // Earthy accent
-}
-
-// Font families for premium typography
-const FONTS = {
-  serif: Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' })
-}
 
 // Google SVG icon component
 function GoogleLogo({ size = 20 }: { size?: number }) {

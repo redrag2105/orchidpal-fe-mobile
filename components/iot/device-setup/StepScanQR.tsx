@@ -1,10 +1,10 @@
+import { THEME } from '@/constants/theme'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { AlertCircle, Eye, EyeOff, QrCode, X } from 'lucide-react-native'
 import React, { useState } from 'react'
 import { ActivityIndicator, Linking, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { styles } from './styles'
-import { THEME } from './theme'
 
 interface StepScanQRProps {
   onScanned: (data: string) => void
@@ -160,9 +160,9 @@ export function StepScanQR({ onScanned, isLoading }: StepScanQRProps) {
 
         {/* Extra options row */}
         <View style={styles.actionRow}>
-          <TouchableOpacity 
-            style={[styles.secondaryButtonSmall, { flex: 1 }]} 
-            onPress={() => setShowManual(!showManual)} 
+          <TouchableOpacity
+            style={[styles.secondaryButtonSmall, { flex: 1 }]}
+            onPress={() => setShowManual(!showManual)}
             disabled={isLoading}
           >
             <Text style={styles.secondaryButtonTextSmall} numberOfLines={1}>
@@ -182,7 +182,7 @@ export function StepScanQR({ onScanned, isLoading }: StepScanQRProps) {
                   placeholderTextColor='#9ca3af'
                   value={serialNumberInput}
                   onChangeText={setSerialNumberInput}
-                  autoCapitalize="characters"
+                  autoCapitalize='characters'
                 />
               </View>
             </View>
@@ -198,10 +198,7 @@ export function StepScanQR({ onScanned, isLoading }: StepScanQRProps) {
                   onChangeText={setSecretKeyInput}
                   secureTextEntry={!showSecretKey}
                 />
-                <TouchableOpacity 
-                  onPress={() => setShowSecretKey(!showSecretKey)}
-                  style={{ padding: 8 }}
-                >
+                <TouchableOpacity onPress={() => setShowSecretKey(!showSecretKey)} style={{ padding: 8 }}>
                   {showSecretKey ? (
                     <EyeOff size={20} color={THEME.inkMuted} />
                   ) : (
@@ -212,11 +209,7 @@ export function StepScanQR({ onScanned, isLoading }: StepScanQRProps) {
             </View>
 
             <TouchableOpacity
-              style={[
-                styles.secondaryButton, 
-                { marginTop: 8 },
-                (!isManualValid || isLoading) && styles.buttonDisabled
-              ]}
+              style={[styles.secondaryButton, { marginTop: 8 }, (!isManualValid || isLoading) && styles.buttonDisabled]}
               onPress={handleManualSubmit}
               disabled={!isManualValid || isLoading}
             >
@@ -250,7 +243,7 @@ export function StepScanQR({ onScanned, isLoading }: StepScanQRProps) {
           {/* Camera overlay */}
           <View style={styles.cameraOverlay}>
             {/* Top bar */}
-              <SafeAreaView edges={['top']} style={styles.cameraHeader}>
+            <SafeAreaView edges={['top']} style={styles.cameraHeader}>
               <TouchableOpacity style={styles.cameraCloseButton} onPress={handleCloseCamera}>
                 <X size={24} color='white' />
               </TouchableOpacity>

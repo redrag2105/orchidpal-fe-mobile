@@ -1,10 +1,9 @@
-import { FONTS, THEME } from '@/constants/theme'
+import { THEME } from '@/constants/theme'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import * as ImagePicker from 'expo-image-picker'
 import { Camera, Edit3 } from 'lucide-react-native'
 import React, { useCallback, useMemo } from 'react'
 import { ActivityIndicator, Alert, Image, Text, TouchableOpacity, View } from 'react-native'
-import { zoneStyles as styles } from './ZoneDetailStyles'
 
 interface ZoneEditProfileSheetProps {
   editProfileSheetRef: React.RefObject<BottomSheet | null>
@@ -112,54 +111,33 @@ export function ZoneEditProfileSheet({
       backdropComponent={renderEditBackdrop}
       keyboardBehavior='interactive'
       onChange={handleEditSheetChange}
-      backgroundStyle={styles.sheetBackground}
-      handleIndicatorStyle={styles.sheetIndicator}
+      backgroundStyle={{ backgroundColor: THEME.paper, borderTopLeftRadius: 32, borderTopRightRadius: 32 }}
+      handleIndicatorStyle={{ width: 40, height: 5, backgroundColor: THEME.paperDeep, borderRadius: 3, marginTop: 12 }}
     >
-      <BottomSheetScrollView contentContainerStyle={[styles.sheetContent, { paddingBottom: 40 }]}>
-        <Text style={styles.sheetTitle}>Edit Profile</Text>
+      <BottomSheetScrollView contentContainerClassName='p-6 pb-10'>
+        <Text className='font-serif text-[28px] font-bold text-ink'>Edit Profile</Text>
 
-        <TouchableOpacity onPress={pickImage} style={{ alignSelf: 'center', marginTop: 24, marginBottom: 32 }}>
+        <TouchableOpacity onPress={pickImage} className='mb-8 mt-6 self-center'>
           {editForm.imageUrl ? (
             <Image
               source={{ uri: editForm.imageUrl }}
-              style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 3, borderColor: THEME.paperDeep }}
+              className='h-[120px] w-[120px] rounded-full border-[3px] border-paper-deep'
             />
           ) : (
-            <View
-              style={{
-                width: 120,
-                height: 120,
-                borderRadius: 60,
-                backgroundColor: THEME.paperDeep,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: 2,
-                borderColor: THEME.inkLight,
-                borderStyle: 'dashed'
-              }}
-            >
+            <View className='h-[120px] w-[120px] items-center justify-center rounded-full border-2 border-dashed border-ink-light bg-paper-deep'>
               <Camera size={32} color={THEME.inkLight} />
             </View>
           )}
-          <View
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              right: 0,
-              backgroundColor: THEME.orchidMain,
-              padding: 8,
-              borderRadius: 20,
-              borderWidth: 3,
-              borderColor: THEME.paper
-            }}
-          >
+          <View className='absolute bottom-0 right-0 rounded-[20px] border-[3px] border-paper bg-orchid-main p-2'>
             <Edit3 size={16} color='white' />
           </View>
         </TouchableOpacity>
 
-        <Text style={styles.inputLabel}>Zone Name</Text>
+        <Text className='mb-2 ml-2 font-sans text-[13px] font-bold uppercase tracking-wide text-ink-light'>
+          Zone Name
+        </Text>
         <BottomSheetTextInput
-          style={styles.input}
+          className='rounded-2xl border border-[rgba(20,40,29,0.1)] bg-white px-5 py-[18px] font-sans text-base text-ink'
           value={editForm.nickname}
           onChangeText={(t) => setEditForm((prev) => ({ ...prev, nickname: t }))}
           placeholder='E.g. Balcony'
@@ -168,21 +146,17 @@ export function ZoneEditProfileSheet({
 
         <TouchableOpacity
           onPress={handleSaveProfile}
-          style={[
-            styles.assignButtonBig,
-            { marginTop: 32 },
-            (isUpdating || (editForm.nickname === zone?.name && editForm.imageUrl === zone?.image_url)) && {
-              opacity: 0.5
-            }
-          ]}
+          className={`elevation-4 mt-8 w-full flex-row items-center justify-center rounded-full bg-forest px-8 py-[18px] shadow-[0_8px_16px_rgba(74,121,95,0.2)] ${
+            isUpdating || (editForm.nickname === zone?.name && editForm.imageUrl === zone?.image_url)
+              ? 'opacity-50'
+              : ''
+          }`}
           disabled={isUpdating || (editForm.nickname === zone?.name && editForm.imageUrl === zone?.image_url)}
         >
           {isUpdating ? (
             <ActivityIndicator color={THEME.paper} />
           ) : (
-            <Text style={{ color: THEME.paper, fontFamily: FONTS.sans, fontWeight: '600', fontSize: 16 }}>
-              Save Changes
-            </Text>
+            <Text className='font-sans text-base font-semibold text-paper'>Save Changes</Text>
           )}
         </TouchableOpacity>
       </BottomSheetScrollView>

@@ -6,12 +6,12 @@
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
-import { ChevronRight, Router, Signal, Plus } from 'lucide-react-native'
+import { ChevronRight, Plus, Router, Signal } from 'lucide-react-native'
 import React from 'react'
 import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native'
 import Animated, { FadeInRight } from 'react-native-reanimated'
 
-import { THEME } from './theme'
+import { THEME } from '@/constants/theme'
 import type { Device } from './types'
 
 interface DeviceCardProps {
@@ -34,7 +34,7 @@ export function DeviceCard({ device, index, onPress, onAssign }: DeviceCardProps
 
           <VStack style={{ flex: 1, gap: 4 }}>
             <Text style={styles.name}>{device.serial_number}</Text>
-            
+
             <HStack style={{ gap: 12, marginTop: 4 }}>
               <HStack style={styles.meta}>
                 <View style={[styles.statusDot, isOnline ? styles.statusOnline : styles.statusOffline]} />
@@ -59,11 +59,7 @@ export function DeviceCard({ device, index, onPress, onAssign }: DeviceCardProps
             <Text style={styles.zoneTagText}>{device.zoneName}</Text>
           </View>
         ) : (
-          <TouchableOpacity 
-            style={[styles.zoneTag, styles.unassignedTag]} 
-            onPress={onAssign}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={[styles.zoneTag, styles.unassignedTag]} onPress={onAssign} activeOpacity={0.7}>
             <Plus size={14} color={THEME.inkLight} />
             <Text style={[styles.zoneTagText, styles.unassignedTagText]}>Assign to Zone</Text>
           </TouchableOpacity>

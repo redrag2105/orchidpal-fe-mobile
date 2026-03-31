@@ -3,25 +3,11 @@
  * Botanical luxury styled error screen with retry option
  */
 
+import { FONTS, THEME } from '@/constants/theme'
 import { AlertCircle, RefreshCw } from 'lucide-react-native'
 import React from 'react'
-import { Platform, Pressable, StyleSheet } from 'react-native'
+import { Pressable, StyleSheet } from 'react-native'
 import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated'
-
-// Theme constants
-const THEME = {
-  paper: '#fdfcf8',
-  paperDark: '#f5f4ef',
-  ink: '#14281d',
-  inkMuted: '#5a7a68',
-  error: '#dc2626',
-  errorLight: 'rgba(220, 38, 38, 0.1)',
-  errorBg: '#fef2f2'
-}
-
-const FONTS = {
-  serif: Platform.select({ ios: 'Georgia', default: 'serif' })
-}
 
 interface ErrorStepProps {
   error: string

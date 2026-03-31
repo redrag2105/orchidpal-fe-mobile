@@ -4,22 +4,19 @@
  */
 
 import { Text } from '@/components/ui/text'
-import { VStack } from '@/components/ui/vstack'
+import { THEME } from '@/constants/theme'
 import { LinearGradient } from 'expo-linear-gradient'
-import { ChevronRight, Plus } from 'lucide-react-native'
 import React from 'react'
-import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, TouchableOpacity } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 
-import { THEME } from './theme'
-
 interface AddDeviceButtonProps {
-  onPress: () => void;
-  title?: string;
-  subtitle?: string;
-  icon?: React.ReactNode;
-  hideArrow?: boolean;
-  style?: any;
+  onPress: () => void
+  title?: string
+  subtitle?: string
+  icon?: React.ReactNode
+  hideArrow?: boolean
+  style?: any
 }
 
 export function AddDeviceButton({ onPress, title = 'Add New Device', style }: AddDeviceButtonProps) {

@@ -1,5 +1,5 @@
+import { FONTS, THEME } from '@/constants/theme'
 import { Platform, StyleSheet } from 'react-native'
-import { FONTS, THEME } from './theme'
 
 export const styles = StyleSheet.create({
   container: {

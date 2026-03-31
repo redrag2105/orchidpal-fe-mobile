@@ -1,10 +1,10 @@
 import { Text } from '@/components/ui/text'
+import { THEME } from '@/constants/theme'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Cpu, Flower2, Leaf, Plus } from 'lucide-react-native'
 import React, { useCallback, useState } from 'react'
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import Animated, { FadeInUp } from 'react-native-reanimated'
-import { THEME } from '../../constants/theme'
 
 export interface FABAction {
   key: string

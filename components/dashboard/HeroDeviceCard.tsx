@@ -1,13 +1,13 @@
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
+import { FONTS, THEME } from '@/constants/theme'
 import { useLatestDevice } from '@/hooks/queries/useLatestDevice'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Cpu, Droplets, Leaf, Sun, Thermometer, Wifi } from 'lucide-react-native'
 import React from 'react'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import { FONTS, THEME } from '../../constants/theme'
 import { CircularStat } from './CircularStat'
 
 export function HeroDeviceCard() {

@@ -14,5 +14,4 @@ export { StepSelectZone } from './StepSelectZone'
 export { StepWaitingOnline } from './StepWaitingOnline'
 
 // Shared
-export { FONTS, THEME } from './theme'
 export { styles } from './styles'

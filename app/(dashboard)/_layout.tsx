@@ -1,19 +1,11 @@
-
+import { THEME } from '@/constants/theme'
+import { useUIStore } from '@/hooks/useUIStore'
 import { Tabs } from 'expo-router'
 import { Cpu, Flower2, Home, Lightbulb, Settings } from 'lucide-react-native'
-import React, { useState, useEffect } from 'react'
-import { Platform, StyleSheet, TouchableOpacity, View, Keyboard } from 'react-native'
-import Animated, { useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated'
+import React, { useEffect, useState } from 'react'
+import { Keyboard, Platform, StyleSheet, TouchableOpacity } from 'react-native'
+import Animated, { useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useUIStore } from '@/hooks/useUIStore'
-
-const THEME = {
-  paper: '#fdfcf8',
-  ink: '#14281d',
-  forest: '#4a795f',
-  inkMuted: '#8a9a90',
-  orchidMain: '#9f5f80'
-}
 
 // Animated tab button component
 function TabButton({
@@ -49,7 +41,11 @@ function TabButton({
   }))
 
   return (
-    <TouchableOpacity style={[styles.tabButton, { paddingVertical: isSticky ? 2 : 4 }]} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity
+      style={[styles.tabButton, { paddingVertical: isSticky ? 2 : 4 }]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
       <Animated.View style={[styles.tabButtonInner, animatedBgStyle]}>{children}</Animated.View>
       <Animated.Text
         style={[styles.tabLabel, { color: isFocused ? activeColor : THEME.inkMuted }, animatedTextStyle]}
@@ -64,9 +60,16 @@ function TabButton({
 function CustomTabBar({ state, descriptors, navigation }: any) {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false)
   useEffect(() => {
-    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardVisible(true))
-    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardVisible(false))
-    return () => { showSub.remove(); hideSub.remove() }
+    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () =>
+      setKeyboardVisible(true)
+    )
+    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () =>
+      setKeyboardVisible(false)
+    )
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
   }, [])
   const insets = useSafeAreaInsets()
   const isTabBarSticky = useUIStore((s) => s.isTabBarSticky)
@@ -77,7 +80,11 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
       opacity: withTiming(isKeyboardVisible ? 0 : 1, { duration: 200 }),
       transform: [{ translateY: withTiming(isKeyboardVisible ? 100 : 0, { duration: 200 }) }],
       paddingHorizontal: withSpring(isTabBarSticky ? 0 : 20, { damping: 14, stiffness: 90, mass: 0.8 }),
-      paddingBottom: withSpring(isTabBarSticky ? 0 : Math.max(insets.bottom, 10), { damping: 14, stiffness: 90, mass: 0.8 })
+      paddingBottom: withSpring(isTabBarSticky ? 0 : Math.max(insets.bottom, 10), {
+        damping: 14,
+        stiffness: 90,
+        mass: 0.8
+      })
     }
   })
 
@@ -87,13 +94,20 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
       borderBottomRightRadius: withSpring(isTabBarSticky ? 0 : 28, { damping: 14, stiffness: 90, mass: 0.8 }),
       borderTopLeftRadius: withSpring(isTabBarSticky ? 24 : 28, { damping: 14, stiffness: 90, mass: 0.8 }),
       borderTopRightRadius: withSpring(isTabBarSticky ? 24 : 28, { damping: 14, stiffness: 90, mass: 0.8 }),
-      paddingBottom: withSpring(isTabBarSticky ? Math.max(insets.bottom - 4, 4) : 8, { damping: 14, stiffness: 90, mass: 0.8 }),
-      paddingTop: withSpring(isTabBarSticky ? 4 : 8, { damping: 14, stiffness: 90, mass: 0.8 }),
+      paddingBottom: withSpring(isTabBarSticky ? Math.max(insets.bottom - 4, 4) : 8, {
+        damping: 14,
+        stiffness: 90,
+        mass: 0.8
+      }),
+      paddingTop: withSpring(isTabBarSticky ? 4 : 8, { damping: 14, stiffness: 90, mass: 0.8 })
     }
   })
 
   return (
-    <Animated.View style={[styles.tabBarWrapper, wrapperAnimatedStyle]} pointerEvents={isKeyboardVisible ? 'none' : 'auto'}>
+    <Animated.View
+      style={[styles.tabBarWrapper, wrapperAnimatedStyle]}
+      pointerEvents={isKeyboardVisible ? 'none' : 'auto'}
+    >
       <Animated.View style={[styles.tabBarPill, pillAnimatedStyle]}>
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key]
@@ -115,7 +129,14 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
           const activeColor = isHome ? THEME.orchidMain : THEME.forest
 
           return (
-            <TabButton key={route.key} label={options.title} isFocused={isFocused} isHome={isHome} isSticky={isTabBarSticky} onPress={onPress}>
+            <TabButton
+              key={route.key}
+              label={options.title}
+              isFocused={isFocused}
+              isHome={isHome}
+              isSticky={isTabBarSticky}
+              onPress={onPress}
+            >
               {options.tabBarIcon?.({
                 color: isFocused ? activeColor : THEME.inkMuted,
                 focused: isFocused,
@@ -169,7 +190,7 @@ export default function DashboardLayout() {
         }}
       />
       <Tabs.Screen
-        name='store'
+        name='settings'
         options={{
           title: 'Settings',
           tabBarIcon: ({ color, focused }) => <Settings size={22} color={color} strokeWidth={focused ? 2.4 : 1.9} />
@@ -226,4 +247,3 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1
   }
 })
-

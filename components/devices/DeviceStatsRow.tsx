@@ -4,12 +4,11 @@
  */
 
 import { Text } from '@/components/ui/text'
+import { THEME } from '@/constants/theme'
 import { Cpu, Wifi, WifiOff } from 'lucide-react-native'
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-
-import { THEME } from './theme'
 
 interface DeviceStatsRowProps {
   onlineCount: number
@@ -42,7 +41,7 @@ export function DeviceStatsRow({ onlineCount, offlineCount, totalCount }: Device
 
       <View style={[styles.card, { backgroundColor: '#f3e5f5' }]}>
         <View style={styles.cardHeader}>
-          <View style={[styles.icon, { backgroundColor: THEME.orchidMain }]}>     
+          <View style={[styles.icon, { backgroundColor: THEME.orchidMain }]}>
             <Cpu size={14} color='white' strokeWidth={2} />
           </View>
           <Text style={styles.label}>Total</Text>
@@ -86,6 +85,6 @@ const styles = StyleSheet.create({
     color: THEME.ink
   },
   label: {
-    fontSize: 13,
+    fontSize: 13
   }
 })

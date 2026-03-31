@@ -14,6 +14,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacit
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated'
 import { SafeAreaView } from 'react-native-safe-area-context'
 // Direct imports to avoid require cycle
+import { FONTS, THEME } from '@/constants/theme'
 import {
   ActivatingStep,
   ActivationSuccessStep,
@@ -26,22 +27,6 @@ import {
   SelectZoneStep
 } from '../components'
 import { useProvisioningStore } from '../store'
-
-// Theme constants synced with web
-const THEME = {
-  paper: '#fdfcf8',
-  paperDark: '#f0efea',
-  ink: '#14281d',
-  inkLight: '#3a5a40',
-  inkMuted: '#5a7a68',
-  orchidMain: '#9f5f80',
-  orchidDeep: '#582c4d',
-  forest: '#4a795f'
-}
-
-const FONTS = {
-  serif: Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' })
-}
 
 export default function DeviceSetupScreen() {
   const router = useRouter()

@@ -3,34 +3,16 @@
  * Botanical luxury styled zone creation form
  */
 
+import { FONTS, THEME } from '@/constants/theme'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as Location from 'expo-location'
 import { ArrowRight, ChevronLeft, Flower2, MapPin, Sun } from 'lucide-react-native'
 import React, { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native'
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native'
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated'
 import { z } from 'zod'
 import type { CreateZoneRequest } from '../../types'
-
-// Theme constants
-const THEME = {
-  paper: '#fdfcf8',
-  paperDark: '#f5f4ef',
-  ink: '#14281d',
-  inkLight: '#3a5a40',
-  inkMuted: '#5a7a68',
-  forest: '#4a795f',
-  forestLight: 'rgba(74, 121, 95, 0.1)',
-  orchidMain: '#9f5f80',
-  orchidLight: 'rgba(159, 95, 128, 0.1)',
-  clay: '#e6b8a2',
-  error: '#ef4444'
-}
-
-const FONTS = {
-  serif: Platform.select({ ios: 'Georgia', default: 'serif' })
-}
 
 const createZoneSchema = z.object({
   name: z.string().min(1, 'Zone name is required').max(50, 'Name too long'),

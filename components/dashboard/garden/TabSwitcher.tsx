@@ -1,8 +1,8 @@
 import { Text } from '@/components/ui/text'
+import { THEME } from '@/constants/theme'
 import React, { useEffect } from 'react'
 import { TouchableOpacity, View } from 'react-native'
 import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated'
-import { THEME } from '../../../constants/theme'
 import { gardenStyles as styles } from './styles'
 
 interface TabSwitcherProps {

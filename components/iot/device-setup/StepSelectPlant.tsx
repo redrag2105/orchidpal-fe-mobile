@@ -1,9 +1,9 @@
+import { THEME } from '@/constants/theme'
 import { ChevronRight, Flower2 } from 'lucide-react-native'
 import React, { useState } from 'react'
 import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import type { PlantSpecies } from '../../../types/device.types'
 import { styles } from './styles'
-import { THEME } from './theme'
 
 interface StepSelectPlantProps {
   species: PlantSpecies[]

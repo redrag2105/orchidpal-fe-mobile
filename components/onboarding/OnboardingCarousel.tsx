@@ -7,6 +7,7 @@
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
+import { FONTS, THEME } from '@/constants/theme'
 import { LinearGradient } from 'expo-linear-gradient'
 import { ArrowRight, Droplets, Flower2, Leaf, Sparkles, Thermometer, Wifi } from 'lucide-react-native'
 import React, { useCallback, useRef, useState } from 'react'
@@ -15,7 +16,6 @@ import {
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
-  Platform,
   TouchableOpacity,
   View,
   ViewToken
@@ -30,23 +30,6 @@ import Animated, {
   useSharedValue,
   withSpring
 } from 'react-native-reanimated'
-
-// Theme constants synced with web
-const THEME = {
-  paper: '#fdfcf8',
-  paperDark: '#f0efea',
-  ink: '#14281d',
-  inkLight: '#3a5a40',
-  orchidMain: '#9f5f80',
-  orchidDeep: '#582c4d',
-  forest: '#4a795f',
-  forestLight: '#6a9b7f',
-  clay: '#e6b8a2'
-}
-
-const FONTS = {
-  serif: Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' })
-}
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
 

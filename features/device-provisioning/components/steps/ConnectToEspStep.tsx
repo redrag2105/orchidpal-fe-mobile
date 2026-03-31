@@ -3,32 +3,12 @@
  * Botanical luxury styled WiFi configuration guide
  */
 
+import { FONTS, THEME } from '@/constants/theme'
 import { AlertCircle, ArrowRight, RefreshCw, Settings, Wifi } from 'lucide-react-native'
 import React from 'react'
 import { ActivityIndicator, Linking, Platform, Pressable, StyleSheet, View } from 'react-native'
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated'
 import { useDeviceStatus } from '../../hooks'
-
-// Theme constants
-const THEME = {
-  paper: '#fdfcf8',
-  paperDark: '#f5f4ef',
-  ink: '#14281d',
-  inkLight: '#3a5a40',
-  inkMuted: '#5a7a68',
-  forest: '#4a795f',
-  forestLight: 'rgba(74, 121, 95, 0.1)',
-  orchidMain: '#9f5f80',
-  orchidLight: 'rgba(159, 95, 128, 0.1)',
-  clay: '#e6b8a2',
-  info: '#3b82f6',
-  infoBg: '#eff6ff',
-  warning: '#d97706'
-}
-
-const FONTS = {
-  serif: Platform.select({ ios: 'Georgia', default: 'serif' })
-}
 
 interface ConnectToEspStepProps {
   espWifiName: string

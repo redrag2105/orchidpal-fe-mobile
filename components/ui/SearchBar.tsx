@@ -1,8 +1,8 @@
+import { THEME } from '@/constants/theme'
 import { Search, X } from 'lucide-react-native'
 import React from 'react'
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import { THEME } from '../../constants/theme'
 
 export function SearchBar({
   value,

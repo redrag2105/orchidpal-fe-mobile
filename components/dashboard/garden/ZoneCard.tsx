@@ -1,11 +1,11 @@
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
+import { FONTS, THEME } from '@/constants/theme'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Cpu, Droplets, Leaf, Plus, Thermometer } from 'lucide-react-native'
 import React from 'react'
 import { Image, StyleSheet, TouchableOpacity, View } from 'react-native'
 import Animated, { FadeInRight } from 'react-native-reanimated'
-import { FONTS, THEME } from '../../../constants/theme'
 
 export interface Zone {
   id: string

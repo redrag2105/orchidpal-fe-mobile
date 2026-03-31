@@ -1,10 +1,10 @@
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
+import { THEME } from '@/constants/theme'
 import { ChevronRight, Sparkles } from 'lucide-react-native'
 import React from 'react'
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import Animated, { FadeInUp } from 'react-native-reanimated'
-import { THEME } from '../../constants/theme'
 
 export interface Insight {
   id: string

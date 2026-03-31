@@ -6,21 +6,12 @@
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
+import { THEME } from '@/constants/theme'
 import { CheckCircle2 } from 'lucide-react-native'
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
 import Animated, { FadeIn } from 'react-native-reanimated'
 import type { ProvisioningStep } from '../types'
-
-// Theme constants
-const THEME = {
-  paper: '#fdfcf8',
-  paperDark: '#f0efea',
-  ink: '#14281d',
-  inkMuted: '#5a7a68',
-  orchidMain: '#9f5f80',
-  forest: '#4a795f'
-}
 
 interface ProgressIndicatorProps {
   currentStep: ProvisioningStep

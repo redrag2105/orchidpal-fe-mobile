@@ -2,13 +2,12 @@ import { sendChatMessage } from '@/apis/chat.api'
 import { ChatEmptyState } from '@/components/ai-chat/ChatEmptyState'
 import { ChatInputArea } from '@/components/ai-chat/ChatInputArea'
 import { ChatMessageList } from '@/components/ai-chat/ChatMessageList'
-import { FONTS, THEME } from '@/constants/theme'
 import { useUIStore } from '@/hooks/useUIStore'
 import { ChatMessage } from '@/types/chat.types'
 import * as ImagePicker from 'expo-image-picker'
 import { useFocusEffect, useRouter } from 'expo-router'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function AskAIScreen() {
@@ -152,21 +151,18 @@ export default function AskAIScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: THEME.paper }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Ask Orchid AI</Text>
-          <Text style={styles.headerSubtitle}>Expert guidance for your collection</Text>
+    <KeyboardAvoidingView className='flex-1 bg-paper' behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <View className='z-10 flex-row items-center justify-between px-5 pb-5' style={{ paddingTop: insets.top + 20 }}>
+        <View className='flex-1'>
+          <Text className='font-serif text-[28px] font-semibold text-ink'>Ask Orchid AI</Text>
+          <Text className='mt-0.5 font-sans text-sm text-ink-muted'>Expert guidance for your collection</Text>
         </View>
       </View>
 
       <ScrollView
         ref={scrollViewRef}
-        contentContainerStyle={[styles.scrollContent]}
-        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 20 }}
+        className='flex-1'
         showsVerticalScrollIndicator={false}
         keyboardDismissMode='on-drag'
         keyboardShouldPersistTaps='handled'
@@ -191,30 +187,3 @@ export default function AskAIScreen() {
     </KeyboardAvoidingView>
   )
 }
-
-const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    zIndex: 10
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: THEME.ink,
-    fontFamily: FONTS.serif
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: THEME.inkMuted,
-    fontFamily: FONTS.sans,
-    marginTop: 2
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 20
-  }
-})

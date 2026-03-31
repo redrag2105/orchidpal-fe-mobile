@@ -1,8 +1,8 @@
+import { THEME } from '@/constants/theme'
 import type { ProvisioningStep } from '@/types/device.types'
 import { CheckCircle2, Flower2, MapPin, QrCode, ShieldCheck, Wifi } from 'lucide-react-native'
 import React from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { THEME } from './theme'
 
 interface ProgressIndicatorProps {
   step: string

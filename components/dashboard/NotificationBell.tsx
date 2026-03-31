@@ -1,7 +1,7 @@
+import { THEME } from '@/constants/theme'
 import { Bell } from 'lucide-react-native'
 import React from 'react'
 import { StyleSheet, TouchableOpacity, TouchableOpacityProps, View } from 'react-native'
-import { THEME } from '../../constants/theme'
 
 interface NotificationBellProps extends TouchableOpacityProps {
   color?: string

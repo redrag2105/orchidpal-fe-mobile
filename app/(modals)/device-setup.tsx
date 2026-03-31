@@ -15,19 +15,16 @@ import {
   StepScanQR,
   StepSelectPlant,
   StepSelectZone,
-  StepWaitingOnline,
-  styles,
-  THEME,
-  FONTS
+  StepWaitingOnline
 } from '@/components/iot/device-setup'
+import { FONTS, THEME } from '@/constants/theme'
 import { useDeviceProvisioning } from '@/hooks/useDeviceProvisioning'
 import { useRouter } from 'expo-router'
-import { ChevronLeft, Router } from 'lucide-react-native'
+import { ChevronLeft } from 'lucide-react-native'
 import React, { useEffect, useState } from 'react'
 import {
   BackHandler,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -113,10 +110,7 @@ export default function DeviceSetupScreen() {
               {/* Step Content */}
               <View style={localStyles.cardWrapper}>
                 {provisioning.step === 'SCAN_QR' && (
-                  <StepScanQR
-                    onScanned={provisioning.handleQRScanned}
-                    isLoading={provisioning.isLoading}
-                  />
+                  <StepScanQR onScanned={provisioning.handleQRScanned} isLoading={provisioning.isLoading} />
                 )}
 
                 {provisioning.step === 'ACTIVATING' && <StepLoading message='Activating device...' />}

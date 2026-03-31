@@ -4,317 +4,76 @@ import { SearchBar } from '@/components/ui/SearchBar'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
 import { THEME } from '@/constants/theme'
-import { usePlants } from '@/hooks/queries/usePlants'
-import { useSpecies } from '@/hooks/queries/useSpecies'
-import { useZones } from '@/hooks/queries/useZones'
-import { useDynamicBottomTab } from '@/hooks/useDynamicBottomTab'
 import { BottomSheetBackdrop, BottomSheetModal } from '@gorhom/bottom-sheet'
-import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { Flower2, Leaf } from 'lucide-react-native'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback } from 'react'
 import { ActivityIndicator, Keyboard, RefreshControl, ScrollView, TouchableWithoutFeedback, View } from 'react-native'
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-// Import extracted constants & components
-// import { useUIStore } from '@/hooks/useUIStore'
-
 import { EmptyState } from '@/components/dashboard/garden/EmptyState'
 import { FilterBar } from '@/components/dashboard/garden/FilterBar'
 import { SpeciesFilterSheet, StatusFilterSheet } from '@/components/dashboard/garden/FilterSheets'
-import { gardenStyles as styles } from '@/components/dashboard/garden/styles'
+import { PlantShelf } from '@/components/dashboard/garden/PlantShelf'
 import { TabSwitcher } from '@/components/dashboard/garden/TabSwitcher'
+import { useGardenLogic } from '@/components/dashboard/garden/useGardenLogic'
 import { ZoneCard } from '@/components/dashboard/garden/ZoneCard'
 
-import { PlantShelf } from '@/components/dashboard/garden/PlantShelf'
-export const MOCK_ZONES = [
-  {
-    id: 'z1',
-    name: 'Balcony South',
-    location_city: 'Hanoi',
-    image_url: 'https://images.unsplash.com/photo-1588626572714-bd108c9dd20b?auto=format&fit=crop&q=80&w=600',
-    plant_id: 'p1' as string | null,
-    device_id: 'd1' as string | null,
-    has_plant: true,
-    has_device: true,
-    exposure: 'PARTIAL_SHADE',
-    created_at: '2026-03-15T15:47:10.560Z',
-    temperature: 26.5 as number | null,
-    humidity: 65 as number | null,
-    automation_rules: ['r1', 'r2']
-  },
-  {
-    id: 'z2',
-    name: 'Living Room',
-    location_city: 'Hanoi',
-    image_url: 'https://images.unsplash.com/photo-1622383563227-04401ab4e5ea?auto=format&fit=crop&q=80&w=600',
-    plant_id: null as string | null,
-    device_id: null as string | null,
-    has_plant: false,
-    has_device: false,
-    exposure: 'PARTIAL_SHADE',
-    created_at: '2026-03-15T15:47:10.560Z',
-    temperature: null as number | null,
-    humidity: null as number | null,
-    automation_rules: [] as string[]
-  },
-  {
-    id: 'z3',
-    name: 'Front Porch',
-    location_city: 'Hanoi',
-    image_url: 'https://images.unsplash.com/photo-1416879572624-9b2ee37f1911?auto=format&fit=crop&q=80&w=600',
-    plant_id: 'p2' as string | null,
-    device_id: 'd2' as string | null,
-    has_plant: true,
-    has_device: true,
-    exposure: 'PARTIAL_SHADE',
-    created_at: '2026-03-15T15:47:10.560Z',
-    temperature: 28 as number | null,
-    humidity: 70 as number | null,
-    automation_rules: ['r3']
-  },
-  {
-    id: 'z4',
-    name: 'Office Window',
-    location_city: 'Da Nang',
-    image_url: 'https://images.unsplash.com/photo-1599388102462-8e7c1a84fbe3?auto=format&fit=crop&q=80&w=600',
-    plant_id: 'p4' as string | null,
-    device_id: null as string | null,
-    has_plant: true,
-    has_device: false,
-    exposure: 'PARTIAL_SHADE',
-    created_at: '2026-03-15T15:47:10.560Z',
-    temperature: null as number | null,
-    humidity: null as number | null,
-    automation_rules: []
-  },
-  {
-    id: 'z5',
-    name: 'Kitchen Shelf',
-    location_city: 'Ho Chi Minh',
-    image_url: 'https://images.unsplash.com/photo-1587223075055-82e9a937ddff?auto=format&fit=crop&q=80&w=600',
-    plant_id: 'p8' as string | null,
-    device_id: 'd4' as string | null,
-    has_plant: true,
-    has_device: true,
-    exposure: 'PARTIAL_SHADE',
-    created_at: '2026-03-15T15:47:10.560Z',
-    temperature: 24 as number | null,
-    humidity: 55 as number | null,
-    automation_rules: []
-  },
-  {
-    id: 'z6',
-    name: 'Bedroom Corner',
-    location_city: 'Hanoi',
-    image_url: 'https://images.unsplash.com/photo-1621460309191-53697ebbb5c2?auto=format&fit=crop&q=80&w=600',
-    plant_id: 'p5' as string | null,
-    device_id: 'd5' as string | null,
-    has_plant: true,
-    has_device: true,
-    exposure: 'PARTIAL_SHADE',
-    created_at: '2026-03-15T15:47:10.560Z',
-    temperature: 22 as number | null,
-    humidity: 60 as number | null,
-    automation_rules: []
-  },
-  {
-    id: 'z7',
-    name: 'Rooftop Garden',
-    location_city: 'Hanoi',
-    image_url: 'https://images.unsplash.com/photo-1416879572624-9b2ee37f1911?auto=format&fit=crop&q=80&w=600',
-    plant_id: 'p6' as string | null,
-    device_id: 'd6' as string | null,
-    has_plant: true,
-    has_device: true,
-    exposure: 'PARTIAL_SHADE',
-    created_at: '2026-03-15T15:47:10.560Z',
-    temperature: 32 as number | null,
-    humidity: 50 as number | null,
-    automation_rules: []
-  },
-  {
-    id: 'z8',
-    name: 'Hallway',
-    location_city: 'Hanoi',
-    image_url: 'https://images.unsplash.com/photo-1588626572714-bd108c9dd20b?auto=format&fit=crop&q=80&w=600',
-    plant_id: null as string | null,
-    device_id: null as string | null,
-    has_plant: false,
-    has_device: false,
-    exposure: 'PARTIAL_SHADE',
-    created_at: '2026-03-15T15:47:10.560Z',
-    temperature: null as number | null,
-    humidity: null as number | null,
-    automation_rules: []
-  },
-  {
-    id: 'z9',
-    name: 'Bathroom',
-    location_city: 'Hanoi',
-    image_url: 'https://images.unsplash.com/photo-1622383563227-04401ab4e5ea?auto=format&fit=crop&q=80&w=600',
-    plant_id: 'p7' as string | null,
-    device_id: null as string | null,
-    has_plant: true,
-    has_device: false,
-    exposure: 'PARTIAL_SHADE',
-    created_at: '2026-03-15T15:47:10.560Z',
-    temperature: null as number | null,
-    humidity: null as number | null,
-    automation_rules: []
-  },
-  {
-    id: 'z10',
-    name: 'Patio',
-    location_city: 'Da Nang',
-    image_url: 'https://images.unsplash.com/photo-1599388102462-8e7c1a84fbe3?auto=format&fit=crop&q=80&w=600',
-    plant_id: 'p9' as string | null,
-    device_id: 'd7' as string | null,
-    has_plant: true,
-    has_device: true,
-    exposure: 'PARTIAL_SHADE',
-    created_at: '2026-03-15T15:47:10.560Z',
-    temperature: 29 as number | null,
-    humidity: 75 as number | null,
-    automation_rules: []
-  }
-]
-
 export default function GardenScreen() {
-  const router = useRouter()
-  const navigation = useNavigation()
-  const handleScroll = useDynamicBottomTab()
+  const logic = useGardenLogic()
+  const {
+    router,
+    handleScroll,
+    activeTab,
+    setActiveTab,
+    searchQuery,
+    setSearchQuery,
+    zoneFilter,
+    setZoneFilter,
+    plantStatus,
+    setPlantStatus,
+    plantSpecies,
+    setPlantSpecies,
+    tempPlantStatus,
+    setTempPlantStatus,
+    tempPlantSpecies,
+    setTempPlantSpecies,
+    statusSheetRef,
+    speciesSheetRef,
+    snapPoints,
+    openStatusSheet,
+    openSpeciesSheet,
+    availableSpecies,
+    filteredZones,
+    filteredPlants,
+    toggleSpecies,
+    loadingZones,
+    loadingPlants,
+    isRefetchingZones,
+    isRefetchingPlants,
+    onRefresh,
+    zones,
+    plants,
+    isNavigatingToDetail
+  } = logic
 
-  const { tab } = useLocalSearchParams<{ tab?: 'zones' | 'plants' }>()
-  const [activeTab, setActiveTab] = useState<'zones' | 'plants'>(tab || 'zones')
-
-  useEffect(() => {
-    if (tab && (tab === 'zones' || tab === 'plants')) {
-      setActiveTab(tab)
-    }
-  }, [tab])
-  const [searchQuery, setSearchQuery] = useState('')
-
-  const { data: zones = [], isLoading: loadingZones } = useZones()
-  const { data: plantsResponse, isLoading: loadingPlants } = usePlants()
-  const plants = plantsResponse?.plants || []
-
-  const { data: speciesResponse } = useSpecies()
-  const speciesList = speciesResponse?.data.map((s) => s.common_name) || []
-
-  const [zoneFilter, setZoneFilter] = useState<string>('All')
-  const [plantStatus, setPlantStatus] = useState<string>('All')
-  const [plantSpecies, setPlantSpecies] = useState<string[]>([])
-
-  const [tempPlantStatus, setTempPlantStatus] = useState<string>('All')
-  const [tempPlantSpecies, setTempPlantSpecies] = useState<string[]>([])
-
-  const isNavigatingToDetail = useRef(false)
-  const [refreshKey, setRefreshKey] = useState(0)
-  const { refetch: refetchZones, isRefetching: isRefetchingZones } = useZones()
-  const { refetch: refetchPlants, isRefetching: isRefetchingPlants } = usePlants()
-  const onRefresh = useCallback(async () => {
-    await Promise.all([refetchZones(), refetchPlants()])
-  }, [refetchZones, refetchPlants])
-
-  useFocusEffect(
-    useCallback(() => {
-      // Whenever we gain focus back, we reset this flag just in case.
-      isNavigatingToDetail.current = false
-      setRefreshKey((prev) => prev + 1)
-
-      return () => {
-        // When screen blurs, if we didn't explicitly navigate to detail, reset filters
-        if (!isNavigatingToDetail.current) {
-          setSearchQuery('')
-          setZoneFilter('All')
-          setPlantStatus('All')
-          setPlantSpecies([])
-        }
-      }
-    }, [])
-  )
-
-  useEffect(() => {
-    // Add explicitly any type for navigation to suppress TS error about custom event "tabPress"
-    const unsubscribe = (navigation as any).addListener('tabPress', (e: any) => {
-      // Also clear filters when switching bottom tab explicitly to this screen
-      setSearchQuery('')
-      setZoneFilter('All')
-      setPlantStatus('All')
-      setPlantSpecies([])
-    })
-    return unsubscribe
-  }, [navigation])
-
-  const statusSheetRef = useRef<BottomSheetModal>(null)
-  const speciesSheetRef = useRef<BottomSheetModal>(null)
-  const snapPoints = useMemo(() => ['50%', '75%'], [])
   const renderBackdrop = useCallback(
     (props: any) => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.4} />,
     []
   )
 
-  const openStatusSheet = () => {
-    setTempPlantStatus(plantStatus)
-    statusSheetRef.current?.present()
-  }
-
-  const openSpeciesSheet = () => {
-    setTempPlantSpecies([...plantSpecies])
-    speciesSheetRef.current?.present()
-  }
-
-  const availableSpecies = speciesList
-
-  const filteredZones = zones.filter((z) => {
-    const matchesSearch =
-      (z.name && z.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (z.location_city && z.location_city.toLowerCase().includes(searchQuery.toLowerCase()))
-
-    let matchesFilter = false
-    if (zoneFilter === 'All') matchesFilter = true
-    else if (zoneFilter === 'Need plants') matchesFilter = !z.has_plant
-    else if (zoneFilter === 'Need device') matchesFilter = !z.has_device
-    else if (zoneFilter === 'Fully Linked') matchesFilter = z.has_plant && z.has_device
-
-    return matchesSearch && matchesFilter
-  })
-
-  const filteredPlants = plants.filter((p) => {
-    const matchesSearch =
-      p.nickname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.species_wiki.common_name.toLowerCase().includes(searchQuery.toLowerCase())
-
-    let matchesStatus = true
-    if (plantStatus === 'Unassigned') matchesStatus = !p.zone_id
-    else if (plantStatus === 'Assigned') matchesStatus = !!p.zone_id
-
-    let matchesSpecies = true
-    if (plantSpecies.length > 0) {
-      matchesSpecies = plantSpecies.includes(p.species_wiki.common_name)
-    }
-
-    return matchesSearch && matchesStatus && matchesSpecies
-  })
-
-  const toggleSpecies = (species: string) => {
-    setTempPlantSpecies((prev) => (prev.includes(species) ? prev.filter((s) => s !== species) : [...prev, species]))
-  }
-
   return (
-    <View style={{ flex: 1, backgroundColor: THEME.paper }}>
+    <View className='flex-1 bg-paper'>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <View style={styles.root}>
+        <View className='flex-1 bg-paper'>
           <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-            {/* Header */}
             <Animated.View entering={FadeIn.duration(400)}>
-              <HStack style={styles.header}>
+              <HStack className='items-center justify-between px-5 py-2'>
                 <VStack>
-                  <Text style={styles.headerTitle}>
-                    My <Text style={styles.headerTitleAccent}>Garden</Text>
+                  <Text className='mt-0.5 pb-2 pt-2 font-serif text-[28px] font-semibold leading-9 text-ink'>
+                    My <Text className='font-serif italic text-orchid-main'>Garden</Text>
                   </Text>
-                  <Text style={styles.greeting}>
+                  <Text className='font-sans text-xs uppercase tracking-wider text-ink-muted'>
                     {activeTab === 'zones' ? `${zones.length} zones` : `${plants.length} orchids`}
                   </Text>
                 </VStack>
@@ -333,7 +92,7 @@ export default function GardenScreen() {
               }}
             />
 
-            <View style={{ paddingHorizontal: 20, paddingBottom: 4 }}>
+            <View className='px-5 pb-1'>
               <SearchBar
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -354,7 +113,7 @@ export default function GardenScreen() {
             />
 
             <ScrollView
-              contentContainerStyle={styles.content}
+              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps='handled'
               onScroll={handleScroll}
@@ -368,11 +127,11 @@ export default function GardenScreen() {
               }
             >
               {(loadingZones && zones.length === 0) || (loadingPlants && plants.length === 0) ? (
-                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: 100 }}>
+                <View className='mt-[100px] flex-1 items-center justify-center'>
                   <ActivityIndicator size='large' color={THEME.orchidMain} />
                 </View>
               ) : activeTab === 'zones' ? (
-                <View style={styles.gridContainer}>
+                <View className='flex-row flex-wrap justify-between gap-4'>
                   {filteredZones.length === 0 ? (
                     <EmptyState message='No zones found matching your criteria.' />
                   ) : (
@@ -380,10 +139,11 @@ export default function GardenScreen() {
                       <Animated.View
                         key={zone.id}
                         entering={FadeInUp.delay(200 + idx * 50).duration(400)}
-                        style={styles.gridItem}
+                        className='w-[47%]'
                       >
                         <ZoneCard
                           zone={zone}
+                          index={idx}
                           onPress={() => {
                             isNavigatingToDetail.current = true
                             router.push(`/zone/${zone.id}`)
@@ -394,13 +154,11 @@ export default function GardenScreen() {
                   )}
                 </View>
               ) : (
-                <View style={styles.listContainer}>
+                <View className='gap-4'>
                   {filteredPlants.length === 0 ? (
                     <EmptyState message='No plants found matching your criteria.' />
                   ) : (
                     (() => {
-                      // If 3 or fewer plants, keep all on the top shelf.
-                      // Otherwise, split them evenly between two shelves.
                       const total = filteredPlants.length
                       const splitIndex = total <= 3 ? total : Math.ceil(total / 2)
 
@@ -440,18 +198,23 @@ export default function GardenScreen() {
         </View>
       </TouchableWithoutFeedback>
 
-      {/* Status Bottom Sheet */}
       <BottomSheetModal
         ref={statusSheetRef}
         index={0}
         snapPoints={snapPoints}
         enablePanDownToClose
         backdropComponent={renderBackdrop}
-        backgroundStyle={styles.sheetBg}
-        handleIndicatorStyle={styles.sheetIndicator}
+        backgroundStyle={{ backgroundColor: 'white', borderTopLeftRadius: 32, borderTopRightRadius: 32 }}
+        handleIndicatorStyle={{
+          width: 48,
+          height: 5,
+          backgroundColor: THEME.paperDeep,
+          borderRadius: 3,
+          marginTop: 10
+        }}
       >
         <StatusFilterSheet
-          sheetRef={statusSheetRef}
+          sheetRef={statusSheetRef as any}
           tempPlantStatus={tempPlantStatus}
           plantStatus={plantStatus}
           setTempPlantStatus={setTempPlantStatus}
@@ -459,18 +222,23 @@ export default function GardenScreen() {
         />
       </BottomSheetModal>
 
-      {/* Species Bottom Sheet */}
       <BottomSheetModal
         ref={speciesSheetRef}
         index={0}
         snapPoints={snapPoints}
         enablePanDownToClose
         backdropComponent={renderBackdrop}
-        backgroundStyle={styles.sheetBg}
-        handleIndicatorStyle={styles.sheetIndicator}
+        backgroundStyle={{ backgroundColor: 'white', borderTopLeftRadius: 32, borderTopRightRadius: 32 }}
+        handleIndicatorStyle={{
+          width: 48,
+          height: 5,
+          backgroundColor: THEME.paperDeep,
+          borderRadius: 3,
+          marginTop: 10
+        }}
       >
         <SpeciesFilterSheet
-          sheetRef={speciesSheetRef}
+          sheetRef={speciesSheetRef as any}
           availableSpecies={availableSpecies}
           tempPlantSpecies={tempPlantSpecies}
           plantSpecies={plantSpecies}
